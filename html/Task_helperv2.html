@@ -1,0 +1,2201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+	<title>Project Management - Workspace</title>
+	<!-- https://www.sitepoint.com/7-reasons-to-use-a-cdn/  These are the reasons yo keep some links with CDN sources -->
+
+	<!-- SANDBOX_MARK_PRODUCTION -->
+
+	<script>
+		const WF_MODE_TESTING = false;
+		const WF_MODE_NORMAL = true;
+		var WF_NetSuite_Error = false; // true when ajax return some error.
+		var WF_DEBUG = false;
+		var WF_DEBUG_AJAX = false;
+		var WF_DEBUG_AJAX_DATA = false;
+		var WF_DEBUG_AJAX_MIRROR = false;
+		var WF_DEBUG_NOTIFICATIONS_CALLS = false;
+		var WF_LOADER_LEVEL = 0;
+		var WF_LOADER_AUTO = false;
+		var WORKFORCE_MODE = WF_MODE_NORMAL; // Set to WF_MODE_NORMAL then save the changes..
+		var WorkForce_Obj = {};
+		var WorkForce_MyTeam = {};
+		var delimiterdates = '\t';
+		var showmemorystatus = false;
+		var CalendarInputFormat = "Y-m-d";
+		var ViewTableLayout = 15;
+		var Branch_review = {}; // Storage last predeccesor branchdependency.
+		var Branch_Succ_review = {}; // Storage last succesor branchdependency
+		var Branch_Succ_review_flare = { "name": "Succesor Tree", "children": [] }; // storage last successor branchdependency to show in graph.
+		var WF_Develop_State = false; // When true, enable edit task no matter what verifications.
+		var NotesTask_review = [];
+		var enableChangeAssigned = false; // Standar user cannot change the assigned.
+		var WF_G_TaskStatus = ['','Active','Completed','Deferred','Cancelled'];
+		var WF_Error_on_Update = false;
+		var WF_Enable_Notification_On_Completed = true;
+		
+		// Set NetSuite Format 
+		LeirAGS_NS_Utils.setformat( window.dateformat );
+		// Set NetSuite Months
+		LeirAGS_NS_Utils.setmonths( window.datetime_short_months );
+		
+		function getHDC(elem,idx) {
+			var attrs = ['backgroundColor','color','x','y','width','height','margin','padding','border','display','font-size','font-family'];
+		    var rval = $('#'+elem).css(attrs[idx]);
+			if (idx < 2) {
+		        var parts = rval.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+		        delete(parts[0]);
+		        for (var i = 1; i <= 3; ++i) {
+		            parts[i] = parseInt(parts[i]).toString(16);
+		            if (parts[i].length == 1) parts[i] = '0' + parts[i];
+		        }
+		        return '#' + parts.join('');
+		    } else {
+				return rval;
+			}
+		}
+		
+		var styleTop = '<style>\
+			//---- ToolBar on TOP WF \
+			.ontop { background: none repeat scroll 0 0 #7087A9 !important; } \
+			.ontop-header{ \
+					height: 42px; \
+					padding-right: 96px; \
+					padding-left:33px; \
+					color: #AFA; \
+					background: none repeat scroll 0 0 #7087A9 !important; \
+					display: none; \
+				} \
+				.ontop-header .title { \
+				 color: #FFF; \
+				} \
+				.ontop-header .btn { \
+					border : 1px solid #607799; \
+					padding: 6px; \
+					margin: 3px; \
+					background: none repeat scroll 0 0 #8097B9 !important; \
+					color: #FFF; \
+				} \
+				.ontop-header .inputs { \
+					background: none repeat scroll 0 0 #8097B9 !important; \
+					color: #90A7C9; \
+					height: 12px; \
+				} \
+				.ontop-header .about { \
+					padding-top:12px;font-size:0.7em \
+				} \
+				.ontop-header .elem { \
+					padding:3px 6px; margin-top:4px;font-size:0.7em; margin-right:9px; \
+				} \
+			//---- \
+			</style>';
+		
+		function createDommyElemHDC(elem,gdc,parent){
+			var $tmp = $(elem);
+			if(parent===undefined) parent='body';
+			$(parent).append($tmp).hide();
+			var gdcV = getHDC('_elem_test_',gdc);
+			$tmp.remove();
+			return gdcV;
+		}
+		
+		function colordefine(){
+			var bg = getHDC('ns_navigation',0);
+			styleTop = styleTop.replace(/#7087A9/g,bg);
+			// '#ns_navigation > .ns-menu > .ns-menuitem.ns-active > a'
+			
+			bgx = createDommyElemHDC('<li data-title="example" class="ns-header ns-menuitem"><a href="#" id="_elem_test_0_"><span id="_elem_test_">Example</span></a></li>',0,'#ns-header-menu-main');
+			styleTop = styleTop.replace(/#7087A9/g,bg);
+			
+		}
+		
+		if(showmemorystatus) {
+			var memstats = new MemoryStats();
+			function leirags_memory_monitor(){
+				if (memstats.notrun) return;
+				memstats.domElement.style.position = 'fixed';
+				memstats.domElement.style.right    = '3px';
+				memstats.domElement.style.bottom   = '3px';
+			    document.body.appendChild( memstats.domElement );
+			    requestAnimationFrame(function rAFloop(){
+			    	memstats.update();
+			        requestAnimationFrame(rAFloop);
+			    });
+			}
+			leirags_memory_monitor();
+		} else {
+			var memstats = { notrun:true, update: function(){} };
+		}
+		
+		// Write HTML_element based on environment...
+		function WF_wh(sbx_elem, prd_elem) {
+			if (WorkForce_Obj.Env == 'SANDBOX')
+				document.write(sbx_elem);
+			else
+				document.write(prd_elem);
+		}
+
+		// Get HTML_element based on environment...
+		function WF_whs(sbx_elem, prd_elem) {
+			if (WorkForce_Obj.Env == 'SANDBOX')
+				return sbx_elem;
+			else
+				return prd_elem;
+		}
+
+		//Dictation...
+		function startDictation(tableType) {
+			$('.talknow').fadeIn();
+			if (window.hasOwnProperty('webkitSpeechRecognition')) {
+				$('input[type="search"]').val('');
+				var recognition = new webkitSpeechRecognition();
+				recognition.continuous = false;
+				recognition.interimResults = false;
+				if ($('#custpage_whatlang').val() == 'en') {
+					recognition.lang = "en-US";
+				} else {
+					recognition.lang = "es-ES";
+				}
+				recognition.start();
+				recognition.onresult = function(e) {
+					if (tableType == 'salesorder') {
+						$('.tabsalesorder-content input:eq(0)').val(e.results[0][0].transcript);
+					}
+					if (tableType == 'mytblTasks') {
+						$('#mytblTasks_wrapper input').val(e.results[0][0].transcript);
+					}
+					if (tableType == 'Customsalesorder') {
+						$('#Customsalesorder_wrapper input').val(e.results[0][0].transcript);
+					}
+					$('.talknow').fadeOut();
+					recognition.stop();
+					//document.getElementById('labnol').submit();
+					$('input[type="search"]').trigger('keyup');
+				};
+				recognition.onerror = function(e) {
+					recognition.stop();
+				}
+			}
+		}
+	</script>
+	
+</head>
+
+<body>
+	<div id="workforce_top_menu_altern" data-author="Ariel Garcia" style="margin-top:14px;"></div>
+	<div id="workforce_pagetitle_firstline" class="row"></div>
+	<script>
+	
+	var auditSpace='';
+	var PredecessorRealBlocking = false;
+	var topmenu_handler_div = '#ns_navigation';
+	var topmenu_handler_alt = false;
+	
+	if ($(topmenu_handler_div).length < 1) {
+		topmenu_handler_div = '#workforce_top_menu_altern';
+		topmenu_handler_alt = true;
+	}
+	
+	// Define WF top menu
+	jQuery(topmenu_handler_div).after("<div id='workforce_top_head' class='ontop-header'> Workforce Management \
+			<button class='btn' onClick='selectTabOk(\"tabsalesord1\")'>My Work</button>\
+			<button class='btn' onClick='selectTabOk(\"tabsalesord2\")'>My Sales Order</button>\
+			<button class='btn' onClick='selectTabOk(\"tabsalesord4\")'>Workspace</button>\
+			<div id='tabSOfull' style='display:none'><button class='btn' onClick='selectTabOk(\"tabsalesord5\")'>Sales Orders</button></div>\
+			\
+			<div id='curr-so-dir' class='curr-so-dir'>\
+			<button class='btn subs' onClick='jQScrollTo(\"NameSalesOrderBySpan\")' id=\"workforce_top_head_so\">SalesOrder</button>\
+			<button class='btn subs' onClick='$(\"#tabtwo2\").trigger(\"click\");$(\".dtab2\").trigger(\"click\");jQScrollTo(\"tabtogant2\");/*jQScrollTo(\"taskNameLabel\")*/'>Treeview</button>\
+			<button class='btn subs' onClick='jQScrollTo(\"task-messages\")'>Comm</button>\
+			</div>\
+			\
+			<div class='pull-right about' style='margin-left:9px; color:#333' onClick=\"$('#contenting').toggle();\">DBG</div>\
+			<div class='pull-right about' onClick='messager(\"About WFM\",\"Autors:<br>Alejandro Perez (alejandro@solutionseekers.xyz),<br>Ariel Garcia (a.garcia@leirags.com)\")'>ver 0.05.01</div>\
+			<div class='btn pull-right elem'><label for='cnfs' style='margin-right:6px;'>Confirmations </label> <input id='cnfs' type='checkbox' checked /></div>\
+			<div class='btn pull-right elem' id='auditSpace'></div></div>");
+	
+	// Function select tab
+	function selectTabOk(tb){
+		window.scroll(0,0);
+		// NO ES TAB asi que no jala normalmente jQuery('.tabtogsales-links a[href="#'+tb+'"]').tab('show') // Select tab by name .. 
+		jQuery('.tabtogsales-links a[href="#'+tb+'"]').trigger('click') // Select tab by name .. SI FUNCIONA
+	}
+	// Show WF top menu
+	function showTopHeader(){
+		jQuery('div.uir-page-title').css('top','0px');
+		jQuery('div.uir-page-title').css('height','68px');
+	}
+	// Show WF top menu after 100 pixel of scroll 
+	$(document).scroll(function() {
+		var y = $(this).scrollTop();
+		//-- console.log('Scroll-Y',y);
+		if(topmenu_handler_alt){
+			$('#workforce_top_head').css('top', y+'px').css('z-index','100');
+		} else {
+		  if (y > 60) {
+		    $('#workforce_top_head').fadeIn();
+		  } else {
+		    $('#workforce_top_head').fadeOut();
+		  }
+		}
+	});
+	
+	// .ontop-header ... show if not netsuite.
+	if(topmenu_handler_alt){
+		$('#workforce_top_head')
+		.css('position','absolute')
+		.css('width','100%')
+		.fadeIn();
+	}
+	
+	var allimagesfound = {
+		'event' : '<img class="record-icon event" src="/uirefresh/img/recordicon/event.svg" alt="" role="presentation">',
+		'salesorder' : '<img class="record-icon salesorder" src="/uirefresh/img/recordicon/salesorder.svg" alt="" role="presentation">',
+		'call' : '<img class="record-icon call" src="/uirefresh/img/recordicon/call.svg" alt="" role="presentation">',
+		'task' : '<img class="record-icon task" src="/uirefresh/img/recordicon/task.svg" alt="" role="presentation">',
+		'customer' : '<img class="record-icon customer" src="/uirefresh/img/recordicon/customer.svg" alt="" role="presentation">',
+		'contact' : '<img class="record-icon contact" src="/uirefresh/img/recordicon/customer-simple.svg" alt="" role="presentation">',
+		'opportunity' : '<img class="record-icon contact" src="/uirefresh/img/recordicon/opportunity.svg" alt="" role="presentation">',
+		'invoice' : '<img class="record-icon contact" src="/uirefresh/img/recordicon/invoice.svg" alt="" role="presentation">',
+		'cashsale' : '<img class="record-icon contact" src="/uirefresh/img/recordicon/invoice.svg" alt="" role="presentation">',
+		'bill' : '<img class="record-icon contact" src="/uirefresh/img/recordicon/generictransaction.svg" alt="" role="presentation">',
+		'case' : '<img class="record-icon contact" src="/uirefresh/img/recordicon/case.svg" alt="" role="presentation">',
+		'cashsale' : '<img class="record-icon contact" src="/uirefresh/img/recordicon/invoice.svg" alt="" role="presentation">',
+		'recentrecords' : '<img src="/uirefresh/img/header/icon_history.svg" alt="">',
+		'purchaseorder' : '<img class="record-icon purchaseorder" src="/uirefresh/img/recordicon/genericdoc.svg" alt="" role="presentation">',
+		'favorites' : '<img src="/uirefresh/img/header/icon_favorites.svg" alt="">',
+		'home' : '<img src="/uirefresh/img/header/icon_home.svg" alt="">',
+		'note' : '<img class="record-icon-small" src="/uirefresh/img/recordicon/note.svg" alt="">',
+		'required' : '<img class="required_icon" title="" alt="" src="/images/chiles/pageTitle/required.png">',
+		'refresh' : '<img class="ns-portlet-icon-refresh" src="/images/dashboard/portlet-refresh.svg" alt="" role="presentation">',
+		'refresh2' : '<span class="ns-portlet-icon-refresh" style="width:32px; display:inline-block; vertical-align:top; cursor:pointer;"><span>',
+		//<!-- Leirags Icons -->
+		'gear-office' : '<img class="icon icons8-Settings" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAJiElEQVRoQ91aa1BU1x3/33Pv3ruIFIQFARVRkIIYKxjBKigoECsmhTax8Ql8SWfamdZGIJppJnZMq2E1MZ1ppskXxXecpNKpkgqoIPhABzG+oIoGEXm4gCgiu/dxbufsenEfd2FZ1jZ6Pu6ex/93/u/fuRS8JIN6HjiKCnbnUjLOUdtbplBxoX7tLk+f+1yAbC/cc3RckP/SwGCdjbyGji54cL+ndH3RmswXAsi2wt2PE1ITvEPDQm3kbWtpg/Mnz/fnF60d+4MHUlSwcxYFqH7ZymWgYTU28gq8AEf2HwEZcFyhPu+SJ8F43LT0+bvXjfXz/kt6drqXmqDlh8sHHvf2v1+wbe2OHzQQ4h/h0VOW/iRxpqqc39VehubG7z3uJx7RyKfrdvoJGpSDaPSOLOHpiYsSwd4/FFTET2pP1AJFo+tYwl9qBFz8hx15vaPVzqiAbNmwM5yWqA9phJazHMeEhk9gw6dNBl9/3yHletjzEJpv3oG25ns8bzKJWJKLGBF/NhpAbgMpKij+PaKoP3NeWi42fjoTFhnm1qW2NLXAtYvXRdOA0SiBtOa9orwSdzZSBfL0pj8FoColGv9z49a8ZmVzYkbYS/M3CuCt2PhYTcT0CHfOdVjTUN8Ajd81AmLo/WhA+K21dizyoJ8DyCkaQc5T05wqkO0b9u5nOfYtkGVsHDCyFEJtsiQdIsAomtrMcdyP56XPY52ZUFe7AQydXSDyAvT2PDQL7efvCwyrAV1wINgnSgUVMbkz5Wd4k8n0H1mSPyCCUzS9XMY4VOul5YGikLF/YF/Btpxc+5twAKLP35kCFDqZvCQZdME6IJt3dXRBa/M9sed+N+Pj68MvzFzIOuQIEw+XL1yBjpZ24HkBgicFAsexEBDkZz6z+34vmEw8dNw1AMtqIDgsBGbOeQU0HOuQa6qOVvF9D/tY/6AAcWL4BIbIQS6NyFH972oAGacWbMurtF7oAOSTDXvPhkwOiZ+zYI7tCQBAEhoZ9iAa6xvhVkMTjPX1hthXoyB8WiiwWofl5rW8kYfmm21Qf/oq8EYBpk6PgJhZMQ5g1M4hv50tPysYOgx1725d/VOnQEixRzPoi/SsNHbM2DHD2r5g4qH2ZC30PngIcxfFQdQr4cOusZ5w40oznDtRD37jfCExNdFBO2qbPXn8BMpLKnhJxL+2Lj4HNWJ2Yi3TEDUjKjgmzvaG1DYkIKrLaoBGFKT9Yj74+HqPCIQyubvzAZwqvQASliE5I8klMCQw3Lh6owMZxRjF8W2ASCxd7f0j74iUzBQve/Oxl5LYKpZEyFyR4tSMXEVGzO3ogUqgaQaSliQPuYxo5HT56YH+R/23aF5KdgBCVhOtEDA0jWIWLF1IO4tKxCeaGpsgOzfDbU3YS0s0c/RgJURGR0J0XLQqGBJ4TpVWSZKEG6xBkMkOzm4xMc3niILlamCISZV9UwaJi4f3CXLT3QZL+A0I9B1Wc8Rnao/XQ8YvMxxMTAGBZTiEjMJv7HOJ08xOcgkBszgrjbZ2/LrqOnj86BFk52U4NQFyu3U114S7t9ps6vhJEaHC7KRYTcD4cU7XfvX3I+AfqIPZybMH5xBzOl5SQdzo0Pqtq1eqLXYKhGhG1KAHi95YZFM7kX5i7hDaILd6pryOlyW5AmNRr8R7c35CzEc0Tc2Zlz6bdRbhFK1krlw2KK+SPxgBj3NWjzkFoiTG7NzsZxu2G6D6WA2s+V2WqpkQTfxr3wletAuN1jeozy/eRGvoja+vWsSqaYaY456/lkDya0mgCwkcXHp412HVRKhMGAJI8Sa/QL/1qctSB9tS4uQPerogc0WqqmmUf10ttn7fWTZcT64v3FMTNmV8YvqbyYzaRkcPnIRx/jobp7c0ZI+LCrblbBqRaZGbCwjWfbjgZ8/C4eXzl0Hkjea8YT+Um1QrH+znKtp2ptmKf5wGhtXCzIRnzdmpb6uhu6PrT+4A2RUWGZZj7XQkd4RNHQ9xSbEOQNpb7kPpwUoo0Oe41BroC4rlpW+nQEhYkMNe9TXXoOV2J5B6TxkkyLQ0tRSrFYyq4VdZqM8vfmmAPDfT+rhwZxaS0eH/lWmN2NnLvq4RWps7yvI/XvMsdqp4JnH2SVOCEzLeTLLli57O9bCzW/qSEYff/Sd4UZAKC/U5n6lFF0v4Re+/vmqxamJUgkbqG6ng52/pZchwO/yOKiFW1PFYxOexDH8s1K+tIoKQSEUhejNiUMK8tKET4rnj9UAIPmWMKiFu37h3HwXwqzS1EqXvkblgdDbMJUr1NeHubbsSZWqoMDvZvRKloqRCkgG+Wr9l9SqX8oi5AuaYvQhRSxaqVMCkaDz2TdmQZYpykLlovG+hrEjL66xrVOabG63j9fCak6KxqrTKDMaenHAIvxYQ9CmE0HQ1EMqB5ta2sQmyPFzGkzwUMUwZT8BgjK/TJmmBdd1l21hx9ClvH+9IVxsrCYuw7G3PNFZHDlaCF+cFiYvnOjVZ8sdgY9XX32QNxgaIrGUap82IGu9yq3usBhBDQXr26Frdqm8vABZlc6Foz6qooSKt7s2rNzopoxit2iES8oGh0Rdp2a6TD+dO1sKjp+TDNDfIh9oT9aAL0kF8UrxLIIhGKg5X8KLkhHxQkH+yce+50LCQuFdHSAc1NTQBp9VA/PwZMHkYOujOzTa4ePoqmIwCRMY4trbOaCci49njZwVDu+Hiu1tW29igawRdZxe03m419hh6tD5+PvzCpU4IuvNXoP1uu5n/Cp4YCJwXC/5PCboeQtAN8NDRajDzYiGTQmBmghOCrrSK7+vtYwOCAsQJUyYwuvFuEHSW5FW8S+vttQpkLBoHTFqEULuE8SGZwpU00JtZLy5qftrQlGlXRzfwAm9mKskgRAarYUEXHGDTMFn7gDW5IIH0ASWjFML0Y4xDuDFanoIRUKZkY0IaMyLaQbhekZFKHEhsreZzLEkrCEMYPUud8Rgy9Kj82XipERouNQCi6QP25IJFHjqLcMGMiHNdJrFdEYI8sQGCj7QeelYwDhhNGKTVHn1WcAWIleZyKZoqZLUcPXHyBHayiw89d27egdY793jeaJJky0PPjv/LQ481WHOBydC5iKbewRjHuPL0hhBqwJL8JSNKu0YDQJHDpbbUVQ2ReS/0Y6g10Jfmefql+WDAnIfeK+5PTEkco/YJR21l7ZOCj3Pce4MYwsY97iOKn/iTj2qsmELyu6HdAD0v0kc1pPjkOM06tQs0mYQdL8xnTiOJcp6a+1/Y41B+7OeZUgAAAABJRU5ErkJggg==" width="25" height="25">',
+		'gantt-bw' : '<img class="icon icons8-Gantt-Chart" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAAd0lEQVRIS2NkYGC4wMDAoM9AW3CBkYGB4T9t7YCYToxFIDXIAOYwksRHLQIFIc2CjipphZg4orpFuFIRLovITnWjFpEddFSJdHwRSveyjqSgwON9rOYg56NRi0jKyANSBNEteZOaGEgqsihJdaMW0a+5RY8G5EUA0cZLosM5XmkAAAAASUVORK5CYII=" width="26" height="26">',
+		'active-directory' : '<img class="icon icons8-Active-Directory" src="data:image/png;base64,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" width="25" height="25">',
+		'tree-structure-b' : '<img class="icon icons8-Tree-Structure-Filled" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAB3UlEQVRoQ+2Y4U3DMBCFXyeADYAJgE3YAJgAmIAyAWwATARs0E4ATAB61Vmyojiue+fIji5/oip2dN+9Z/ulKyzkWi2EAw7SmpKuiCsy3oFnAFcATgsbtAHwBuCpBWu9ALgrBBgObwLkG8CxEmTTgiJ/SojddAex6KK8wxWJm+nWUliLOxTPjduerXUB4BUA78EN3a2RG1GCinwJDEXpBiRYiSC83gHcA/iR37wfKazKqdsgrzrrJAqJrfQrAMxG8bUG8KgE2UUUk6wDgAXF19BK/P2ZKJhz+fykEGgroXFNEJOsA+BMishZqbDW/YYTxGSxRbvQhyzklJX2q6xwVA0QNoa70pSVCsvMD68BwsUc70r5KgxG1AAxKKv8FQ4y0rNwJjGCPEQHXnl7D5hRQxEudp4XDIWpc+OAUqen1ABh8eeiCJUZnuTmEHwhQUyyTvRXDg9EpoVrqZgg1a1GEJOsk4goBGIgzFlNnfXCAlVnnYnQSEWmrGaS9eb41M1ZzSTrzQESxGJkia12KQ9Mst6cIKyb3yfBat1+6gZlgtXCF2OXioztCQ4Sd2XuNeKK5HKNK5LrUMFzk6zXgiImWa8FEIqnznqtgBQ4cXyog6hbaPwCV8S4oerXLUaRf831b6FadEMiAAAAAElFTkSuQmCC" width="16" height="16">',
+		'tree-structure-w' : '<img class="icon icons8-Tree-Structure" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAACAklEQVRoQ+1Y0U1DMRBzJ4ANgAmATdgAmACYgDIBbABMBGzQTgBMAHJ1kaIobXLJKS/vKfmpql5aO3bu/LrCQtZqITwwiPSm5FBkKBI/gWcAVwBOlQe0AfAG4KkHa70AuFMSCMu7IPIN4BjAJYBPJaELAB8ANj0o8ifgS7Hs9pduVh7cwfJBRI6nC0Wcx2vcMTmRGwBsu7zosyRC4CRAIv4qva+TKEIrvQLg6y+Ae3k/K0V8K32JIpwbs+laoZXeRYkf8RVfjyoH4tb5sjrr7JkUMSsxG/lrDeCxcjDtIopJ1gFAQP7aZ6UYZu5l/YmS0FZC45pETLIOgDMBkbKSEmteOYmYXDaJOzlWykOmrLIkcusNOL8rKSGVlVsScQjCrlSGTLnLkogbcGFXUkIqK7ckwnnwIF2kDE3FLksiDgYVISE38Crg5W+1JMLLzpnEKc3owffaR9d85EGlJRF+F9svFTkXRZpZjT9uknW8v3I4EKnMtRxaE6uRiEnW2RNRcq1WnfVcaKzOOgdCY8pqJlmv9KlMcylTVjPJei2IONJMtzGrmWS9lkRIKNbV+OjLVYplkmd2Ag6t5hSbHZGY1WapiN8oFvEHnSM0y8sea9uDiJzKZF0rVMUk65W2PM1kT9WaZL0eiJBoddbrhUhKteTng0jyiBoXDEUaH3jy5xajyD+K0pmh6fjZpwAAAABJRU5ErkJggg==" width="25" height="25">',
+		'tree-structure-c' : '<img class="icon icons8-Tree-Structure" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAABjUlEQVRoQ+2YPU7EMBCFxwilQyw1FUfgRtQ0ZE/AcgKSFEipuAGhQMpyAooNoqXjCCyCykIYZbWWopUTZ9DYjsWkHsXv83vjPwGRfyJy/cAAoR1kB/6tAyc3nwoD/3Z+YExLsAgxwNY+dgCT424tRyhkhK5f1Kx4+nrHuDeJVagVvvctL5SCNG/kLBqArnAA2AjPG4nRD0EcMAnXqicNMCR80gBjhCuAD1CQFc/yEpMhdIRej89QZ5XH+3LRNqfO+K44LRySJJufijVG/FBt706MBVhWpXEcV8L1YM4AXAt3BuBLODlAXZWb5qTOuK1XyCJUP9weUTanTTi9A7EDLKtyLQRkP/tJ7tMJsgh1llGvIC4AdDy9gLgE8AJCBlDflVcgIBUAhz0riBNHSC/17WEOpEzHgGQruRi7VLZ16MMc5ue7tWNAJn0f0EBDIFEADIFEBWACKRrZ1+zG9HrtAVv/RPuswi9zBmtJ9wFbdNgBdgCTEUtt9M/rVHMRrIkZYDsD7ABVFP76n+gd+AVethZA7MObUwAAAABJRU5ErkJggg==" width="24" height="24">',
+		'tree-structure-c-50' : '<img class="icon icons8-Tree-Structure" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAABjUlEQVRoQ+2YPU7EMBCFxwilQyw1FUfgRtQ0ZE/AcgKSFEipuAGhQMpyAooNoqXjCCyCykIYZbWWopUTZ9DYjsWkHsXv83vjPwGRfyJy/cAAoR1kB/6tAyc3nwoD/3Z+YExLsAgxwNY+dgCT424tRyhkhK5f1Kx4+nrHuDeJVagVvvctL5SCNG/kLBqArnAA2AjPG4nRD0EcMAnXqicNMCR80gBjhCuAD1CQFc/yEpMhdIRej89QZ5XH+3LRNqfO+K44LRySJJufijVG/FBt706MBVhWpXEcV8L1YM4AXAt3BuBLODlAXZWb5qTOuK1XyCJUP9weUTanTTi9A7EDLKtyLQRkP/tJ7tMJsgh1llGvIC4AdDy9gLgE8AJCBlDflVcgIBUAhz0riBNHSC/17WEOpEzHgGQruRi7VLZ16MMc5ue7tWNAJn0f0EBDIFEADIFEBWACKRrZ1+zG9HrtAVv/RPuswi9zBmtJ9wFbdNgBdgCTEUtt9M/rVHMRrIkZYDsD7ABVFP76n+gd+AVethZA7MObUwAAAABJRU5ErkJggg==" width="48" height="48">',
+		'drafting-compas-b': '<img class="icon icons8-Drafting-Compass-2-Filled" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAADFklEQVRoQ+2a/02XMRDGHyZAJlAmUCZQJlAmUCdQJkAnUCYAJlAnUCdQJ1AnECaAPEmbNPWuvXvvmhBC/zP2be/T+31fdrB2/QDwpFzxE8DBqut2Vh1czr3uzl9237KD7xLIMwBfO40cAvi2wgpWaeQtgA+KwMcAPmbDrACRNNHLna6ZFSCfATyfvPgXAC8ytbIC5B+ABxMhLwHs3XaQPuRq8qY+YuphRWJGpad3wbRo+58mILfe2ekbtP93AE4UmPfl/+veFFfJNC3WVBT+qEjGMEygambfy79rQqTWCMUaLLwyQZjk3gBg+H1dNCMJSE2clfB7CoDJM7wyQdqwS/MiGF+fmuCiZqglCl7Dc1oYzgIZOfh+AfmtPDtNkVoMrSyQcwAvBUnaDK5l/AsAr0IUADJAaCY0K2nRVwjJRWHpG9JilqeZbV4ZIJqAV0KpQmF3BWlb4E0wGSBtO9sKIUWkGtl6YcNtcBTkEQDNidmf9zmCuYbg0mJQ+LNJHQk+or3wr2boIL3+Y0HgUE6JaoTaoFb6VW1emqJoPkVt1FDtVkwEZNQJ1igkTVFGUW5zMRkB0XJHmxe0cZDlW5dWtoLwVWlWUifYvqoGommT4Znm5c4pMxDNB1yvlbR5GKJnIHTAh0mCRI8ZRcKUEmUk4P3I1Ku+mWlJ581yR/vNTCNpOcULopUYUoFIIDpozeKSjTPq0Q+lQlIqcVRFeUHS438p86VextWneEG0KaLr9bpn1bTsaoM9IJo9/1XqLY+/amHe3AZ7QLRWNeNnAu1nCPOw2woyKvTCbWopdbR22XS+FST8YgY7C2ncCqK1s2YbNoBoIyVTG2wB0aJKhpP3fJrTT6OiBURrZ0OtqaKhzXdZQDTbDQ0LFBBtmDGNXhYQKX8MS2qDP4y2tGVN3Tede1lApFeaHhyAkR5uGoItIH3xxwKRcO521AjXF5Im7VtB2l+gXMWcUfh+W1ucmioHK0gbgjePbBxQ7XBiGnp5rhWEe2uT5PnGIft/W133eYRyHRwhKN+67vOA1IF0/UOyBFmHR7juuwElbK0z9GIeDQAAAABJRU5ErkJggg==" width="25" height="25">',
+		'drafting-compas-w': '<img class="icon icons8-Drafting-Compass" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAEC0lEQVRoQ+2Z4bENQRCFz4sAESACRIAIEAEiQASIABEgAkSACBABIkAE1Pdqz6vWZndmdmdv3R+m6lXd+3buTJ/p091nek+03/gk6Wpa/q2kO3tsebLHotOav2fW3mXPXRZNQLyHge2y5y6L/geyged7eeS8pB8zdl2Q9HODzcWf7gHktqSXkgBTGoC4L4kMNmyMBgKIN5N17yQ9l/Rh+n5D0kNJt6bvN8OzzYBGAsEDXydPcOIAeBZqyWdJjyQBCI/hmcujaDYSyBNJjyXhCU6egpjphfHXJL2SdF3SU0n8bvMYCQQPYByUMYU+SoJuDGKC56bce0k8x0Obx0ggZCk8wJr+HDOUM9m3iVIUSDzEnM1jJJBYuTHw3GSkU+2lKYa+S+Lz0Eo/EkiJWvzPIpFsBo2OnloOdmKB7ESWwitx/Jq8YVDMI0VvHiM9YiAY5fSLkZbyALsn6UHIVEeZtaghcN8DzwCEzMQgYwE2ZikH/tF4hJOmyBHIGAuATCsbC71Iz8y7OHmPurJpjKKWvQGlMApDqeoYbUD+7Lgw+CFeGQEEqlDcMNSV3MCinioZ7jS9WXeNAAIIwDhwI81izEAdTj/SyQmCNA2Y1WMrEDISmspplRM2MNMsGmeQNhwPAg76ocHIbKvGViDEw11JL6a4MM1cvbNR0XDTyWu8ntLzwYFYcrAxcpyTzTQrGRVVMoKytE43mC0eIcVS3HySNijSrGRQ9IoPIHv2YEDiJcrc7jEm08mxtvqytdYjpofvE730iPMt9S06V8mWtUB833DAGlhPwNorNtyJYlWBXAMk14kSzVo4bsMjnXKdaVnndM4aIHNyZM211XTaLFt6gbjdE+tESY5wSC3deK8X6WSvcCFr7n31AumRI63d+CGyJQJxv4nT5DSyXIjikKwDt33qJTmS7+Rzd3THHPuRykvVP8YKqdpNQF/g/oqRfDGaC7ScZWoBmV8rLM03GBfb2tpnlIwesaSu/TjLkdr8HiBuD8U6s7T+WaxmavmmRhBGauVK3CJHWqmFoUuyJdcmqOUkAC1Pe8stwR7rRI82ag12n/icdmuSLS1A1soR14hIDXpabqFmypRkTrNsaQGS5Ug+uVqM9Dyfu99UW6s1IE6NX6b+1Fo50gqmpIKJ1Su1bksNSJYjmWatBvbMy3Rq6rYsAemRIz2G1uaWVHBVtiwBIcXxmiwLurn7eM3AnudZtrhPNpssloC4QDrlZpr1GNY7N9Mp1q3iS9YWj7j4QLVDeMOg7ZW4/yqPOIN4YZoKnFSztO51Q5of3xD70Wzva8kj8SZIfuePUzrkgFLYwd9iw3sJyCFjonY4Wer/M38OSK1jWNt4j+eOmWLDew6I+Tns1dgAZC7GxSvwH1JuV0Jh36OGAAAAAElFTkSuQmCC" width="25" height="25">',
+		'tasks-w' : '<img class="icon icons8-Tasks" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAABVUlEQVRoQ+1ZwQ3CMAw8JgImYAXYFDZgA2AiUKCRQmhpT3YaJ3I+SJWd+Hzn9FQ26GRtOsEBB2KNSWfEMiM3ADtrBc7UcwZwCjGptJ6NgYjlvjGMAXmMMHMHsB0yrcxVbPwkkKlCvxINsLcYSJiZsPbDb7NAgpzCihdAs0By9TQHJDAR5RTBpFdzM8NuYI6pEn5urSuAA7VF/eALgGP+HqlflqACK3oXQPikOhBxC5U3SBlx96vcXHY72v2mdiUeltsYyXPWXS82jWxnpPGsBVoMJHe/qV1JXbHW82JANGWzRJbFgEilwuarA5lyvyXkJHHXszPCdrJ2vLvf2gyMnu+m0RotXTLi7reyzIq7X9bNsv2YfSFqzQ1rOYoBkbpfM0Ck7tcMEJbqPL46EC33G7/ia83c30Z1+debf/uVDpNGfin9atRG7eFAqHatEOyMrNBk6ogXDKBsMyDekaAAAAAASUVORK5CYII=" width="25" height="25">',
+		'tasks-b' : '<img class="icon icons8-Tasks-Filled" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAA9UlEQVRoQ+1Y2w3CQAxzN2IDVoBNYQM2YCQQSCcV+Gge5yhU7ncuPttJmnbBTp5lJzwgIt2clCOdHbkDOHS74MZ9LgDOr5h1aT3+jMS47ptDhEiXvhrCi4gcmdyDKq2PKTFZ3Ui6tCMRUOaZn6l1A3BkIhJyXwGcvt8jBJy6lF1GaZqxiKQlnJxg7Yi238nietOFl0YvkDfe2rftX4giMqzv8oUoR+SIdxyR4rX9koTNpbVOiBxKwWkRKRDZBaHt1yUXN7hs+2X1Yfn2KyIbFSlHoi2r0upWWlEnree0/VqVKo1jNWIpCf2NL5fbAKjSMohUGvIEO8M2MwKbUM0AAAAASUVORK5CYII=" width="25" height="25">',
+		'tasks-c' : '<img class="icon icons8-Tasks" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAB50lEQVRoQ+1YMUvDQBR+V3U1EeEuUk1UdGhBcRErdCtUEaqgm4uzm6NdHMQf4+Ig1MG5dlBxSFO6VFqLXZqlgktBbCQOQkgDueZor+dlft/Le9/38vLxEAjyIEH6ANkIb0qKpUju/O4DxUDhjeUw9aAYKt1e7aV/FXEb0TSsYILDYD0x9XoDEsszsLkWp8ZGBTyXW1B9tc3ri+zGXyPGoq4YxgJ1btOsQGodw056lRobFXBfrMHDy5tsxEOkVCTqXAGAHK1+JHI3WmQOKwQPsH4bDUguuet3nsGw0KV4slpQrbW9W2tcf4hTkxOPN5e7KbEsCp2gfEZLRXjTRSxFcvlCByGk8sZymHq8Nj5f6GgEq5iQMNihxlhWBfYzCYiTad97/TY+X+gYhq4ahj7UIsO8rFgswenxFqzos75wv9eSjYThNFqMVCQaf+zR/1cRohFV43D9lssWHGSSfdev38aP8Q9R2nj2nzObjGKZRjacjDaLWIoM9xrvcucwk4/ZNZ6mIrttA/S6cJhN0MACY5le42kqajbfwfn6hLOTbRpYYCzTkylNRbKRALakIjRj1C9WjhbNaA16jadRqW3bgL67cJRN0sACY0d6jUcoBo7TY9KIm0TaeGZUMk4klmlkTM5I0gmjyA8TiYhCrLLafwAAAABJRU5ErkJggg==" width="25" height="25">',
+		'tasks-c-16' : '<img class="icon icons8-Tasks" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAB50lEQVRoQ+1YMUvDQBR+V3U1EeEuUk1UdGhBcRErdCtUEaqgm4uzm6NdHMQf4+Ig1MG5dlBxSFO6VFqLXZqlgktBbCQOQkgDueZor+dlft/Le9/38vLxEAjyIEH6ANkIb0qKpUju/O4DxUDhjeUw9aAYKt1e7aV/FXEb0TSsYILDYD0x9XoDEsszsLkWp8ZGBTyXW1B9tc3ri+zGXyPGoq4YxgJ1btOsQGodw056lRobFXBfrMHDy5tsxEOkVCTqXAGAHK1+JHI3WmQOKwQPsH4bDUguuet3nsGw0KV4slpQrbW9W2tcf4hTkxOPN5e7KbEsCp2gfEZLRXjTRSxFcvlCByGk8sZymHq8Nj5f6GgEq5iQMNihxlhWBfYzCYiTad97/TY+X+gYhq4ahj7UIsO8rFgswenxFqzos75wv9eSjYThNFqMVCQaf+zR/1cRohFV43D9lssWHGSSfdev38aP8Q9R2nj2nzObjGKZRjacjDaLWIoM9xrvcucwk4/ZNZ6mIrttA/S6cJhN0MACY5le42kqajbfwfn6hLOTbRpYYCzTkylNRbKRALakIjRj1C9WjhbNaA16jadRqW3bgL67cJRN0sACY0d6jUcoBo7TY9KIm0TaeGZUMk4klmlkTM5I0gmjyA8TiYhCrLLafwAAAABJRU5ErkJggg==" width="16" height="16">',
+		'todo-list-c' : '<img class="icon icons8-Todo-List" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAABjUlEQVRoQ+1YO3LCMBB9S5OChpuEKqVjajfOCTLcgKP4CL5BXMQ1TtKlIjehoUgBm9FMTIIxSEIfw8zSYq/eZyU9L+HGf3Tj+CEEhnZQHFAOJHldjICyqbJVbEecHUjy15KInsG8JtAsNgknAnvwv7Iz8Pb+kqUxXeglkOb1dAtMP6qsPAWmCx7gL+Jx2lSz9aAEFHgGL0E02THmfSRswBef3+yT0OLh7kD0IweSp7oh4LFdtEvCBryqEZ1Ami8nTJsGoPsuCVvwgxBQi/aRAHMDon8b1KznozvQqt5LYt/MZuB99v6pWmeP0X4S1wNekdLeA4ckrgu8EYF2T+ywKUYYL2Kf87o21DqgKzD0/14ISJhzsNHJAQlzDsq3rx45IGGuo2r0KCFhbmgHJMx5OFlsSmjvAQlzNnJe8KzWgQtqRn3FCwEJcw6eOTkgYc5BeQlzf+Kd/9CXMNdpM+1sVCZzHjamTQmZzNmoFeJZo4tMJVKZzIWQ32S4G2hdb2WNWsjbagEKCYEAolqV/AERxrlA+hwpxAAAAABJRU5ErkJggg==" width="48" height="48">',
+		'todo-list-c-24' : '<img class="icon icons8-Todo-List" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAABjUlEQVRoQ+1YO3LCMBB9S5OChpuEKqVjajfOCTLcgKP4CL5BXMQ1TtKlIjehoUgBm9FMTIIxSEIfw8zSYq/eZyU9L+HGf3Tj+CEEhnZQHFAOJHldjICyqbJVbEecHUjy15KInsG8JtAsNgknAnvwv7Iz8Pb+kqUxXeglkOb1dAtMP6qsPAWmCx7gL+Jx2lSz9aAEFHgGL0E02THmfSRswBef3+yT0OLh7kD0IweSp7oh4LFdtEvCBryqEZ1Ami8nTJsGoPsuCVvwgxBQi/aRAHMDon8b1KznozvQqt5LYt/MZuB99v6pWmeP0X4S1wNekdLeA4ckrgu8EYF2T+ywKUYYL2Kf87o21DqgKzD0/14ISJhzsNHJAQlzDsq3rx45IGGuo2r0KCFhbmgHJMx5OFlsSmjvAQlzNnJe8KzWgQtqRn3FCwEJcw6eOTkgYc5BeQlzf+Kd/9CXMNdpM+1sVCZzHjamTQmZzNmoFeJZo4tMJVKZzIWQ32S4G2hdb2WNWsjbagEKCYEAolqV/AERxrlA+hwpxAAAAABJRU5ErkJggg==" width="24" height="24">',
+		'todo-list-b' : '<img class="icon icons8-Todo-List-Filled" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAABlElEQVRoQ+2Y4U3EMAyFv9uAERiBEWCCYwNgA5gANjiYADZATABMAGzACDAB6EmNFKombaKEWif7Z9W4fn628+oNe2KbPcGBA7HGZC0jB8CXJTA1QC6BM+ACeLcCphTIMfA8BC9GroAHC2BKgBwCb4DKKtg3cAR8rg1mKRAFLyYUdGwnwMvaIPT9FJCQ9dDQ98D5KGCV1e3o2c8/gvoTewrII6BSUsZPAQGJ7Wl4Po7bFJA4+6p9AYrtA1DTT41fM0A0WneZ8lBzC0Rq7JoBot7QON0mwOjuMDFux/GlekTB6tKL7Q4QYyYtN35vgOsh6tehpEyCyI3fELBGrkasGt6UtlpaWvF75gTiVFksvdnHZ82BqwHi6rfnpChhxNVvTyaCb1e/rn7b1Vn2f8TVb7tE13ly9VuXt36n5i5EV7/9cj/teY6RVDyufnsxVcqI7357MTEnGqf+CH3324kN3/2GxPrut3GJZUvLd7+Ns13szne/xSnrfGCJRDEnEFvufjvnt9z9EkbKva5wwoGskPTsJ38B8NNvM6Rkuf0AAAAASUVORK5CYII=" width="25" height="25">',
+		'process-w' : '<img class="icon icons8-Services" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAFNklEQVRoQ93Zj7EtQxAG8H4RIAJeBIgAESACRIAIEAEiQASI4BEBIkAEiID6vdrvVN+pObvn7Hl7b7lTdevc3Z2d6a//fN09+6QeyXjySHDUQwJ5u6o+qKo/q+rzQaEfVtXrVfV1Vf1xibLvG8jLVfVxVRH0tUXAv6vqzSaw+79UlbnGDwugn9YA3TcQsvy7CMQSQNA8Id9Z7n9fVe8tlnq1Cf/KMn+K5yGAEPqtRfBfF0u8VFVfLRJ+UlX/VNUbi9WeVdVvy/VZozwEEAJzr08X4Qn+5SBhnomdz6rqu8UdHwwIP/fXAzZAunAETgywRKwjPt5toB8MiKD+ZgHCjfyFoTASa6yNuKFYCkFgO2C9H8CH0+/vjZ26wJuu0iZ/u9D0CJiVn+bmkTFCcwIVO2EhWnSPdrsl3BMHfs/RLUsaLOR/lkAQaPv5syOBxL9t/v4Z6kwwz9zri0miNE/MoWjAT5Y9EggrcAuaY4WPluQWoWMxVAuQuYZYcO09uaUnQmtiuCTTE9gjgUR7BMQ8RhcsgRyq7VYJJf+4uKVnnablFYDjcoe6VhfMhjJ4B5IMP8vYNI4ouvuHAadEcbRFAkbtJNhvAcKtxMaUto8GQng+HUbqQNaS3cy1OjFwVy4p9u6YbcYat95DqUl+ApprEH4MdsKYx2UMpX0SXQeOrQC0rhEaf/7ekRZJMAtYIE7aa2D20K/4sbbK+EQGRwJJcAp0mkxp8XMvLZb7nofZCMcinXYlVopwz/tiBaCTxfYCmWlylsBsLh+MQ05J3thyYbUapYxDxZB8stu14jZ9cZpKUOd+6iTPwvlKeGOWP0Zhw3ZJmilzuNUdZWxZJL7dg9Rm2UCtk2uC5roHNK117aeM7xbUaBGW9fwGdPKPEqfLYE3Wvoi14uOEsjkNZiSZRRHjtXloN8Vh116sGeFmjVWKwVh003rnLNJBRPhUnZ5xod5+KqmZm5A2Jxw36COB2TM6Ss1BA/dz3Xv41WzeF58BSQY1D0ezBrP2gwDmj8DmCX7C98BO+e6+3MANuFPaWqAJDnBo1DWF2cv6XIjS7vQeM3aYAfGyxQgV89sAIIv2SnVcM5UrIQEgfFcMq7g2L6ApJT5vvT4/6282YudcK35LEF3YLJnNFDPeowDFn9/u564JHEuOZEIRwFEey2zuv8ZaCUqbsMyeIZGx4oya96x39p01IAm0O4lnWemS9jSnJ7MG6YWCsNg5IISgTYE4ZuFr6qOLz6VuRdaB5ACA8Dl3FYj5315pT/3P5+PbrJeqdKxY/2pCIpHUTBjshY0OJPyexfk1QU9nR0uekIVnCSra7+2ptbwvsDt9r3nDLnAzIFjq3FH+te3pKBRrS4D/eyCzXnyXBcaX1lwL/aY3yHtpT2cl+znXcp87jpXxVsF6FcC+mA3T/CTrjqVBD/axPU1buxbsqNyalDR+pbpK8DWL9GeYymbjEY4519BvchHiEPCbGXovmksS4rk+Y6s9TWUrLsZ+Yq+8uzJ7youRTq8RIo3RLWXORfuds0jch0+jzL0u0Svpa/r0i4Tvk2ZAekCnU+MmDgGA6kE+bqjvyNenHKAlTsavt1cLu/bCDEjvDpXQXAuIXqqkSUrW9wtEn4OdxEY+R5PjsFi5ptXFPOkKsVkvzfNlapzTlXjvrpXNY5kcxUT7tK4QZBUn6cbs8CGnJZ4fCuKSegf351t4126vucQNhps1T94H/NLDuN1xs7dMmB3QXfKVdregWy/uBTL70rp59rQlzC3P9wK5Zc9D3n00QP4D0T5wQkrBnisAAAAASUVORK5CYII=" width="25" height="25">',
+		'process-c' : '<img class="icon icons8-Services" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAEQElEQVRoQ+2ZUW7bRhCGvzFQoM1L45cCVh/qnKDqCSqdINQFGvEESU5Q6wRVT0DlBFqfoM4Jqpyg8UNkoC9RX9oALTLFrkiZXC3JlUXaSNF9k7i7nH925p9/lsInPuQTt58HA6AZG4QvPQduZMrpIU59EACa8RjhfchQmR7m1IcCMEL4Jehp5VRSNrGn0CsA5+kTnvGRV2WjNOMFwk81AFJJWRTP6vYonvcNYIHwDJxHFyiXueHDFg8blBnCc2Dq5iozSbnw1/UGQDOGCL/GhkLEvA3Kd5Lytjy3TwBXCN9HGHbIFCNTJr0D0AzLJVmjZTacYC4pVy5CMkbgcuNpy7pxscbO6+UENMM0GqJUErVscCt45WdJedFrEjvmgHmewFWHKpeSkjR5udYBnvG9nUCJAhOEZcVYpRICISAunPw6UbOulxCqhIQlz9KIrbQaue5/AC2xHB0KXiKH1k0kxdxnIbNJbCupP/a43J/QwGK2QlsG22mlXkJIM8dAIeO3th5Do1CR3H0BqFebt+42nDCXH3i9K2Rb0I0U62uiXgDkBjUXs0MExI6X+QM4PyqEfk8Y/lMj0kQZn5mdNDgHVoGu6y6m14bewSdwkzDSmmZElPTMVLT8BcKPqPOcZZA5YP9r0zvXTheBld1WV32D8kZS97syDgbwLuFCrFGBocrsa3Or2XNJYfX8wmto6sWeuuZn2wPkw+kjuPKltH3cK4DCABt2XxlWJYNqe2KUl5K6k4oaQQDvEx7/Cb8JrARmNq7z/2wbmIg4sRYcqixOYPY5bD4IT1VdyJyL8uTM3DYjvlS4dXe7Viq/OAhgnVC0gkXybLsgwSZm61DdFpoKUOVqYBiXTuGti21/bLuu3Wm1vWwPQBPLtG3W+lyZDMy+HGhd1zBhD8B64miw61Zwd5IDw5NjDPbXVgDcJEy1rRXc7nApyrzg/JxaLe0106NVER5THQumAmCdtGgYG9ce15cNiHFA0/q7gNkPoaTh0gkuB8tmrbKeuBgPncS1KNPi1O5ibGhNkIVsIv8tLAS+rVBWSSrUGRCq1ApvHimjUxN/ZRgLsLaQhZJ5sIwrfOtJtY0EXg+W7tqk8/HfBfBu4qpwNyGkrB7B+F5C6CbhXCFDAkeumIGpXu35MVGXxKqsTmBSlhNdxJNfB0YfYdmkdY6hUSsxPoNxWdgdC8KvA1UNVLe7YkSYny237aBjHniOtLSDdrLycmDi1WYbwAoAqzj/EqcY/W9XbfvEPr/+Qhl2mQuHFrJYQ8Pz7kPM2TeHGOg4y93qXmpBsA5Uqqlt8WChuC+L9ttVW3g5yeDCXVx76ZSt39B04BC3RX0hS0hsR1amvTxHLIiw6lReDUy1n81pedh1H1A4oNOeuGuGiTmlTgGU74ViXt7FnIMBtNwL7S62ujAuZo+DAbg8gKlL6tIQ2HRZoGKMb0zi2A0eet6/YEi5QCLwdTYAAAAASUVORK5CYII=" width="48" height="48">',
+		'process-b' : '<img class="icon icons8-Services" src="data:image/png;base64,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" width="25" height="25">',
+		'send-back-w' : '<img class="icon icons8-Send-Backward" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAABnElEQVRoQ+2a7VHDMAyGn04AGwAbwCaMwAaMAEwAI7ARjAATwAZwuiNXN03xR15FuZz9M5WVPNIrN3K8YyNjtxEONg3yDNwCl47Z+gBegSfVPcYZeQHuVc4L/BjIY4Fd1mQM8gWcAzfAe3Z2u8E18AZYZq7a3exnjkF+/n5aonak9+ogAjn0jEwFsUurS2sfgV4jvUYE9TDlYjPSksYncvldNUhYC6DMSGgLoAQJbQGUIOkqZL2GDetr0qG6frTieYEMTZk1UOlQXV8MRLoiTTgLAVHJKfUTAqKSU+onBMRDZouBeMgpDchiIB5yqgL5Bs4a97Wkb7MZPWYzYrt+D5WiHv6LToF4yCwLYgwGcwdcFALlQDxkVgRS+PxHZquSViuEzVvVu5YKxENOVauWCmSOn5K5ITUStmqVRGTK5lSxe8gsJCOtgflv3mIgHnIKKXYPOYWAeMgpHMRDZovViMeGQ1WHOEcSc1qAmvsOn7Y/00MNys/QLS1ADcDY9uCwgRKkpQVoAbFM2PGPgxMTapCWB5PM6SCSMAqd/AJDya4zklbDdQAAAABJRU5ErkJggg==" width="25" height="25">',
+		'send-back-b' : '<img class="icon icons8-Send-Backward-Filled" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAABT0lEQVRoQ+2a61XCQBCFPyqQDtAOpBNLoANLECqAEuwIStAKtAM96zHkQUiyO5MN5Fz+Zl535s6E2eyCmfwWM8HBrIHsgRfgccRqfQDvwM7LR7MiB+DVy/gAOwHIdoBcr0gTyBewBNbAqVc7XeAZOAKhMk/pZkrNJpCf/0c5esfVl4A40EEVaUuiqCVqlRlQj6hHHPqhzYSoJWpFUGuyFcDzhTjpCuAJpFgBIgpoEq2tAJ5Aiilkii5S+Ry/gLRkThWJpFNVXNTqSp6oJWpRnpQ2x+838JB4rnVT1Aqnfm+GUudWvTq1QiABzAZY5Y4qwV8nkAR7fyo3Ra1UEAJiyRwdU8tiV9QyZE/Nfjf/tQxV1vi1JE89oh6x8KdDdxRqFSvASDFfmP2sXmrw/AydewWoXTbwBJJrBQiVCNc/ajcmvIHkotWFHwGZLPVXHP8C/sNTMxJ2rdQAAAAASUVORK5CYII=" width="25" height="25">',
+		'sort-start-date' : '<img class="icon icons8-Sort-By-Start-Date" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAB9UlEQVRoQ+2YQU7CQBSG/ycI7uQG9AbiRlaGJuJKE+EG3EDY4BGMuCg3aD2BuGCHC93JRo6gN9AlNeGZIZIUsKWlM7Zj2m37pv/3/p83UwiaX6S5fmQASTuYOfAvHKj3mL0goy4FOmtaXMq5sB+vqBm3AVIiFAWgfssmz2ATwdgEGgbuTwFOetwn4HIhTBuA0x5XGLABVKJELRUO1G+4DYL1m5hUO2Bes5HPzbtu+nUytQDMaIJgE1AKikGqAQhwQNjXEkB09idCDoCadhHyRkPbH7G362KMzhgOEQ60G6NewdpuZF6I+VFCuAGUUzuFNgkTh7n8F5xRlxphdtugZ6ScheKKiFOfAcTpnozaNQf64+nSx0n7qJioS5v0ZAAyYhC0RmQHrPH0gxB8CFMt2m99Zn7vVPcM7/21CFkv0wERLpISGfReZjx0qsWlvWMd4JUNfLmTtLnAwCd2C5XOIb0FOiBuWgLCdfsAV4ionKQbIjYATVAotFfFC13KRmStOVwax0/3Z0repWRR0ZkMIGRuMwf8GqVVhI4bw9YOzf8DCn0x893z4LwVusDnQWkRigIhS7z0MRoGQqZ46QBiwSAI2eKVAPhBqBCvDGAVQpV4pQALCAKbMqaN37SSNoXijsNt6zOAbTsnqy5zQFYnt11Hewe+AQr2/TF5ZVTPAAAAAElFTkSuQmCC" width="48" height="48">',
+		'open-popup-w' : '<img class="icon icons8-Open-in-Popup" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAABsklEQVRoQ+2Z7U0EIRCGn+vAErQD7cAOtAO1A63EEtQOtALtQO1AK1ArODPJkmzI7c3Hwh6bwK9NgOH9mIENbFh526wcP53AoR30OnAM3AOngHyXbF/AB3AHyLepeQgI4HfgyBQ5PugXOLOS8BB4Bi7iuFwzX4BLywwPgZ8F1E+YJYVOShPYZgE95C1YQvE9IEILWJAPY0LxOwGHwtrQ7kAVhbSgo/7ugCZWSCEtaHegtkK14/dzwKGwNjRUY90BTVZHf3dAEyukkBa0pXPgGngwAJ6qu5BApYvYQqJpAmKARqJ5AkLiEbiaSKfmCazaAQ28mNKsA1Pgn7J0apLAFPiboR7G/U0Q+BzuR/ftOgl8quVE4uAEBPw5IHeYmvL5RiTjZYfa1RY5yOaA1w7p6gTk6juqvAZe+qsTkGv1SNpYwC9CwFOwVtDjcdUd0ApWHHod7U4REmnOt/UFyPo3uiR4IVH0gUMKV5TNW9rnSyova/wNLpreyawO5H+XNcBL2shOd2t9H9v3Y7UrfxOJ/ISdk+uz51odSAtJOr3NXrVgAC+BgkuXCdUJlNExHmX1DvwDGBF7Mfn76pEAAAAASUVORK5CYII=" width="24" height="24">',
+		'open-popup-b' : '<img class="icon icons8-Open-in-Popup-Filled" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAABY0lEQVRoQ+2Z4Q2CMBCFHxvoJo7gKG6gG6gb6AZu4gpuok6guQSShgDvKkdp8fqLhMe1372jubQVFjKqhXDAQXJz0h0p1ZEVgCOAHQB5TjFeAG4AzgDkeXBoS+sCYM+CTfT+CuDAYmtBngmdaK9Z3FhbgXxYoInf04RTQb1ABzFyiiacCtwRIyvqMDThVOCOuCOdGaCVQwVeWl5aXlqqGvAWRZUmLqKbEhX4rsWzHKOgCacChSPaGM3Cf/nf6BxU8E8gQyXyBrAF8AhE2TrSBxJCbAKYokDaEPfgAKEYkC4IOQtr/sciQPogpPyKARmCKAaEQRQBooHIHkQLkTVIDES2ILEQMQ1il5a2UlTQ0Wulhgjd7E1ILMgcEOYgc0GYgshlS9PFSgMovVOqKzhJIJ1LW1pN95oaQtwwvXqTgKkhxAm5DD1ZXoaO3T4n/15bWpMvZOwEDjI2g9bfuyPWGR0b7wvf6Wgzqu4FiwAAAABJRU5ErkJggg==" width="25" height="25">',
+		'details-popup-w' : '<img class="icon icons8-Details-Popup" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAABhElEQVRoQ+2a4U3EMAyFv5sARoAJgAmADdiEFWCCYwRWYALY4GADNoANQA81pyhthVo7pyjn+3VqasfPz05f0m7o5LfpBAddA9kCd8BZo2x9As/AYx5fycgTcN8ogDIsAXlIF0sgX8ApcAW8NwroEtgBYuZ8DsjPMNB674ziLAPuDkijVTUKa0/EHCPdAIkeORCVx9fsUVpRWssyED2ifEmDSePkqlh6TLpsamxZjsd3J99TfkyMKFgJtZPM8wcgETc1ZgWSfLsDsQbmaW9ixDMQq68AYs2gt72JkVi1VtIRq5YS191WN9Tvyn5YaharVhKNobWW1s4/95tKyzkWk7sAYkpfBWMTI6G1VjISWiu01srSsZiZmt0ysbdtAPHOqNXf8TFizZiOO2+B78KRHqqvw+mkdQ7Zz75DfAOuPWYY3tPnYLxBvAxfaPyFW2NLq4CVkIsMjOZKTOiJfTPBlil/NYCkTVgORtd02F0FRC1GUmZzZnStGojaQHJm9N+9nPJa/AWLtIozBRrdtQAAAABJRU5ErkJggg==" width="25" height="25">',
+		'details-popup-w-16' : '<img class="icon icons8-Details-Popup" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAABhElEQVRoQ+2a4U3EMAyFv5sARoAJgAmADdiEFWCCYwRWYALY4GADNoANQA81pyhthVo7pyjn+3VqasfPz05f0m7o5LfpBAddA9kCd8BZo2x9As/AYx5fycgTcN8ogDIsAXlIF0sgX8ApcAW8NwroEtgBYuZ8DsjPMNB674ziLAPuDkijVTUKa0/EHCPdAIkeORCVx9fsUVpRWssyED2ifEmDSePkqlh6TLpsamxZjsd3J99TfkyMKFgJtZPM8wcgETc1ZgWSfLsDsQbmaW9ixDMQq68AYs2gt72JkVi1VtIRq5YS191WN9Tvyn5YaharVhKNobWW1s4/95tKyzkWk7sAYkpfBWMTI6G1VjISWiu01srSsZiZmt0ysbdtAPHOqNXf8TFizZiOO2+B78KRHqqvw+mkdQ7Zz75DfAOuPWYY3tPnYLxBvAxfaPyFW2NLq4CVkIsMjOZKTOiJfTPBlil/NYCkTVgORtd02F0FRC1GUmZzZnStGojaQHJm9N+9nPJa/AWLtIozBRrdtQAAAABJRU5ErkJggg==" width="16" height="16">',
+		'details-popup-b' : '<img class="icon icons8-Details-Popup-Filled" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAABP0lEQVRoQ+2aaw0CQQyE5xwgARQADpCAEyyAApCAFBwADnAADiDluVly/JidhrtN7xePtDtfp21yBw0quZpKOFA1yBrAHMCwo26dAGwBrFJ9uSMbAIuOAuSyDGT5+jAHOQMY9ATEnBm1gVx7AvGlP3ekGpCeGfKRW+36raa1AuRPw/UejWq3VrRWtFZZBegZmQI4JGdPAOyf7/PvyiQCae62XAFSWmV1PO2IWkhpvgApraA6nnYkthZhhev6JfS4htCt5aqKSB4gRNFcQ2hHYmsRvsTWsqLFHSLROooQetgVhytz0CCxtQgbYmvF1iLaRhVCD7tKgCpPgKgqqcoTjqgqqcrT6og91x2rTnHOc8Tj+fD98vgx1P5wsPtREBMwA3BRgnqAmL42GBcIL0dehc5h3CC8QVJn7LW8ndLWvAFNyFkznhB5JgAAAABJRU5ErkJggg==" width="25" height="25">',
+		'edit-prop-b' : '<img class="icon icons8-Edit-Property" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAABO0lEQVRIS+2W/RHBQBDFXyqgA1RgVEAqQAV0QAekAzqgAypABymBDnTAPHZnNpGbXCYX4w+ZyeTz9nf39usivI8NgDGArjzXvVwB7AAkaigSyKKuZcd4gtb8RtAdQKshEFfWU9CjIYhV7bUiBfE+5JGx+wdVkdZLurzffAPG+vm3QFUkcv3rtaKvgUL4aCJV55yvDE5HmqQuW6kz6ZtMWO0IUwBpUyBW7JUsn0U7doGq+mgPYC6G2dNonL7py7tLCJCFsNmxgcYA2CIUloSUjpCZlUtgSza/UCAL0cikfAOBBelHRRDCrKSZVk56WpYoue8M4aL9RgaiCWtD0Ydzk91SWybGaKONoQz+gCiIV/7IAR0P0hYAHcwSw5PjRgBOebmsrTr7BPqGE6PcBB5lAoVzrQM6mMTUe6cgT1SNWYsbgY2XAAAAAElFTkSuQmCC" width="26" height="26">',
+		'edit-prop-w' : '<img class="icon icons8-Edit-Property" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAACV0lEQVR4Xu2a4TEEQRCF32UgBCEQATKQASIgBDKQgRKBEgEicJcBESACqtUuc2N3p3f29Zm57au6H85s77xv3uvZGxaY+Wsxc/1wAO6AmRPwCMzcAN4EPQIegTSBz/SQokcMulwTAQdQ9PqmJ+cOGGKUEwHNNel1sRsRR5buAAdgt3iUyu6ACCM9ApRl2mARB8DeBTa4eJRbuQPYDvBtkGJMuyK+DVpvgx4BO/dSKnsE/isCKfLsg5W+KKbmscZHk2dtwdQ4B0BJ+G8Rd0AP0JQTzSJAXuDscjGARwCHTbUlgGsAt211Zg/InjH5Qk2vERBHAN7nCkCYC4T9bQOwA+BthKPOmABSzUdjzXDumrmF40X8A4C9CMA9gNPmM8n/SfD7peYmKWFtvdQ4SwB94qXZteJlnn8csg0AtOK3EsAY8QLgDsBxEIEV0wEjeg9l6FjxN1EcZBLUJkhRpSzCEL+ShlmjAxjiP5rd4qU2ACzx8mgsD0Kqf5JKbW9K104eRhdfEwAT8bUAMBNfAwBT8aUDMBdfMoCNiM8FMLmdZxaIv9i0Zbqe8GSf/9nqhu6X8xyQOf9Jl5mIr8UBZuJrAGAqXgtgkndHXBw/cZqLLwmAHGM9B7BeAex2wJvU8LoWQ9MERyxi9lA5thJx7UvO8cKDC/mcLr4kB8hh5XkA4ArAZfCzifiSAMhfbw4CwRfNAaZEQ95xHNT7fMqTpURgzIkxTXwpDogb4NCiUcWXAiBugH0A5AxPxn6f5LBeJUQgboCi7akRKmLbN0vzWp1SAMikzMV2EfwCeIvKnvWxwWgAAAAASUVORK5CYII=" width="16" height="16">',
+		'wrike' : '<img class="icon wrike16" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAJFBMVEX///99vkRNp0d8vkNMp0ZFiUFKm0RJlENIjUJJnkRLpEVJl0Nim6vRAAAASUlEQVQYlaXPQRLAIAgDQAxoa/v//5pMHbVe5ZYFRjQ7KQSAWDIkM5f6RCgnldl9Ub6+OyVnSR8muOQd612WB52QfifsmXLyowaKbwDspnCUzwAAAABJRU5ErkJggg==" width="16" height="16">',
+		'netsuite15' : '<img class="netsuite15" src="data:image/png;base64,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" width="16" height="16">',
+	}
+	
+	function getNetSuiteImage(which, docwr ){
+		var is = (allimagesfound[which])? allimagesfound[which] : '('+which+')';
+		if(!docwr)
+			return is;
+		else
+			document.write(is);
+	}
+	
+	function getAllNetSuiteImage(){
+		var allimgs = '';
+		for (var imgx in allimagesfound) {
+			// Protect against inherited properties.
+			if (allimagesfound.hasOwnProperty(imgx)) {
+				allimgs += '<div class="col-sm-4" style="height:72px">'+allimagesfound[imgx]+'<br>'+imgx+'</div>';
+			}
+		}
+		return allimgs;
+	}
+	
+	
+	/**
+	 * Convert object to table...
+	 *
+	 **/
+	 window.LeirAGS_cnvObjTable_v0 = function(o){var m=[]; for(a in o){ b=o[a]; if(typeof b === 'object'){ m.push('<tr><td>'+a+'</td><td>'+LeirAGS_cnvObjTable(b)+'</td></tr>'); } else m.push('<tr><td>'+a+'</td><td>'+b+'</td></tr>'); }; return '<table class="table table-bordered table-hover table-striped">'+m.join('')+'</table>'; }
+	
+	/**
+	 * Find in Object.
+	 * @param o mix (object || array)
+	 * @param f (field)
+	 * @param v (value)
+	 * @return array of objects.
+	 */
+	window.LeirAGS_findInObj_v0 = function(o,f,v){var m=[]; for(a in o){ b=o[a]; if(typeof b === 'object'){ if (b[f] == v) m.push(b); } else { if(b==v) m.push(b); } } return m};
+		
+	</script>
+	<div class="image-container1" style="display:none" onclick="clickimageContainer.call(this)">
+		<div class="image-container2"> </div>
+	</div>
+	<div class="loader"></div>
+	<div class="talknow" style="display: none"></div>
+	<span id="msgSalesOrdersClick"></span>
+	<span id="msgSalesOrdersClick2" style="display: none">Scroll down...</span>
+	<div id="contenting" class="row" style="display: none"></div>
+	<div id="notification-comm0" style="display: none;" >
+	  <span id="dismiss-comm0" class="dismiss"><a title="dismiss this notification">x</a></span>
+	</div>
+	<div id="notification-comm" style="display: none;" >
+	  <span id="dismiss-comm" class="dismiss glyphicon glyphicon-remove" aria-hidden="true"></span>
+	  <div id="notification-comm-cont"></div>
+	</div>
+	
+	<!-- 
+	<h1>Popup/Modal Windows without JavaScript</h1>
+	<div id="ags_wrapper">
+		<p><a class="ags_button" href="#ags_popup1">Click Me</a></p>
+		<p><a class="ags_button" href="#ags_popup2">Click Me Too</a></p>
+	</div>
+	 -->
+	 
+	<div id="ags_popup1" class="ags_overlay">
+		<div class="ags_popup ags_popup-xlarge">
+			<h2>Information</h2>
+			<a class="close" href="#">&times;</a>
+			<div class="content">
+				<p>Welcome users,<br>We apprecieate all your work, remember mark as completed your task as soon, these will help to get accurrate stats.<br>Have a nice day.</p>
+			</div>
+		</div>
+	</div>
+	
+	<div id="ags_popup2" class="ags_overlay ags_light">
+		<a class="cancel" href="#"></a>
+		<div class="ags_popup ags_popup-sm">
+			<h2>What the what?</h2>
+			<div class="content">
+	      <p>Click outside the popup to close.</p>
+			</div>
+		</div>
+	</div>
+
+	<div id="stats-area" class="leirags-stats pull-right" >
+		<ul class="leirags-stats-list">
+			<li onClick="processGoActions('notifications')" style="cursor:pointer"><span class="pull-right" style="text-align:right"><b id="leirags-st-fn"> 10</b><br><emp id="leirags-st-fp"> 1%</emp></span> <span class="glyphicon glyphicon-envelope text-default" aria-hidden="true"></span> <span class="glyphicon-class">Notifications</span> </li>
+			<li onClick="processGoActions('task-active')" style="cursor:pointer"><span class="pull-right" style="text-align:right"><b id="leirags-st-an">100</b><br><emp id="leirags-st-ap">30%</emp></span> <span class="glyphicon glyphicon-folder-open text-info" aria-hidden="true"></span> <span class="glyphicon-class">Active</span> </li>
+			<li onClick="processGoActions('task-deviated')" style="cursor:pointer"><span class="pull-right" style="text-align:right"><b id="leirags-st-bn">100</b><br><emp id="leirags-st-bp">40%</emp></span> <span class="glyphicon glyphicon-random text-success" aria-hidden="true"></span> <span class="glyphicon-class">Deviated</span> </li>
+			<li onClick="processGoActions('task-unacknowledged')" style="cursor:pointer"><span class="pull-right" style="text-align:right"><b id="leirags-st-cn">100</b><br><emp id="leirags-st-cp">10%</emp></span> <span class="glyphicon glyphicon-eye-close text-danger" aria-hidden="true"></span> <span class="glyphicon-class">Un-Acknowledged</span> </li>
+			<li class="hide"><span class="pull-right" style="text-align:right"><b id="leirags-st-dn"> 10</b><br><emp id="leirags-st-dp"> 1%</emp></span> <span class="glyphicon glyphicon-ok-sign text-default" aria-hidden="true"></span> <span class="glyphicon-class">Completed</span> </li>
+			<li onClick="processGoActions('my-sales-orders')" style="cursor:pointer"><span class="pull-right" style="text-align:right"><b id="leirags-st-en"> 10</b><br><emp id="leirags-st-ep"> 1%</emp></span> <span class="glyphicon glyphicon-tasks text-info" aria-hidden="true"></span> <span class="glyphicon-class">Tasks / SO</span> </li>			
+		</ul>
+	</div>
+	 
+	<div class="tblsalesorders"> <!-- Level 00> -->
+		<div class="thetabsalesorders" style="display: block; background-color:#FFF; width:100%;"> <!-- Level 01> -->
+
+			<!-- Tabs Headers Superiors -->
+			<ul class="tabtogsales-links" style="margin-top:10px">
+				<li id="tabone" class="tabso1"> <a href="#tabsalesord1"> My Work</a></li>
+				<li id="tabtwo" class="tabso2"> <a href="#tabsalesord2" id="tabtwo2"> My Sales Orders</a></li>
+				<!-- 	<li id="tabthree" class="tabso3" style="display: none"><a href="#tabsalesord3">	My Team</a></li> -->
+				<li id="tabfour" class="tabso4 active"><a href="#tabsalesord4"> Workspace</a></li>
+				<li id="tabfive" class="tabso5" style="display: none"><a href="#tabsalesord5">Sales Orders</a></li>
+				<li id="tabsix" class="tabso6" style="display: none"><a href="#tabtracingtasks">Tracing Tasks</a></li>
+				<li id="tabseven" class="tabso7" style="display: no2ne"><a href="#tabnotifications">Notifications</a></li>
+			</ul>
+			
+			<!-- Tabs Content -->
+			<div class="tabsalesorder-content" > <!-- Level 02< -->
+			
+<!-- Tab My Work START -->
+				<div id="tabsalesord1" class="tabsalesord" style="min-height:610px"> <!-- tab-content-enclosure-start -->
+					<div id="myw-cnt" class="row" style="margin:0 1px;">
+						<div class="filtersBar4OrderSales">
+							<div id="filtersGroupOS1" class="cols-sm-12" style="padding:20px 0;">
+								<div class="col-sm-9">
+									<div style="display:inline-block; width:70%;">
+										<label>Filter by Task Status:</label>
+										<select id="multipleSelectStatus" title="Click here to select task status" data-placeholder="Select Status" class="selectpicker" multiple>
+											<option value="1" selected>Active</option>
+											<option value="2" >Complete</option>
+											<option value="3" >Deferred</option>
+											<option value="4">Cancelled</option>
+											<option value="1001" >Acknowledge</option>
+											<option value="1002" >Without Acknowledge</option>
+										</select>
+									</div>
+									<div style="display:inline-block">
+										<label style="margin-right:6px; padding:0 4px; border-right:1px solid gray;">My Team Tasks <input id="myteam-tasks" type="checkbox" /></label>
+										<label>Today Tasks <input id="today-tasks" type="checkbox" /></label>
+									</div>
+								</div>
+								<div class='filtersDividers'>
+									<script>
+										WF_wh("<img src='/core/media/media.nl?id=6520865&c=3461650&h=b1508371f29e451d2a01' alt='' />",
+											"<img src='/core/media/media.nl?id=8153905&c=3461650&h=b22aec6399c3c7a0e99c' alt='' />");
+									</script>
+								</div>
+								<div class="basicFilters" style="display: inline-block;">
+									<div id="filterTaskStatus" class="filterButtonSO">Filter</div>
+								</div>
+								<div class='filtersDividers'>
+									<script>
+										WF_wh("<img src='/core/media/media.nl?id=6520865&c=3461650&h=b1508371f29e451d2a01' alt='' />",
+											"<img src='/core/media/media.nl?id=8153905&c=3461650&h=b22aec6399c3c7a0e99c' alt='' />");
+									</script>
+								</div>
+							</div>
+						</div>
+						<!-- End of filtersBar -->
+	
+						<div style="margin-top:12px;">
+							<button id="ButtonLoadMoreAllWork" title='Loads 50 more records dynamically...' type="button" class="btn btn-info btn-transparent" data-slice="-1">Load More...</button>
+							<label class="btn btn-info btn-sm" for="mywork_switch">Toogle selector <input type="checkbox" id="mywork_switch" name="mywork_switch" style="display:none"></label>
+							<div id="select-assignee-group" style="display:inline-block">
+								<input type="hidden" id="mywork_group_assigne" value="0">
+								<label>Group Assignee: </label>
+								<input type="text" id="mywork_group_assigne_name" value="" class="employeeSelectFly" onClick='selectassignee(this)' data-onchg='mywork_group_assigne'>
+								<button type="button" class="btn btn-sm btn-default" id="applyAssigneeByGroup">Apply</button>
+							</div>
+							<div class="row" style="margin:6px 3px;">
+								<table id="AllMyWork" class="AllMyWork table" width="100%">
+									<thead>
+										<tr>
+											<th width= "5%" align="center" valign="middle">#</th>
+											<th width="15%" align="center" valign="middle"><strong>Customer</strong></th>
+											<th width="10%" align="center" valign="middle"><strong>Sales Order</strong></th>
+											<th width="20%" align="center" valign="middle"><strong>Task</strong></th>
+											<th width="10%" align="center" valign="middle"><strong>Assigned</strong></th>
+											<th width= "5%" align="center" valign="middle" class="centerth"><strong> ACK</strong></th>
+											<th width= "8%" align="center" valign="middle" class="centerth"><strong>Status</strong></th>
+											<th width= "8%" align="center" valign="middle" class="centerth"><strong>Start Date</strong></th>
+											<th width= "8%" align="center" valign="middle" class="centerth"><strong>Due Date</strong></th>
+											<th width= "5%" align="center" valign="middle" class="centerth"><strong>Work on Weekends</strong></th>
+											<th width= "5%" align="center" valign="middle" class="centerth"><strong>Duration</strong></th>
+											<!-- <th width="0%" align="center" valign="middle" class="centerth"><strong>Save</strong></th> -->
+										</tr>
+									</thead>
+									<tbody style="min-height:420px"></tbody>
+									<tfoot><tr><td colspan="11">_</td></tr></tfoot>
+								</table>
+							</div>
+							<div id="AllMyWorkResume" class="row hide" style="margin:6px 3px;"></div>
+<script id="mywork-saleorder-template" type="text/x-handlebars-template">
+<tr data-id="{{internalid}}" data-so="{{tranid}}" data-osstatus="{{sostatus}}" data-soname="{{tranid}}">
+<td class='styleToId' style='text-align=center; vertical-align: middle;'>
+  <div style="padding:3px;width:100%; heigth:100%; background-color:#EEE;" onmouseover="this.style.background='#DDD';" onmouseout="this.style.background='#EEE';"
+    onClick="window.open('/app/accounting/transactions/salesord.nl?id={{internalid}}&whence=', '_blank'); return false">
+    <img src="/core/media/media.nl?{{img_url}}" style='margin:3px; padding:3px; border:1px solid #CCC;'/><br/><span class='sort_tranid' style='font-size:11px;'>{{tranid}}</span>
+  </div>
+</td>
+<td style='vertical-align: middle;'>{{customer}}</td>
+<td>{{colStatus}} - {{CustomSotatus}}</td>
+<td style='text-align:justify; vertical-align: middle;'>{{description}}</td>
+<td class='rowDataSd' style='text-align:center; vertical-align: middle;'>{{soItems}}</td>
+<td class='rowDataSd' style='text-align=center; vertical-align: middle;'>{{soSA}}</td>
+<td align='middle'>{{DaysSinceApproved}}</td>
+<td style='vertical-align: middle;'>PM: {{ProjectManager}}<hr class='slim dot'><span class='soSR'>SR: {{SalesRep}}</span><hr class='slim dot'><span style='soPE'>PE:{{provengineer}}</span><hr class='slim dot'><span class='soCITY'>{{soSAname}}</span></td>
+<td class='rowDataSd' title='Monthly Recurring Revenue' align='right' style='vertical-align: middle;'>{{MRR_txt}}</td>
+<td class='rowDataSd' title='Non Recurring Revenue' align='right' style='vertical-align: middle;'>{{NRR_txt}}</td>
+<td style='vertical-align: middle;'>{{standardDate}}</td>
+<td style='vertical-align: middle;text-align: right'>{{PendingMRR_txt}}</td>
+<td style='vertical-align: middle;text-align: right'>{{PendingNRR_txt}}</td>
+<td style='vertical-align: middle;display:none'>{{addrcities}}</td>
+</tr>
+</script>
+						</div>
+					</div>
+					<div style="clear:both">.</div>
+				</div> <!-- tab-content-enclosure-end -->
+<!-- Tab My Work END -->
+
+<!-- Tab for My Sales Orders -->
+				<div id="tabsalesord2" class="tabsalesord">
+					<div class="filtersBar4OrderSales">
+						<div id="filtersGroupOS2" class="cols-sm-12" style="padding:20px 0;">
+							<div class="col-sm-9">
+								<label>Filter by SO Status: </label>
+								<select id="multipleSelectSalesOrders" title="Click here to select any of the provided options" data-placeholder="Select Type of Sales Order" class="selectpicker" multiple></select>
+							</div>
+							<div style="display: inline-block; background:#DDD; padding: 0 3px;">
+								<label style="background:#DDD;">SO:</label>
+								<input type="text" value="" id="nameSoField_salesorder" onKeyPress="enterpress(event, this)" data-button="filterButtonSO"/>
+							</div>
+							<div class='filtersDividers'>
+								<script>
+									WF_wh("<img src='/core/media/media.nl?id=6520865&c=3461650&h=b1508371f29e451d2a01' alt='' />",
+										"<img src='/core/media/media.nl?id=8153905&c=3461650&h=b22aec6399c3c7a0e99c' alt='' />");
+								</script>
+							</div>
+							<div class="basicFilters" style="display: inline-block;">
+								<div id="filterButtonSO" class="filterButtonSO">Filter</div>
+							</div>
+							<div class='filtersDividers'>
+								<script>
+									WF_wh("<img src='/core/media/media.nl?id=6520865&c=3461650&h=b1508371f29e451d2a01' alt='' />",
+										"<img src='/core/media/media.nl?id=8153905&c=3461650&h=b22aec6399c3c7a0e99c' alt='' />");
+								</script>
+							</div>
+						</div>
+					</div>
+					<!-- End of filtersBar -->
+					<div id="show_salesorder_table"  style="margin-top:12px;">
+					<button id="ButtonLoadMore_salesorder" type="button" class="btn btn-info btn-transparent" data-slice="-1">Load More...</button>
+					<div class="row" style="margin:6px;">
+						<table id="salesorder" class="table table-hover">
+							<thead>
+								<tr>
+									<th width= "8%" class="bg-success-z">Sales Order</th>
+									<th width="12%" class="bg-success-z">Customer</th>
+									<th width="12%" class="bg-success-z">Status</th>
+									<th width="12%" class="bg-success-z">Description</th>
+									<th width= "4%" class="bg-success-z">Items</th>
+									<th width= "4%" class="bg-success-z">Locations</th>
+									<th width= "4%" class="bg-success-z">Days Since Approved</th>
+									<th width="16%" class="bg-success-z">PM / SalesRep / PE</th>
+									<th width= "4%" class="bg-success-z">MRR</th>
+									<th width= "4%" class="bg-success-z">NRR</th>
+									<th width= "6%" class="bg-success-z">Estimated Delivery Date</th>
+									<th width= "6%" class="bg-success-z">Pending MRR</th>
+									<th width= "6%" class="bg-success-z">Pending NRR</th>
+									<th width= "1%" class="bg-success-z" style="display: none">Address Cities</th> 
+								</tr>
+							</thead>
+							<tfoot>
+								<tr>
+									<th class="bg-success-z"></th>
+									<th class="bg-success-z"></th>
+									<th class="bg-success-z"></th>
+									<th class="bg-success-z"></th>
+									<th class="bg-success-zr"></th>
+									<th class="bg-success-zr"></th>
+									<th class="bg-success-z"></th>
+									<th class="bg-success-z"></th>
+									<th class="bg-success-zr"></th>
+									<th class="bg-success-zr"></th>
+									<th class="bg-success-z"></th>
+									<th class="bg-success-zr"></th>
+									<th class="bg-success-zr"></th>
+									<th style="display: none;" class="bg-success-z"></th>
+								</tr>
+							</tfoot>
+							<tbody></tbody>
+						</table>
+						</div>
+					</div>
+				</div>
+				<!-- End of Tab 1 tabsalesord1 ACTIVE -->
+<!-- Tab for My Sales Orders -->
+
+<!-- Tab for DEROGATED -->
+				<div id="tabsalesord3" class="tabsalesord">
+					<!-- My Team content here -->
+					<div class="container">
+						<!-- First Table -->
+						<div class="row" style="margin:6px;">
+						<table id="tableSOcount" class="table table-hover">
+							<thead>
+								<tr>
+									<th class="bg-success-z">USER</th>
+									<th class="bg-success-z" align="right">SALES ORDERS WITH TASKS</th>
+									<th class="bg-success-z" align="right">SERVICES</th>
+									<th class="bg-success-z" align="right">ADDRESSES</th>
+									<th class="bg-success-z" align="right">PLANNING</th>
+								</tr>
+							</thead>
+							<tfoot>
+								<tr>
+									<th class="bg-success-z"></th>
+									<th class="bg-success-z" align="right"></th>
+									<th class="bg-success-z" align="right"></th>
+									<th class="bg-success-z" align="right"></th>
+									<th class="bg-success-z" align="right"></th>
+								</tr>
+							</tfoot>
+							<tbody></tbody>
+						</table>
+						</div>
+						<br/><br/>
+						<!-- Name of PM - Project Manager -->
+						<div id="secondPanel_all" class="panel panel-primary" style="display:none">
+							<div id="secondPanel" class="panel-heading" style="font-size: 16px; display:none"></div>
+						</div>
+						<div id="allSecondPanel" style="display:none">
+							<!-- Second Table -->
+							<div id="secondDiv">
+								<div style="width:100%">
+									<ul id="ulListdpto" class="list-group" style="display:none;list-style:none;margin-left:0px">
+										<li class="list-group-item">
+											<span class="badge">14</span>
+										</li>
+									</ul>
+								</div>
+							</div>
+							<!-- Third Table -->
+							<div id="thirdDiv" style="display:none" class="right_team">
+								<div id="treeTasksMyTeam" style="width:100%;height:450px;display:inline-block"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- End of Tab 2 tabsalesord2 - Task Tree -->
+<!-- Tab for DEROGATED END -->
+		
+<!-- Tab for WorkSpace -->
+				<div id="tabsalesord4" class="tabsalesord active">
+					<div class="filtersBar4OrderSales">
+						<div id="filtersGroupTbl4" class="cols-sm-12" style="padding:20px 0;">
+							<div class="col-sm-3">
+								<label>Employee:</label>
+								<div class="ToMyTeam"></div>
+							</div>
+							<div class="col-sm-3">
+								<label>Filter Task Status:</label>
+								<select id="multipleSelectStatus2" title="Click here to select task status" data-placeholder="Select Status" class="selectpicker" multiple>
+									<option value="1" selected>Active</option>
+									<option value="2" >Complete</option>
+									<option value="3" >Deferred</option>
+									<option value="4">Cancelled</option>
+									<option value="1001" >Acknowledge</option>
+									<option value="1002" >Without Acknowledge</option>
+								</select>
+							</div>
+							<div class='filtersDividers'>
+								<script>
+									WF_wh("<img src='/core/media/media.nl?id=6520865&c=3461650&h=b1508371f29e451d2a01' alt='' />",
+										"<img src='/core/media/media.nl?id=8153905&c=3461650&h=b22aec6399c3c7a0e99c' alt='' />");
+								</script>
+							</div>
+							<div class="basicFilters" style="display: inline-block;">
+								<div id="filterTaskStatusEmployee" class="filterButtonSO">Filter</div>
+							</div>
+							<div class='filtersDividers'>
+								<script>
+									WF_wh("<img src='/core/media/media.nl?id=6520865&c=3461650&h=b1508371f29e451d2a01' alt='' />",
+										"<img src='/core/media/media.nl?id=8153905&c=3461650&h=b22aec6399c3c7a0e99c' alt='' />");
+								</script>
+							</div>
+						</div>
+					</div>
+					<div style="margin-top:12px;">
+						<button id="ButtonLoadMore_Customsalesorder" type="button" class="btn btn-info btn-transparent" data-slice="-1">Load More...</button>
+						<div class="row" style="margin:6px;">
+							<table id="Customsalesorder" class="table table-hover">
+								<!--  This class was removed from here table-bordered -->
+								<thead>
+									<tr>
+										<th width= "8%" class="bg-success-z">Sales Order</th>
+										<th width="12%" class="bg-success-z">Customer</th>
+										<th width="12%" class="bg-success-z">Status</th>
+										<th width="12%" class="bg-success-z">Description</th>
+										<th width= "4%" class="bg-success-z">Items</th>
+										<th width= "4%" class="bg-success-z">Locations</th>
+										<th width= "4%" class="bg-success-z">Days Since Approved</th>
+										<th width="16%" class="bg-success-z">PM / SalesRep / PE</th>
+										<th width= "4%" class="bg-success-z">MRR</th>
+										<th width= "4%" class="bg-success-z">NRR</th>
+										<th width= "6%" class="bg-success-z">Estimated Delivery Date</th>
+										<th width= "6%" class="bg-success-z">Pending MRR</th>
+										<th width= "6%" class="bg-success-z">Pending NRR</th>
+										<th width= "1%" class="bg-success-z" style="display: none">Address Cities</th>
+									</tr>
+								</thead>
+								<tfoot>
+									<tr>
+										<th class="bg-success-z"></th>
+										<th class="bg-success-z"></th>
+										<th class="bg-success-z"></th>
+										<th class="bg-success-z"></th>
+										<th class="bg-success-z"></th>
+										<th class="bg-success-z"></th>
+										<th class="bg-success-z"></th>
+										<th class="bg-success-z"></th>
+										<th class="bg-success-z"></th>
+										<th class="bg-success-z"></th>
+										<th class="bg-success-z"></th>
+										<th class="bg-success-z"></th>
+										<th class="bg-success-z"></th>
+										<th style="display: none" class="bg-success-z"></th>
+									</tr>
+								</tfoot>
+								<tbody> </tbody>
+							</table>
+						</div>
+					</div>
+					<!-- <p style="text-align"><img src="http://cdn.kaptestglobal.com/images/icons/man-grey.png" alt="" /></p> -->
+				</div>
+				<!-- End of Tab 3 tabsalesord3 - Task Tree -->
+<!-- Tab for WorkSpace END -->
+
+<!-- Tab for All Sales Order -->
+				<div id="tabsalesord5" class="tabsalesord">
+					<div class="filtersBar4OrderSales">
+						<p id="msgAdminSalesOrdersTab hide"></p>
+						<div id="filtersGroupOS3" class="cols-sm-12" style="padding:20px 0;">
+							<div class="col-sm-9">
+								<label> Filter by SO Status: </label>
+								<select id="multipleSelectSalesOrders2" title="Click here to select sales order status" data-placeholder="Select Type of Sales Order" class="selectpicker" multiple></select>
+							</div>
+							<div style="display: inline-block; background:#DDD; padding: 0 3px;">
+								<label style="background:#DDD;">SO:</label>
+								<input type="text" value="" id="nameSoField_allsalesorder" onKeyPress="enterpress(event, this)" data-button="filterButtonALLSO2"/>
+							</div>
+							<div class='filtersDividers'>
+								<script>
+									WF_wh("<img src='/core/media/media.nl?id=6520865&c=3461650&h=b1508371f29e451d2a01' alt='' />",
+										"<img src='/core/media/media.nl?id=8153905&c=3461650&h=b22aec6399c3c7a0e99c' alt='' />");
+								</script>
+							</div>
+							<div class="basicFilters" style="display: inline-block;">
+								<div id="filterButtonALLSO2" class="filterButtonALLSO">Filter</div>
+							</div>
+							<div class='filtersDividers'>
+								<script>
+									WF_wh("<img src='/core/media/media.nl?id=6520865&c=3461650&h=b1508371f29e451d2a01' alt='' />",
+										"<img src='/core/media/media.nl?id=8153905&c=3461650&h=b22aec6399c3c7a0e99c' alt='' />");
+								</script>
+							</div>
+						</div>
+					</div>
+					<div style="margin-top:12px;">
+						<button id="ButtonLoadMore_allsalesorder" type="button" class="btn btn-info btn-transparent" data-slice="-1">Load More...</button>
+						<div class="row" style="margin:6px;">
+						<table id="allsalesorder" class="table table-hover">
+							<!--  This class was removed from here table-bordered -->
+							<thead>
+								<tr>
+									<th width= "8%" class="bg-success-z">Sales Order</th>
+									<th width="12%" class="bg-success-z">Customer</th>
+									<th width="12%" class="bg-success-z">Status</th>
+									<th width="12%" class="bg-success-z">Description</th>
+									<th width= "4%" class="bg-success-z">Items</th>
+									<th width= "4%" class="bg-success-z">Locations</th>
+									<th width= "4%" class="bg-success-z">Days Since Approved</th>
+									<th width="16%" class="bg-success-z">PM / SalesRep / PE</th>
+									<th width= "4%" class="bg-success-z">MRR</th>
+									<th width= "4%" class="bg-success-z">NRR</th>
+									<th width= "6%" class="bg-success-z">Estimated Delivery Date</th>
+									<th width= "6%" class="bg-success-z">Pending MRR</th>
+									<th width= "6%" class="bg-success-z">Pending NRR</th>
+									<th width= "1%" class="bg-success-z" style="display: none">Address Cities</th>
+								</tr>
+							</thead>
+							<tfoot>
+								<tr>
+									<th class="bg-success-z"></th>
+									<th class="bg-success-z"></th>
+									<th class="bg-success-z"></th>
+									<th class="bg-success-z"></th>
+									<th class="bg-success-z"></th>
+									<th class="bg-success-z"></th>
+									<th class="bg-success-z"></th>
+									<th class="bg-success-z"></th>
+									<th class="bg-success-z"></th>
+									<th class="bg-success-z"></th>
+									<th class="bg-success-z"></th>
+									<th class="bg-success-z"></th>
+									<th class="bg-success-z"></th>
+									<th style="display: none" class="bg-success-z"></th>
+								</tr>
+							</tfoot>
+							<tbody> </tbody>
+						</table>
+						</div>
+						<div>
+							<!-- <h6 id="AllRegistersSalesH2">...</h6></div> -->
+							<!-- <button id="ButtonLoadAllMyWork" title="Load all records from my work" type="button" class="btn btn-info btn-transparent"> Load All </button> -->
+						</div>
+
+					</div>
+				</div>
+<!-- Tab for All Sales Order END -->
+
+
+
+<!-- Tab for Inspect Tasks -->
+				<div id="tabtracingtasks" class="tabsalesord">
+					<script>
+						var hr_list_results_fullsize = false;
+						function toogle_hr_list_results_size(){
+							var $hr_list_results = $('#hr-list-results'); 
+							$hr_list_results.removeClass('col-sm-8');
+							$hr_list_results.removeClass('col-sm-12');
+							if(hr_list_results_fullsize) 
+								$hr_list_results.addClass('col-sm-8');
+							else
+								$hr_list_results.addClass('col-sm-12');
+							hr_list_results_fullsize = ! hr_list_results_fullsize;
+						}
+					</script>
+					<h4>Tracing Tasks
+					<label class="label label-info" onClick="$('#hr-list').slideToggle('fast'); toogle_hr_list_results_size()"><span class="glyphicon glyphicon-minus-sign" aria-hidden="true"></span></label>
+					</h4>
+					
+					<div class="col-sm-12" style="padding:0px">
+						<!-- <div class="col-sm-4" style="padding:0px; border:1px solid DarkSlateBlue"></div>  -->
+						<div id="hr-list" class="col-sm-4" style="padding:3px; border:1px dotted Green">
+							<ul class="treeViewAGS" style="margin:2px" id="hr-list-tree">
+								<li>
+								  Staff
+								  <ul class="collapsibleList" id="employees-root"></ul>
+								</li>
+								<li>
+								  Departments
+								  <ul class="collapsibleList" id="departments-root"></ul>
+								</li>
+							</ul>
+						</div>
+						
+						<div class="col-sm-8" id="hr-list-results">
+							<div class="row" style="margin-left:4px; padding:4px;background-color:#FFF;">
+								<label>Filter Task Status:</label>
+								<select id="tracing-status" data-placeholder="Select Task Status" class="selectpicker" multiple>
+									<option value="1" selected>Active</option>
+									<option value="2" >Complete</option>
+									<option value="3" >Deferred</option>
+									<option value="4">Cancelled</option>
+									<!--  
+										<option value="1001" >Acknowledge</option>
+										<option value="1002" >Without Acknowledge</option>  
+									-->
+								</select>
+								..
+								<label>Due Date:</label>
+								<select id="tracing-dates" data-placeholder="Select Task Status" class="selectpicker">
+									<option value="today" selected>Today only</option>
+									<option value="past">Past until today</option>
+									<option value="will">Expire in the future</option>
+								</select>
+								<button type="button" class="btn btn-secondary pull-right" onClick="$('#tracing-extrafilters').slideToggle('slow')"><span class="glyphicon glyphicon-filter" aria-hidden="true"></span></button>
+							</div>
+							<div class="row" id="tracing-extrafilters" style="margin-left:4px; padding:4px;background-color:#EEE; display:none">
+								<div class="col-sm-4 form-group"><label for="tracing-assigned">Assigne :</label> <input class="awesomplete form-control" id="tracing-assigned" type="text" /></div>
+								<div class="col-sm-4 form-group"><label for="tracing-startdate">Start :</label> <input id="tracing-startdate" type="text" onchange="" class="toDatePickerFilter form-control"> </div>
+								<div class="col-sm-4 form-group"><label for="tracing-duedate">Due :</label> <input id="tracing-duedate" type="text" onchange="" class="toDatePickerFilter form-control"> </div>
+								<div class="col-sm-4 form-group"><label for="tracing-departments">Deptartment :</label> <select id="tracing-departments" class="form-control" style="height:32px;"><option>all</option></select></div>
+								<div class="col-sm-4 form-group"><label for="tracing-process">Process :</label> <select id="tracing-process" class="form-control" style="height:32px;"><option>all<option></select></div>
+								<div class="col-sm-4 form-group"><label for="tracing-subprocess">SubProcess :</label> <select id="tracing-subprocess" class="form-control" style="height:32px;"><option>all<option></select></div>
+								<div class="col-sm-4 form-group"><label for="tracing-cities">City :</label> <select id="tracing-cities" class="form-control" style="height:32px;"><option>all<option></select></div>
+								<div class="col-sm-4 form-group"><label for="tracing-states">State :</label> <select id="tracing-states" class="form-control" style="height:32px;"><option>all<option></select></div>
+								<div class="col-sm-4 form-group"><label for="tracing-customers">Customer :</label> <select id="tracing-customers" class="form-control" style="height:32px;"><option>all<option></select></div>
+								<!-- 
+								<div class="col-sm-4"><label for="tracing-wonw">Work on Weekends :<input type="checkbox" onchange="" id="tracing-wonw" name="filterWonW"></label></div>
+								<div class="col-sm-4">
+										Duration from
+										<input type="text" size="6" onchange="" name="filterDurationStart" class="filterDurationStart" value=""> to
+										<input type="text" size="6" onchange="" name="filterDurationEnd" class="filterDurationEnd" value="">
+									</div>
+								 -->
+								<br style="clea1r:both">
+								<div class="col-sm-4 form-group">
+									<label for="tracing-items">Item :</label> <select id="tracing-items" class="form-control" style="height:32px;"><option>All</option></select>
+									</div>
+								<div class="col-sm-4 form-group">
+									<label for="tracing-address">Address :</label> <select id="tracing-address" class="form-control" style="height:32px;"><option>All</option></select>
+									</div>
+									
+								<div class="hide">
+									<br style="clear:both">
+									<div class="col-sm-4 form-group">
+										<label for="tracing-items-i">Item :</label> <input class="awesomplete form-control" id="tracing-items-i" type="text" />
+										</div>
+									<div class="col-sm-4 form-group">
+										<label for="tracing-address-i">Address :</label> <input class="awesomplete form-control" id="tracing-address-i" type="text" />
+										</div>
+									<div class="col-sm-4 form-group">
+										<label for="tracing-customers-i">Customer :</label> <input class="awesomplete form-control" id="tracing-customers-i" type="text" />
+										</div>
+								</div>
+								<button type="button" class="btn btn-secondary pull-right" onClick="tracing_apply_filters()">Apply Filters</button>
+							</div>
+							
+							<div id="tracing-cnt" class="row" style="margin-left:4px; background-color:#FFF"></div>
+						</div>
+						
+					</div>
+				 	
+				 	<div style="clear:both">...</div>
+				</div>
+<!-- Tab for inspect tasks END -->
+
+
+
+
+<!-- Tab for Inspect Tasks -->
+				<div id="tabnotifications" class="tabsalesord">
+					<h4>Notifications</h4>
+					<div class="col-sm-12 hide" style="padding:0px">
+						<div class="col-sm-4" style="padding:0px; border:1px solid DarkSlateBlue">
+						</div>
+						<div class="col-sm-8">
+							<label>Filter Task Status:</label>
+							<select id="notif-status" data-placeholder="Select Notification Status" class="selectpicker">
+								<option value="1" selected>Created</option>
+								<option value="2" >Viewed</option>
+								<option value="3" >Deleted</option>
+							</select>
+						</div>
+					</div>
+					
+					<div class="col-sm-12" style="padding:0px">
+					<script>
+					WF_Chat_Obj = { 
+						Mode: false,
+						lastHistory: 0,
+						curData : {},
+						cacheMsg : [],
+						myFriends : [], 
+						myGroups: [],
+						options: {
+							avatarDefault: 'https://system.sandbox.netsuite.com/core/media/media.nl?id=6571913&c=3461650&h=ca757ac3c92ae77e3226',
+							friendListId: '#chotFriendsList',
+							friendListClass: '.friend-select',
+							newfriendId: '#chotFriendId',
+							newfriendName: '#chotFriendName',
+							messageNew: '#message-to-send',
+							messageHistory: '#chat-history-container',
+							chatPrefix: '#tabchot',
+						},
+						pushMessage: function(msg,inout){
+							//this.cacheMsg.push(msg);
+							if (inout=='outgoing') {
+								this.addFriend(msg.to,msg.ton);
+								var deposit = LeirAGS_findInObj(this.myFriends,'id',msg.to);
+							} else {
+								this.addFriend(msg.from,msg.fromn);
+								var deposit = LeirAGS_findInObj(this.myFriends,'id',msg.from);
+							}
+							if (deposit.length) {
+								msg.message_html = WF_Chat_Obj.decodeHTMLEntities(msg.message);
+								msg.time = LeirAGS_dates.specialDate( new Date( msg.stamp ) );
+								deposit[0].msg.push(msg);
+								this.drawMessages(deposit[0]);
+								this.drawFriends();
+							}
+						},
+						decodeHTMLEntities: function(txt) {
+						    var entities = [
+						        ['amp', '&'],	['apos', '\''],	['#x27', '\''],
+						        ['#x2F', '/'],	['#39', '\''],	['#47', '/'],
+						        ['lt', '<'],	['gt', '>'],	['nbsp', ' '],
+						        ['quot', '"']
+						    ];
+						    for (var i = 0, max = entities.length; i < max; ++i) 
+						        txt = txt.replace(new RegExp('&'+entities[i][0]+';', 'g'), entities[i][1]);
+						    return txt;
+						},
+						drawMessages: function(deposit){
+							var msgH = '', n=0;
+							if (!deposit.count){ }
+							var tmpl_m = $('#message-template').html();
+							var tmpl_r = $('#message-response-template').html();
+							deposit.msg.forEach(function(msj){
+								n++;
+								if(n > deposit.count){
+									if(msj.to != WorkForce_Obj.userID) 
+										msgH += LeirAGS_Tmpl(tmpl_m, msj);
+									else
+										msgH += LeirAGS_Tmpl(tmpl_r, msj);
+								}
+							});
+							deposit.count = n;
+							$('#tabchot'+deposit.tab+' ul.list').append(msgH);
+						},
+						addFriend: function(id,name) {
+							if (!id || !name || id == WorkForce_Obj.userID +1) return false;
+							// Find if id exist
+							if ( LeirAGS_findInObj(this.myFriends,'id',id).length == 0 ) {
+								this.myFriends.push({id:id, name:name, count:0, avatar: this.options.avatarDefault, tab: this.addTabChat(id,name) , msg:[]});
+								this.drawFriends();
+								return true
+							} else return false
+						},
+						drawFriends: function(){
+							$(this.options.friendListId).html('');
+							var myflist = '';
+							var tmpl = $('#friend-template').html();
+							this.myFriends.forEach(function(frn){
+								myflist += LeirAGS_Tmpl(tmpl, frn);
+							});
+							$(this.options.friendListId).html(myflist);
+							$(this.options.friendListClass).on('click',function(){
+								var ndt = $(this).data();
+								$('#chat-with-name').html(ndt.name);
+								$(WF_Chat_Obj.options.messageHistory+' .tab-content').hide();
+								$('#tabchot'+ndt.tab).fadeIn();
+								WF_Chat_Obj.curData = ndt;
+							});
+						},
+						newFriend: function(){
+							this.addFriend( 
+								$(this.options.newfriendId).val(), 
+								$(this.options.newfriendName).val() 
+							)
+							$(this.options.newfriendId).val('')
+							$(this.options.newfriendName).val('')
+						},
+						addTabChat: function(id,name){
+						  	var tid = ++this.lastHistory;
+						  	var tmpl = $('#chat-history-template').html();
+						  	var cDiv = LeirAGS_Tmpl(tmpl,{'id':tid});
+						  	$( cDiv ).appendTo( this.options.messageHistory );
+						  	return tid
+						},
+						sendMsg: function(){
+							if (this.curData.fid > 0 && this.curData.fid != WorkForce_Obj.userID) {
+								var m = $(this.options.messageNew).val();
+								chatSendMsg('','',[this.curData.fid],m); 
+							}
+							$(this.options.messageNew).val('');
+						}
+					}
+					</script>
+						<div id="notif-conversations" class="col-sm-12" style="background:#FFF">
+							<ul class="nav nav-tabs" style="margin:0;padding-left:3px:">
+							  <li class="active"><a data-toggle="tab" href="#notif-chat-tasks">Tasks</a></li>
+							  <li><a data-toggle="tab" href="#notif-chat-chats">Chat</a></li>
+							  <li><a data-toggle="tab" href="#notif-chat-logs">Logs</a></li>
+							</ul>
+							
+							<div class="tab-content">
+							
+							  <div id="notif-chat-tasks" class="tab-pane fade in active">
+							    <h3>Messages in Tasks</h3>
+							    <div id="notif-cnt" class="col-sm-12" style="font-size:10pt;"></div>
+							  </div>
+							  
+							  <div id="notif-chat-logs" class="tab-pane fade">
+							    <!-- <h3>Log messages</h3> -->
+							    <!-- <div>
+								    <div id="notif-list" class="notif-list col-sm-3" style="padding:3px; border:1px dotted BlueLight; heigth:inherit; background:#FFF">
+										<div id="notif-friends">
+											<div id="notif-friends-list" class="list-group notif-friends-list" style="font-size:9pt"></div>
+										</div>
+										<div id="notif-search-friend" class="input-group">
+											<input type="hidden" value="" id="chatFriendId" onChange="WF_Chat_Obj.newFriend()">
+											<span class="input-group-addon">Friend</span>
+											<input id="chatFriendName" class="employeeSelectFly form-control" type="text" value="" onClick='selectassignee(this)' data-onchg='chatFriendId'>
+											<span class="input-group-btn">
+									        	<button class="btn btn-default text-secundary" type="button" onClick="WF_Chat_Obj.newFriend()">+</button>
+									      	</span>
+										</div>
+										<div id="notif-messager" class="input-group" style="margin-top:3px">
+											<textarea id="chat-messager" class="form-control" rows="3" style="resize:none"></textarea>
+											<span class="input-group-addon btn btn-primary" onClick="WF_Chat_Obj.sendMsg()">&gt;</span>
+										</div>
+									</div>
+								    <div id="notif-cnt-chat" class="col-sm-9">
+								    	<ul class="nav nav-tabs hide" id="tabs-chats">
+									        < !-- <li data-fid="0" class="active"><a href="#tabchat1">Me</a></li>  -- >
+									    </ul>
+									    <div id="tabs-chats-content" class="tab-content">
+									        < !-- <div class="tab-pane active" id="tabchat1">...</div> -- >
+									    </div>
+								    </div>
+							    </div -->
+							  </div>
+							  
+							  <div id="notif-chat-chats" class="tab-pane fade">
+							    <!-- <h3>Chat messages</h3> -->
+							    <div id="notif-cnt-log" class="col-sm-12"></div>
+							    <!-- CHOT> -->
+<div class="chot_container clearfix">
+    <div class="chot_people-list" id="chot_people-list">
+      <div class="search">
+      	<input type="hidden" value="" id="chotFriendId" onChange="WF_Chat_Obj.newFriend()" />
+        <input type="text" value="" id="chotFriendName" placeholder="search" onClick="selectassignee(this)" data-onchg="chotFriendId" />
+        <i class="fa fa-search"></i>
+      </div>
+      <ul class="list" id="chotFriendsList"></ul>
+    </div>
+    
+    <div class="chot">
+      <div class="chat-header clearfix">
+         <img src="https://system.sandbox.netsuite.com/core/media/media.nl?id=6571913&c=3461650&h=ca757ac3c92ae77e3226" alt="avatar" />
+        <!-- <img src="https://system.netsuite.com/core/media/media.nl?id=10841342&c=3461650&h=ef384bc58ff4bf9183c3" alt="avatar" />  -->
+        
+        <div class="chat-about">
+          <div class="chat-with" id="chat-with-name"></div>
+          <div class="chat-num-messages">already 1 902 messages</div>
+        </div>
+        <i class="fa fa-star"></i>
+      </div> <!-- end chat-header -->
+      
+      <div class="chat-history-container" id="chat-history-container">
+      </div> <!-- end chat-history -->
+      
+      <div class="chat-message clearfix">
+        <textarea name="message-to-send" id="message-to-send" placeholder ="Type your message" rows="3"></textarea>
+                
+        <i class="fa fa-file-o"></i> &nbsp;&nbsp;&nbsp;
+        <i class="fa fa-file-image-o"></i>
+        
+        <button type="button" onClick="WF_Chat_Obj.sendMsg()">Send</button>
+
+      </div> <!-- end chat-message -->
+      
+    </div> <!-- end chat -->
+    
+</div> <!-- end container -->
+
+<script id="friend-template" type="text/x-handlebars-template">
+<li class="clearfix">
+	<img src="{{avatar}}" alt="" />
+	<div class="about friend-select" data-fid="{{id}}" data-tab="{{tab}}" data-name="{{name}}">
+		<div class="name">{{name}}</div>
+		<div class="status">
+			<i class="fa fa-circle online"></i> online
+		</div>
+	</div>
+</li>
+</script>
+
+<script id="chat-history-template" type="text/x-handlebars-template">
+	<div class="chat-history tab-content" id="tabchot{{id}}" style="display:none">
+		<ul class="list"></ul>
+	</div> <!-- end chat-history -->
+</script>
+
+<script id="message-template" type="text/x-handlebars-template">
+  <li class="clearfix">
+    <div class="message-data align-right">
+      <span class="message-data-time" >{{time}}</span> &nbsp; &nbsp;
+      <span class="message-data-name" >{{fromn}}</span> <i class="fa fa-circle me"></i>
+    </div>
+    <div class="message other-message float-right">
+      {{message_html}}
+    </div>
+  </li>
+</script>
+
+<script id="message-response-template" type="text/x-handlebars-template">
+  <li>
+    <div class="message-data">
+      <span class="message-data-name"><i class="fa fa-circle online"></i> {{fromn}}</span>
+      <span class="message-data-time">{{time}}</span>
+    </div>
+    <div class="message my-message">
+      {{message_html}}
+    </div>
+  </li>
+</script>
+							    
+							    <!-- CHOT< -->
+							    
+							    <br />
+							  </div>
+							</div>
+							
+						</div>
+				 	</div>
+				 	<div style="clear:both">...</div>
+				</div>
+<!-- Tab for inspect tasks END -->
+
+
+
+			</div> <!-- Level 02< tabcontent -->
+		</div> <!-- Level 01< -->
+		
+		<!-- End of Tabs Sales Orders-->
+		<div class='selecttab'>
+			<!-- Table content to generated starts here  -->
+			<!-- Tables for Services and Service Addresses -->
+			<p class="nivela">&nbsp;</p>
+			<!-- We add Tabs here -->
+			<div class="thetabtogants" style="display:none">
+				
+				<div id="ViewSalesorderData" style="width:100%; border-top:1px solid #DDD; margin:6px 2px; padding:3px;">
+					<div id="refreshCurrSO" style="float:right; width:92px; height:72px; border:1px dotted #EEF; text-align:center" onMouseOver="this.style.background='#DDF';" onMouseOut="this.style.background='#EEF';">
+						<div style="margin:3px; width:92px;"><script>getNetSuiteImage('salesorder',true)</script></div>
+						<span id="IdSalesOrderBySpan" style="margin-top:9px;width:92px;">0000</span>
+					</div>
+					<span id="NameSalesOrderBySpan" class="badge" style="font-size:150%; text-align:left; font-weight:bold; padding:9px 12px; margin-right:9px;">S-0-000</span>
+					<span id="TitleSalesOrderBySpan" style="width:60%; display:inline-block; font-size:180%; font-weight:bold;">EMPTY NAME</span>
+				</div>
+				
+				<div class="row" style="clear:both; width:100%; margin:6px 2px;">
+				
+					<div class="panel panel-default col-sm-4" style="width:32%; margin:0 2px;">
+					  <div class="panel-heading"><h4>General Data</h4></div>
+					  <div class="panel-body" id="sodata-general" style="padding: 15px 2px;"></div>
+					</div>
+					
+					<div class="panel panel-info col-sm-4" style="width:33%; margin:0 2px;">
+					  <div class="panel-heading"><h4>Sales Scope of Work</h4></div>
+					  <div class="panel-body" id="sodata-sow" style="padding: 15px 2px;"></div>
+					</div>
+					
+					<div class="panel panel-success col-sm-4" style="width:33%; margin:0 2px;">
+					  <div class="panel-heading"><span id="btnESOWbtn" class="glyphicon glyphicon-pencil pull-right btn btn-md btn-info hide" style="cursor:pointer" onClick="editESOW()"></span><h4>Engineering Scope of Work</h4></div>
+					  <div class="panel-body" id="sodata-sowe" style="padding: 15px 2px;"></div>
+					</div>
+				</div>
+				
+				<div id="space-x" style="border-top:1px solid #DDD; margin:12px 0px; padding:3px;"></div>
+				<ul class="tabtogant-links">
+					<li id="tabtogant1a" class="active"><a href="#tabtogant1">Table View</a></li>
+					<li><a href="#tabtogant2" class="dtab2">Task Tree View</a></li>
+					<!-- <li><a href="#tabtogant3" class="dtab3">Gantt View</a></li> -->
+					<li><a id="tabtogant3" href="" target="_blank" class="dtab3">Gantt View</a></li>
+					<li><a href="#tabtogant4" target="_blank" class="dtab4">NetWork Design</a></li>
+					<li><a href="#tabtogant5" target="_blank" class="dtab5">Configuration</a></li>
+				</ul>
+				
+				<!-- Tabs Content -->
+				<div class="tabtogant-content">
+					<div id="tabtogant1" class="tabtogant active">
+<script>
+/**
+ *  loops thru the given 3 values for the given control
+ */
+var tristate_set1 = [ '\u2753', '\u2753', '\u2705', '\u274C' ];
+var tristate_set2 = [ '\u25ef', '\u25ef', '\u25ce', '\u25c9' ];
+
+function tristate_toggle(control, triset) {
+    switch (control.value.charAt(0)) {
+        case triset[1]: control.value = triset[2]; $(control).data('state',2); break;
+        case triset[2]: control.value = triset[3]; $(control).data('state',3); break;
+        case triset[3]: control.value = triset[1]; $(control).data('state',1); break;
+        default: control.value = triset[1]; $(control).data('state',1); break;
+    }
+}
+function tristate_set(control, characters, newState) {
+	if (newState && newState > 0 && newState < 4) {
+		control.value = characters[newState]; 
+		$(control).data('state',newState);
+	}
+} 
+function tristate1(control) {
+	tristate_toggle(control, tristate_set1 );
+}
+function tristate1_set(control, newState) {
+	tristate_set(control, tristate_set1, newState)
+}
+function tristate2(control) {
+	tristate_toggle(control, tristate_set2 );
+}
+function tristate2_set(control, newState) {
+	tristate_set(control, tristate_set2, newState)
+}
+</script>
+						<div class="filtersBar" style="margin: 6px 12px 0px 7px;">
+							<div id="filtersGroupTbl" class="cols-sm-12" style="padding:6px 0 36px 0;">
+								<div class="col-sm-9">
+									<div class="div-selectassigned basicFilters" style="display: none;"></div>
+									<div class="div-selectdepartment basicFilters" style="display: none;"></div>
+									<div class="div-selecttaskstatus basicFilters" style="display: none;"></div>
+									<div class="div-selectStartDate basicFilters" style="display: none;">Start Date
+										<input type="text" onchange="" id="filterStartDate" class="toDatePickerFilter"> </div>
+									<div class="div-selectDueDate basicFilters" style="display: none;">Due Date
+										<input type="text" onchange="" id="filterDueDate" class="toDatePickerFilter"> </div>
+									<div class="div-selectWoW basicFilters" title='Work on Weekend' style="display: none;">
+										<label for="filterWoW" style="padding:4px; border:1px dotted gray;">Work on Weekends
+											<input type="checkbox" onchange="" id="filterWoW" name="filterWoW" class="filterWoW hide">
+											<input type="button" id="filterWoW2" data-state="1" onclick="tristate1(this)" value="&#x2753;" style="padding:4px 6px; background-color:#FFF;"/>
+										</label>
+										</div>
+									<div class="div-selectDuration basicFilters" style="display: none;">Duration from
+										<input type="text" size="6" onchange="" id="filterDurationStart" name="filterDurationStart" class="filterDurationStart" value=""> to
+										<input type="text" size="6" onchange="" id="filterDurationEnd" name="filterDurationEnd" class="filterDurationEnd" value="">
+									</div>
+									<div class="div-labelServices basicFilters" style="display: inline-block;">
+										<select id="selServices" class="div-selServices basicFilters" style="height:32px; display: inline-block;"></select>
+										<select id="selAdresses" class="div-selAdresses basicFilters" style="height:32px; display: inline-block;"></select>
+									</div>
+								</div>
+
+								<div class='filtersDividers'>
+									<script>
+										WF_wh("<img src='/core/media/media.nl?id=6520865&c=3461650&h=b1508371f29e451d2a01' alt='' />",
+											"<img src='/core/media/media.nl?id=8153905&c=3461650&h=b22aec6399c3c7a0e99c' alt='' />");
+									</script>
+								</div>
+
+								<div class="div-selectDuration basicFilters" style="display: inline-block;">
+									<div onclick='Reset.call(this)' id="filterReset" class="filterButton">Reset</div>
+								<!--  /div>
+
+								<div class="div-selectDuration basicFilters" style="display: inline-block;" -->
+									<div id="filterButtonG" class="filterButton">Filter</div>
+								</div>
+
+								<div class='filtersDividers'>
+									<script>
+										WF_wh("<img src='/core/media/media.nl?id=6520865&c=3461650&h=b1508371f29e451d2a01' alt='' />",
+											"<img src='/core/media/media.nl?id=8153905&c=3461650&h=b22aec6399c3c7a0e99c' alt='' />");
+									</script>
+								</div>
+								
+								<div class="div-selectDuration basicFilters" style="display: inline-block;">
+									<div id="addTasksProcessToSO" class="filterButton" style="display:none" data-taskid="0" onClick="openAddTask(this)">Add Tasks</div>
+								</div>
+
+							</div>
+							<div class="col-sm-12" style="margin:6px;">&nbsp;</div>
+						</div>
+						<div class="row" style="margin:6px;">
+						<table id="myUpdatedSA" class="myUpdatedSA table table-striped">
+							<thead>
+								<tr>
+									<th align="center" width= "1%" class="rounded-th-left">#</th>
+									<th align="center" width="10%">Service</th>
+									<th align="center" width= "1%">Capacity</th>
+									<th align="center" width= "5%">UoM</th>
+									<th align="center" width="14%">Options</th>
+									<th align="center" width="12%">Location A</th>
+									<th align="center" width="12%">Address A</th>
+									<th align="center" width="12%">Location Z</th>
+									<th align="center" width="12%">Address Z</th>
+									<th align="center" width="12%">Estimated Delivery Date</th>
+									<th align="center" width= "8%" class="rounded-th-right">Subscription</th>
+								</tr>
+							</thead>
+							<tfoot>
+								<tr><td colspan="11" style="border-collapse: collapse; height:1px;"></td></tr>
+							</tfoot>
+							<tbody></tbody>
+						</table>
+<script id="saleorder-serviceitems-template" type="text">
+<tr data-line="{{line}}" data-item="{{itemid}}" data-toshow="{{line}}_{{itemid}}" class="{{row_bg}}">
+ <td style="border-right:1px solid #AFA;">{{rown}}</td>
+ <td class="styleToId" style="cursor:pointer">{{action_txt}}{{itemName}}</td>
+ <td align="center">{{capacity}}</td>
+ <td align='center'>{{UoM}}</td>
+ <td>{{options}}</td>
+ <td>{{LocationA}}</td>
+ <td>{{AddressA}}</td>
+ <td>{{LocationZ}}</td>
+ <td>{{AddressZ}}</td>
+ <td>{{EstimatedDate}}</td>
+ <td><a href='https://system.netsuite.com/app/common/custom/custrecordentry.nl?rectype=13&id={{subscription_val}}' target='_blank'>{{subscription}} </a></td>
+</tr>
+</script>
+
+<script id="saleorder-serviceitems-conf-template2" type="text">
+<li data-line="{{line}}" data-item="{{itemid}}" data-toshow="{{line}}_{{itemid}}" class="{{row_bg}}" role="presentation">
+ {{rown}} : {{action_txt}} : {{itemName}} : {{capacity}} : {{UoM}} : {{LocationA}} : {{AddressA}}
+ <span><a href='https://system.netsuite.com/app/common/custom/custrecordentry.nl?rectype=13&id={{subscription_val}}' target='_blank'>{{subscription}} </a></span>
+</li>
+</script>
+
+<script id="saleorder-serviceitems-conf-template3" type="text">
+<li data-line="{{line}}" data-item="{{itemid}}" data-toshow="{{line}}_{{itemid}}" class="{{row_bg}}">
+<!-- span class="pull-left">{{rown}}</span --><a href="#"> <h5>{{itemName}} <span class="label label-info label-as-badge pull-right">{{subscription}}</span> <small class="pulls-right">{{capacity}} {{UoM}}</small> </h5> {{LocationA}} : {{AddressA}} </a>
+</li>
+</script>
+
+<script id="saleorder-serviceitems-conf-template" type="text">
+<li data-line="{{line}}" data-item="{{id}}" data-toshow="{{line}}_{{itemid}}">
+	<a href="#"> <h5>{{itemName}} 
+	<span class="label label-info label-as-badge pull-right">{{subscription}}</span> 
+	<small class="pulls-right">{{capacity}} {{UoM}}</small> </h5> 
+	{{LocationA}} : {{AddressA}} </a>
+</li>
+</script>
+
+						</div>
+						<!-- p class="nivela">&nbsp;</p --> 
+						<div class="row" style="margin:6px;">
+						<table id="myUpdatedServicesAddresses" class="myUpdatedServicesAddresses table table-striped">
+							<thead>
+								<tr>
+									<th width="1%" class="rounded-th-left">#</th>
+									<th align="center" width="10%">Address Name</th>
+									<th align="center" width="33%">Address</th>
+									<th align="center" width="14%">City</th>
+									<th align="center" width="14%">Type</th>
+									<th align="center" width="14%">Status</th>
+									<th class="rounded-th-right" width="13%">Last Mile Type</th>
+								</tr>
+							</thead>
+							<tfoot>
+								<tr style="border-collapse: collapse; height:1px;"><td colspan= "7" style="border-collapse: collapse; height:1px;"></td></tr>
+							</tfoot>
+							<tbody></tbody>
+						</table>
+<script id="saleorder-serviceaddress-template" type="text">
+<tr data-toshow="{{id}}" class="{{row_bg}}">
+  <td style="border-right:1px solid #AFA;">{{rown}}</td>
+  <td align="left" class="styleToId"  style="cursor:pointer">{{name}}</td>
+  <td style="vertical-align: middle;"">{{address}}</td>
+  <td align="justify">{{city}}</td>
+  <td align="left">{{type}}</td>
+  <td align="left">{{status}}</td>
+  <td align="left">{{lmt}}</td>
+</tr>
+</script>
+						</div>
+						<p class="nivela">&nbsp;</p>
+						<!-- Add Filters Bar -->
+						<!-- 222222222 -->
+						<!-- End of filtersBar -->
+						<!-- In this table we draw the tasks of the user/all tasks -->
+						<div style="margin:6px;">
+							<button id="ButtonLoadMoreTasks" title='Loads 50 more registers...' type="button" class="btn btn-info btn-transparent" data-slice="-1" data-function="1">Load More...</button>
+							
+							<label class="btn btn-info btn-sm" for="tbltasks_switch">Toogle selector <input type="checkbox" id="tbltasks_switch" name="tbltasks_switch" style="display:none"></label>
+							<div id="tbltasks_select-assignee-group" style="display:inline-block">
+								<input type="hidden" id="tbltasks_group_assigne" value="0">
+								<label>Group Assignee: </label>
+								<input type="text" id="tbltasks_group_assigne_name" value="" class="employeeSelectFly" onClick='selectassignee(this)' data-onchg='tbltasks_group_assigne'>
+								<button type="button" class="btn btn-sm btn-default" id="applyAssigneeByGroupInSO">Apply</button>
+							</div>
+							
+							<div id="filtered_message" style="border:1px dotted #777; margin:2px; width:100%; float:right; text-align:right">Not filtered</div>
+						</div>
+						<div class="row" style="margin:6px;">
+						<table id="mytblTasks" class="mytblTasks" style="min-height:420px">
+							<thead>
+								<tr>
+									<th width= "4%" align="center" valign="middle">#</th>
+									<th width="30%" align="center" valign="middle"><strong>Task</strong></th>
+									<th width= "4%" align="center" valign="middle">:</th>
+									<th width="10%" align="center" valign="middle"><strong>Assigned</strong></th>
+									<th width= "8%" align="center" valign="middle" class="centerth"><strong> ACK</strong></th>
+									<th width= "8%" align="center" valign="middle" class="centerth"><strong>Status</strong></th>
+									<th width="10%" align="center" valign="middle" class="centerth"><strong>Start Date</strong></th>
+									<th width="10%" align="center" valign="middle" class="centerth"><strong>Due Date</strong></th>
+									<th width= "8%" align="center" valign="middle" class="centerth"><strong>Work on Weekends</strong></th>
+									<th width= "7%" align="center" valign="middle" class="centerth"><strong>Duration</strong></th>
+								</tr>
+							</thead>
+							<tbody></tbody>
+						</table>
+						</div>
+						<!-- div><div class="row"><h6 id="RegistersfromTaskTable2">...</h6></div></div -->
+					</div>
+					<!-- End of Tab 1 tabtogant1 ACTIVE -->
+					<div id="tabtogant2" class="tabtogant">
+						<div class="tab2Container"><script>var TaskFullSize=false;</script>
+							<div class="row" style="margin:6px;">
+								<div id="treeTasksr" class="treeTasksr col-sm-6">
+									<div class="tskStatusColorContainer" style="height:10%;">
+										<div class="tskStatusColor tskGreen">&nbsp;</div><span class="spTskStatus">Completed</span>
+										<div class="tskStatusColor tskGray">&nbsp;</div><span class="spTskStatus">Cancelled</span>
+										<div class="tskStatusColor tskBlue">&nbsp;</div><span class="spTskStatus">Normal</span>
+										<div class="tskStatusColor tskRed">&nbsp;</div><span class="spTskStatus">Outdate</span>
+										<div class="tskStatusColor tskCream">&nbsp;</div><span class="spTskStatus">Duration</span>
+										<div class="tskStatusColor tskDarkGray">&nbsp;</div><span class="spTskStatus">Range</span>
+										<button class="btn btn-sm btn-default" onClick="if(!TaskFullSize){jQuery('#Task').css('width','100%');jQuery('.treeTasksr').css('width','100%');$(this).html('Normal-Size');}else{jQuery('#Task').css('width','50%');jQuery('.treeTasksr').css('width','50%');$(this).html('Full-Size');};TaskFullSize=!TaskFullSize;return false;">Full-Size</button>
+									</div>
+									<div id="treeTasks" style="width:100%; height:90%;"></div>
+									<div id="dhtml_log" style="display:none">DHTML TREE VIEW - Log<hr></div>
+								</div>
+								<div id="Task" class="col-sm-6">
+									<div id="goToTranstelco" class="preimageTasks">
+										<script>
+											WF_wh('<img src="/core/media/media.nl?id=6522405&c=3461650&h=c18776f0221b9a84e485" title="logo Transtelco" />',
+												'<img src="/core/media/media.nl?id=8153909&c=3461650&h=b6b56279e0c20b8efaba" title="logo Transtelco" />');
+										</script>
+									</div>
+									<div id="contTasks">
+										<div id="taskNameLabel"></div>
+										<div class="todoScroll">
+											<table id="tableTask" class="tbl-task-details" style="width:99.9%; border:none;">
+												<thead>
+													<tr>
+														<th colspan="2" align="center" valign="middle"><strong>Title</strong></th>
+													</tr>
+												</thead>
+												<tbody></tbody>
+											</table>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<!-- End of Tab 2 tabtogant2 -->
+					<div id="tabtogant4" class="tabtogant">
+						<div class="row" style="clear:both; width:100%; margin:6px 2px;">
+				
+							<div class="panel panel-default col-sm-4" style="width:32%; margin:0 2px;">
+							  <div class="panel-heading">
+							  	<!-- <span id="btnESOWbtn2" class="glyphicon glyphicon-pencil pull-right btn btn-md btn-info" style="cursor:pointer" onClick=""></span> -->
+							  	<h4>Network Design - PreSale</h4>
+							  </div>
+							  <div class="panel-body" id="nddata-presale"></div>
+							</div>
+							
+							<div class="panel panel-info col-sm-4" style="width:33%; margin:0 2px;">
+							  <div class="panel-heading">
+							  	<!--  <span id="btnESOWbtn3" class="glyphicon glyphicon-pencil pull-right btn btn-md btn-info" style="cursor:pointer" onClick=""></span>  -->
+							  	<h4>Network Design - PostSale</h4>
+							  </div>
+							  <div class="panel-body" id="nddata-postsale"></div>
+							</div>
+							
+							<div class="panel panel-success col-sm-4" style="width:33%; margin:0 2px;">
+							  <div class="panel-heading">
+							  <!--  <span id="btnESOWbtn4" class="glyphicon glyphicon-pencil pull-right btn btn-md btn-info hide" style="cursor:pointer" onClick=""></span>  -->
+							  <h4>Other Data</h4></div>
+							  <div class="panel-body" id="nddata-other"></div>
+							</div>
+							
+						</div>
+					</div>
+					<div id="tabtogant5" class="tabtogant">
+						<div class="row" style="clear:both; width:100%; margin:6px 2px;">
+				
+							<div class="panel panel-default col-sm-4" style="width:32%; margin:0 2px;">
+							  <div class="panel-heading">
+							  	<!-- <span id="btnESOWbtn2" class="glyphicon glyphicon-pencil pull-right btn btn-md btn-info" style="cursor:pointer" onClick=""></span> -->
+							  	<h4>Circuits</h4>
+							  </div>
+							  <div class="panel-body" id="conf-circuits"></div>
+							</div>
+							
+							<div class="panel panel-info col-sm-8" style="width:66%; margin:0 2px;">
+							  <div class="panel-heading">
+							  	<!--  <span id="btnESOWbtn3" class="glyphicon glyphicon-pencil pull-right btn btn-md btn-info" style="cursor:pointer" onClick=""></span>  -->
+							  	<h4>Configuration <small>Testing by Now</small></h4>
+							  </div>
+							  <div class="panel-body" id="conf-data">
+							  	<div class="uir-field-wrapper" data-field-type="textarea">
+							        <textarea id="custbody_item_config_fs_initValue" style="display:none"></textarea>
+									<div class="centereNOT" style="height:480px; width:100%;">
+									 <span id="custbody_item_config_fs" style="">
+										<div data-font-family="" data-font-size="" id="exthtmlfield-custbody_item_config_fs" name="exthtmlfield-custbody_item_config_fs" style="padding-bottom: 5px;"></div>
+										<input id="custbody_item_config" name="custbody_item_config" type="hidden" value="" />
+										<script type="text/javascript">
+											NLExtHtmlEditor.createEditor('custbody_item_config_fs','custbody_item_config',
+												document.getElementById('custbody_item_config_fs_initValue').value,false,
+												"this.isvalid=validate_textfield_maxlen(this,1000000,true,true);if (!this.isvalid) {getHtmlEditor('custbody_item_config').setFocus(); return false;}",
+												128,document.forms['main_form'].elements['custbody_item_config'],
+												'FFFFE5',true,true,false,
+												'99%',480,false);
+											/* setTimeout(function(){jQuery("iframe[name='ext-gen55']").css('width','100%')},2000); */
+										</script>
+									 </span>
+									</div>
+								</div>
+								<div style="clear:both; margin:32px 0px;"><br /></div>
+							  </div>
+							</div>
+							
+						</div>
+					</div>
+					<a id="goto_bottom"></a>
+				</div>
+			</div>
+			<!-- End of Tabs here -->
+			
+			
+			<div>
+				<!-- Large modal -->
+				<div style="display: none" id="leirags-test-00">
+					<button id="play1" type="button" class="btn btn-primary" data-toggle="modal" data-target=".bs-example-modal-lg">Large modal</button>
+					<button id="editESOW-button" type="button" class="btn btn-info" data-toggle="modal" data-target=".bs-edit-esow-modal-lg" title="Edit Engineer Scope Of Work">E-ESOW</button>
+					<button id="reactivatetaskmodal-button" type="button" class="btn btn-info" data-toggle="modal" data-target=".bs-reactivatetask-modal-sm">RAT</button>
+					<button id="canceltaskmodal-button" type="button" class="btn btn-info" data-toggle="modal" data-target=".bs-canceltask-modal-sm">CAT</button>
+				</div>
+				<div class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+					<div class="modal-dialog modal-lg" role="document">
+						<div class="modal-content">
+							<!-- End of Tabs here -->
+							<p class="nivela">&nbsp;</p>
+							<div class="row">
+							<table id="myUpdatedTasks" class="myUpdatedTasks" style="width:100%; borders=none;">
+								<thead>
+									<tr>
+										<th width="20%" align="center" valign="middle"><strong>Title</strong></th>
+										<th width= "5%" align="center" valign="middle"><strong>Assigned</strong></th>
+										<th width= "5%" align="center" valign="middle"><strong>Ack</strong></th>
+										<th width="10%" align="center" valign="middle"><strong>Status</strong></th>
+										<th width="10%" align="center" valign="middle" class="centerth"><strong>OLD Start Date</strong></th>
+										<th width="15%" align="center" valign="middle" class="centerth"><strong>OLD Due	Date</strong></th>
+										<th width="10%" align="center" valign="middle" class="centerth"><strong>Start Date</strong></th>
+										<th width="10%" align="center" valign="middle" class="centerth"><strong>Due Date</strong></th>
+										<th width="10%" align="center" valign="middle" class="centerth"><strong>Work on Weekends</strong></th>
+										<th width= "5%" align="center" valign="middle" class="centerth"><strong>Duration</strong></th>
+									</tr>
+								</thead>
+								<tbody> </tbody>
+							</table>
+							</div>
+							<br/>
+							<br/>
+							<button id="closeTskBtn" type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+						</div>
+					</div>
+				</div>
+				
+				<div class="modal fade bs-edit-esow-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myEditLargeModalLabel">
+					<div class="modal-dialog modal-lg" role="document">
+						<div class="modal-content">
+						
+							<div class="modal-header">
+						        <button type="button" class="close" data-dismiss="modal">&times;</button>
+						        <h4 class="modal-title modal-title-success">Engineer Scope of Work</h4>
+						    </div>
+						    <div class="modal-body">
+							    <div class="uir-field-wrapper" data-field-type="textarea">
+							        <textarea id="custbody_op_sow_fs_initValue" style="display:none"></textarea>
+									<div class="centere" style="height:320px;">
+									 <span id="custbody_op_sow_fs" style="">
+										<div data-font-family="" data-font-size="" id="exthtmlfield-custbody_op_sow_fs" name="exthtmlfield-custbody_op_sow_fs" style="padding-bottom: 5px;"></div>
+										<input id="custbody_op_sow" name="custbody_op_sow" type="hidden" value="" />
+										<script type="text/javascript">
+											NLExtHtmlEditor.createEditor('custbody_op_sow_fs','custbody_op_sow',
+												document.getElementById('custbody_op_sow_fs_initValue').value,false,
+												"this.isvalid=validate_textfield_maxlen(this,1000000,true,true);if (!this.isvalid) {getHtmlEditor('custbody_op_sow').setFocus(); return false;}",
+												128,document.forms['main_form'].elements['custbody_op_sow'],
+												'FFFFE5',true,true,false,
+												'99%',320,false);
+											setTimeout(function(){jQuery("iframe[name='ext-gen55']").css('width','100%')},2000);
+										</script>
+									 </span>
+									</div>
+								</div>
+						    </div>
+						    <div class="modal-footer" style="margin-top:32px">
+						        <button id="closeBtnESOW" type="button" class="btn btn-default" data-dismiss="modal" onClick="setWindowChanged(window, false);">Cancel</button>
+								<button id="acceptBtnESOW" type="button" class="btn btn-info" data-dismiss="modal" onClick="saveESOW()">Accept</button>
+						    </div>
+
+						</div>
+					</div>
+				</div>
+				
+				<div id="reactivatetaskmodal" class="modal fade bs-reactivatetask-modal-sm" tabindex="-1" role="dialog" aria-labelledby="myReactivateTaskModalLabel">
+					<div class="modal-dialog modal-sm" role="document">
+						<div class="modal-content">
+						
+							<div class="modal-header">
+						        <button type="button" class="close" data-dismiss="modal">&times;</button>
+						        <h4 class="modal-title modal-title-success">ReActivate Task</h4>
+						    </div>
+						    <div class="modal-body">
+						    	<p id="reactivation-task-title"></p>
+							    <label>Reason to re-activate (be specific)</label>
+							    <textarea rows="8" style="width:100%;" id="reactivation-note"></textarea><br>
+						    </div>
+						    <div class="modal-footer" style="margin-top:32px">
+						    	<!--  <span class="label label-danger" style="font-size:14px">Testing</span>  -->
+						    	<span class="label label-success" style="font-size:14px">Working</span>
+						        <button id="closeBtnRAT" type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+								<button id="acceptBtnRAT" type="button" class="btn btn-info" data-dismiss="modal" onClick="setTimeout(reactivateTaskProcess,10)">Accept</button>
+						    </div>
+
+						</div>
+					</div>
+				</div>
+				
+				<div id="canceltaskmodal" class="modal fade bs-canceltask-modal-sm" tabindex="-1" role="dialog" aria-labelledby="myCancelTaskModalLabel">
+					<div class="modal-dialog modal-sm" role="document">
+						<div class="modal-content">
+						
+							<div class="modal-header">
+						        <button type="button" class="close" data-dismiss="modal">&times;</button>
+						        <h4 class="modal-title modal-title-success">Cancel Task</h4>
+						    </div>
+						    <div class="modal-body">
+						    	<p id="cancelaltion-task-title"></p>
+							    <label>Reason to cancel (be specific)</label>
+							    <textarea rows="8" style="width:100%;" id="cancelation-note"></textarea><br>
+						    </div>
+						    <div class="modal-footer" style="margin-top:32px">
+						    	<!--  <span class="label label-danger" style="font-size:14px">Testing</span>  -->
+						    	<span class="label label-success" style="font-size:14px">Working</span>
+						        <button id="closeBtnCAT" type="button" class="btn btn-default" data-dismiss="modal" onClick="clearCancelingTask()">Cancel</button>
+								<button id="acceptBtnCAT" type="button" class="btn btn-info" data-dismiss="modal" onClick="setTimeout(cancelTaskProcess,10)">Accept</button>
+						    </div>
+
+						</div>
+					</div>
+				</div>
+				
+				
+			</div>
+		</div>
+		<div id="whynotTab" class="row" style="margin:6px 12px; display:none">
+			<div id="whynotLeft" class="col-sm-1">
+				<table style="display:none;">
+					<tr>
+						<td class="band">.band </td>     	 
+						<td class="band">.band </td> 
+						<td class="band">.band  </td> 
+						<td class="band">.band </td> 
+						<td class="band">.band </td> 
+					</tr>
+					<tr>
+						<td class="band-after">.band-after </td>     	 
+						<td class="band-after">.band-after </td> 
+						<td class="band-after">.band-after </td> 
+						<td class="band-after">.band-after </td> 
+						<td class="band-after">.band-after </td> 
+					</tr>
+					<tr>
+						<td class="band-today">.band-today </td>     	 
+						<td class="band-today">.band-today </td> 
+						<td class="band-today">.band-today </td> 
+						<td class="band-today">.band-today </td> 
+						<td class="band-today">.band-today </td> 
+					</tr>
+					<tr>
+						<td class="band-onweek">.band-onweek </td>     	 
+						<td class="band-onweek">.band-onweek </td> 
+						<td class="band-onweek">.band-onweek </td> 
+						<td class="band-onweek">.band-onweek </td> 
+						<td class="band-onweek">.band-onweek </td> 
+					</tr>
+					<tr>
+						<td class="band-cancel">.band-cancel </td>     	 
+						<td class="band-cancel">.band-cancel </td> 
+						<td class="band-cancel">.band-cancel </td> 
+						<td class="band-cancel">.band-cancel </td> 
+						<td class="band-cancel">.band-cancel </td> 
+					</tr>
+					<tr>
+						<td class="band-ontime">.band-ontime </td>     	 
+						<td class="band-ontime">.band-ontime </td> 
+						<td class="band-ontime">.band-ontime </td> 
+						<td class="band-ontime">.band-ontime </td> 
+						<td class="band-ontime">.band-ontime </td> 
+					</tr>
+					<tr>
+						<td class="band-passdue">.band-passdue</td>     	 
+						<td class="band-passdue">.band-passdue </td> 
+						<td class="band-passdue">.band-passdue </td> 
+						<td class="band-passdue">.band-passdue </td> 
+						<td class="band-passdue">.band-passdue </td> 
+					</tr>
+				</table>
+			</div>
+			<div class="col-sm-12">
+				<button type="button" class="btn btn-default pull-right" onClick="$('#whynotTab').slideToggle('fast')"><span class="glyphicon glyphicon-minus-sign" aria-hidden="true"></span></button>
+				<h4>Predecessor's Task Dependency Chain</h4>
+				<div id="whynotTable"></div>
+			</div>
+		</div>
+		
+		<div id="whynextTab" class="row" style="margin:6px 12px; display:none">
+			<div id="whynextLeft" class="col-sm-1" style="display:none"></div>
+			<div class="col-sm-12">
+				<button type="button" class="btn btn-default pull-right" onClick="$('#whynextTab').slideToggle('fast')"><span class="glyphicon glyphicon-minus-sign" aria-hidden="true"></span></button>
+				<h4>Successor's Task Dependency Chain</h4>
+				<div id="whynextTable"></div>
+				<a class="btn btn-warning btn-sm pull-right" onClick="$('#branch-graph').slideToggle('fast');">Successor Task Diagram</a>
+			</div>
+		</div>
+		
+		<div id="correctionsTab" class="row" style="margin:6px 12px; display:none">
+			<div class="col-sm-12">
+				<button type="button" class="btn btn-default pull-right" onClick="$('#correctionsTab').slideToggle('fast')"><span class="glyphicon glyphicon-minus-sign" aria-hidden="true"></span></button>
+				<h4>Corrections Task Start Dates</h4>
+				<div id="correctionsTable"></div>
+			</div>
+		</div>
+		
+		<div id="wrike-tab" class="row" style="margin:12px 12px;">
+			<!-- <iframe id="wrike-iframe1" src="https://www.wrike.com/workspace.htm?view=task#path=folder&id=124171318&a=45142&c=list&t=124171319&so=10&sd=0" width="99%" height="600"></iframe> -->
+			<!-- <iframe id="wrike-iframe1" src="https://www.wrike.com/open.htm?id=124171319" width="99%" height="600"></iframe> -->
+			<!-- <iframe id="wrike-iframe2" src="https://www.wrike.com/workspace.htm#path=folder&id=-1&a=45142&c=list&ot=124171319&so=5&sd=0" width="99%" height="600"></iframe>  -->
+		</div>
+		<style>
+		.commtask0 {
+			background: #2BC0E4; /* fallback for old browsers */
+			background: -webkit-linear-gradient(to left, #2BC0E4 , #EAECC6); /* Chrome 10-25, Safari 5.1-6 */
+			background: linear-gradient(to left, #2BC0E4 , #EAECC6); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+        }
+        .commtask1 {
+			background: #4CA1AF; /* fallback for old browsers */
+			background: -webkit-linear-gradient(to left, #4CA1AF , #C4E0E5); /* Chrome 10-25, Safari 5.1-6 */
+			background: linear-gradient(to left, #4CA1AF , #C4E0E5); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+		}
+		.commtask2 {
+			background: #8e9eab; /* fallback for old browsers */
+			background: -webkit-linear-gradient(to left, #8e9eab , #eef2f3); /* Chrome 10-25, Safari 5.1-6 */
+			background: linear-gradient(to left, #8e9eab , #eef2f3); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+        }
+        .commtask {
+			background: #b7d7e8; /* fallback for old browsers */
+			margin: 12px 12px; 
+			/* border: 2px solid blue; */
+			padding: 3px;
+		}
+		.commtask-left {
+			background: #cfe0e8; /* fallback for old browsers */
+			height:560px; /* border:1px dotted green; */
+			padding-top: 6px;
+		}
+		.commtask-right {
+			/* background: #f0f0f0; /* fallback for old browsers */
+			/* margin:3px 3px; */ 
+			height:560px; /* border:1px dotted green; */ 
+			overflow:auto; 
+			background: #eafbf8;
+		}
+		.commtask-upfiles, .commtask-addmsg {
+			margin:3px 0;
+			padding:6px;
+			height:180px; 
+			border:1px dotted green; 
+			backgorund:#EEF;
+		}
+		.commtask-addmsg { height: 210px }
+		.btn-file {
+		    position: relative;
+		    overflow: hidden;
+		}
+		.btn-file input[type=file] {
+		    position: absolute;
+		    top: 0;
+		    right: 0;
+		    min-width: 100%;
+		    min-height: 100%;
+		    font-size: 100px;
+		    text-align: right;
+		    filter: alpha(opacity=0);
+		    opacity: 0;
+		    outline: none;
+		    background: white;
+		    cursor: inherit;
+		    display: block;
+		}
+		</style>
+		<div id="task-communication" class="row commtask" style="display:none">
+			<div class="col-sm-12">
+				<div class="col-sm-3"><h4>Communication <a href="#" target="_blank" onClick="var hf=$(this).attr('href'), tt=$('#tasktitle_toup').html(); copyToClipboard('Workforce '+String.fromCharCode(34)+hf+String.fromCharCode(34)+'\n'+tt+''); /* '<a href='+String.fromCharCode(34)+hf+String.fromCharCode(34)+'>WorkForce: '+tt+'</a>' */$('#wffooter-uright > li:nth-child(2)').html('Permalink copied...'); setTimeout(function(){$('#wffooter-uright > li:nth-child(2)').html('.')},2900); return false"><span class="glyphicon glyphicon-link text-default pull-right" aria-hidden="true"></span></a></h4></div>
+				<div class="col-sm-9"><h4 id="tasktitle_toup" class="text-danger"></h4></div>
+			</div>
+			<div class="col-sm-3 commtask-left">
+				<div id="add-message" class="commtask-addmsg" style="">
+					<h4>New Message</h4>
+					<textarea id="new-msg-cont" rows="8" style="width:100%"></textarea>
+					<button class="btn btn-sm button" onClick="sendMessageTask(); return false">Send</button>
+					<input type='hidden' value='' id='addmention-id' onChange="return insert_mention()" />
+					<span style="float:right;">Mention <em style="font-size:18px">@</em><input id="addmention-name" class='employeeSelectFly inputs' type='text' value='' onClick='selectassignee(this)' data-onchg='addmention-id' style='width:98px;'></span>					
+				</div>
+				<!--  <div id="add-arroba" class="commtask-addmsg" style="height:82px">
+					<h5>Add Mention</h5>
+					<input type='hidden' value='' id='addmention-id' onChange="return insert_mention()" />
+					<input id="addmention-name" class='employeeSelectFly inputs' type='text' value='' onClick='selectassignee(this)' data-onchg='addmention-id' style='width:168px;'>
+					<button class="btn btn-sm button" onClick="return insert_mention()">Add</button>
+				</div> -->
+				<div id="upload-files" class="commtask-upfiles" style="">
+				<h5>Upload Files to Task</h5>
+					<!-- End NetSuite FORM --></form><form id="leirags_form_upload">
+					<input type='file' name="files" id="leirags_fileup" accept='*' onchange='leirags_upload_file_on_task(event)' onchange2='openFile(event)'><small class="pull-right text-info txt-info" style="border:1px solid #FFF; padding:3px;">10mb max.</small>
+					<input type='hidden' readonly name='action' id="upload-action-type" data-screenshot='addScreenShotOnTask' data-upfile='addFileOnTask' value="none"/>
+					<input type='hidden' readonly name='WhichSalesOrder' value='' id="leirags_fileup_so"/>
+					<input type='hidden' readonly name='SOName' value='Test Folder' id="leirags_fileup_soname"/>
+					<input type='hidden' readonly name='WhichTask' value='' id="leirags_fileup_task"/>
+					<input type='hidden' readonly name='TaskTitle' value='Task Title' id="leirags_fileup_tasktitle"/>
+					<input type='hidden' readonly name='filename' value='thename' id="leirags_fileup_filename"/>
+					<input type='hidden' readonly name='assignee' value='thename' id="leirags_fileup_assignee"/>
+					
+				</form><!-- End Upload FORM -->
+				<br>
+				<div id='upload-file-preview'></div>
+				<script>
+				function showUploadFileInputs(sh){
+					var tpn = (sh)? 'text':'hidden'; 
+					$('#leirags_fileup_so').attr('type',tpn);
+					$('#leirags_fileup_soname').attr('type',tpn);
+					$('#leirags_fileup_task').attr('type',tpn);
+					$('#leirags_fileup_tasktitle').attr('type',tpn);
+					$('#leirags_fileup_filename').attr('type',tpn);
+					$('#leirags_fileup_assignee').attr('type',tpn);
+				}
+				function getFileExtension3(filename) {
+					console.info('filename',filename);  
+					return filename.slice((filename.lastIndexOf(".") - 1 >>> 0) + 2);
+					}
+				function chunkString(str, length) {
+					  return str.match(new RegExp('.{1,' + length + '}', 'g'));
+					}
+				var file64;
+				  var openFile = function(event) {
+				    var input = event.target;
+				    var reader = new FileReader();
+				    reader.onload = function(){
+				      // var dataURL = reader.result;
+				      // var output = document.getElementById('upload-file-preview');
+				      // output.src =  dataURL;
+				      //var Trunks = JSON.stringify(chunkString(String(dataURL),512));
+				      //var Eme = Trunks.join('<br>');
+				      //$('#upload-file-preview').html( Eme );
+				      file64 = reader.result;
+				      var filename = input.files[0].name;
+					    loaderStart();
+					    // LeirAGS_Upload('Test Folder', '12345', filename, getFileExtension3(filename),  file64.split(',').pop()  );
+					    salesorder ='Test Folder';
+					    soid = '1234567';
+					    taskid = '235467';
+					    tasktitle = 'Task Title';
+					    ftype = getFileExtension3(filename);
+					    uploadFiletoNetSuite('Msg Title', 'Msg Uploading File', salesorder, soid, taskid, tasktitle, filename, ftype, file64);
+					    loaderEnd();
+				    };
+				    reader.readAsDataURL(input.files[0]);
+				    // reader.readAsText(input.files[0]);
+				    // reader.readAsArrayBuffer(input.files[0]);
+				  };
+				  
+				  function leirags_upload_file_on_task(evt){
+					  evt.preventDefault();
+					  var oFile = document.getElementById("leirags_fileup").files[0];
+			          if (oFile.size > 1e7) // 10 mb for bytes.
+			          {
+			                alert("File size must under 10mb !");
+			                return false;
+			          }
+			          $('#upload-action-type').val("addFileOnTask");
+					  var taskIdmsg=$('#leirags_fileup_task').val();
+					  if(!taskIdmsg) { $('#leirags_fileup').val(''); $('#upload-file-preview').html('Not Valid Task !'); return false;}
+					  loaderStart();
+					  $('#upload-file-preview').html('Processing...');
+					  setTimeout(function(){
+					      var formData = new FormData( $('#leirags_form_upload')[0] );
+					      console.info(formData);
+						   $.ajax({
+						       url: getUrl().Cabinet,
+						       type: 'POST',
+						       data: formData,
+						       async: false,
+						       cache: false,
+						       contentType: false,
+						       enctype: 'multipart/form-data',
+						       processData: false,
+						       success: function (response) {
+						         data = CleanResponseData( response );
+						         $('#leirags_fileup').val(''); // Clear file uploaded
+						         if (data.file != 'Error Not Saved'){
+						        	 if(data.fileId) {
+						        		file_link = '<h5>File Uploaded click link to view. <a target="_blank" href="'+data.fileurl+'">'+data.filename+'</a></h5>';
+						        		$('#upload-file-preview').html(file_link);
+						        		file_link = '<p><a target="_blank" href="'+data.fileurl+'">'+data.filename+'</a></p>';
+						        		file_link += data.preview;
+						        		var old_msg = $('#new-msg-cont').val();
+						        		old_msg = old_msg.trim(); // Trim spacess...
+						        		old_msg.replace(/ {2,}/g,' '); // Quit double spaces..
+						        		$('#new-msg-cont').val( old_msg + ((old_msg)?"<br>":"") + file_link);
+						        		insert_mention();
+						        		sendMessageTask();
+						        		//writeNoteOntask(data.taskId, 'File uploaded',' ' + file_link, {} );
+						        		//setTimeout(function(){getTaskNotes(data.taskId,0,null);}, 100);
+						        	 }
+						         }
+						         loaderEnd();
+						       }
+						   });
+					  }, 200);
+					   return false;
+				  }
+				</script>
+				</div>
+				<div id="copypaste-images" class="commtask-upfiles" style="height:90px;">
+					<div style="width: 50%; height: 100%; background: #DDD; font-size:18px; color: #FFF; float:left;"  
+						onMouseOver="this.style.color='#DDD'; this.style.background='#FFF'; this.style.border='1px dotted #33F';"
+						onMouseOut ="this.style.color='#FFF'; this.style.background='#DDD'; this.style.border='none';"
+						id="pasteImageTarget">Click and paste images here.</div>
+					<img alt="" src="" id="screen-shot-preview" style="width:50%; height: 100%;">
+					<script>
+						document.getElementById("pasteImageTarget").
+						addEventListener("paste", handleImagePaste);
+						function handleImagePaste(e) {
+						    for (var i = 0 ; i < e.clipboardData.items.length ; i++) {
+						        var item = e.clipboardData.items[i];
+						        //console.log("Item: " + item.type);
+						        if (item.type.indexOf("image") != -1) {
+						        	var LeirAGS_Buffer = item.getAsFile();
+						            procScreenShot(LeirAGS_Buffer);
+						        } else {
+						            //console.log("Discarding image paste data");
+						        }
+						    }
+						}
+						function procScreenShot(fileBlob){
+							var reader = new FileReader(); 
+							reader.onload = function(e) {
+								var rawData = reader.result; 
+								LeirAGS_upload_File(rawData); 
+							} 
+							reader.readAsBinaryString(fileBlob);
+						}
+						function LeirAGS_upload_File(file) {
+							//console.info('url:',getUrl().Cabinet);
+						    var xhr  = window.XMLHttpRequest?new XMLHttpRequest():new ActiveXObject("Microsoft.XMLHTTP");
+						    xhr.upload.onprogress = function(e) {
+						        var percentComplete = (e.loaded / e.total) * 100;
+						        console.log("Uploaded: " + percentComplete + "%");
+						    };
+						    xhr.onload = function() {
+						        if (xhr.status == 200) {
+						        	//console.info(xhr.responseText);
+						        	// return ;
+						            //alert("Sucess! Upload completed.\n\n" + xhr.responseText);
+						        	data = CleanResponseData( xhr.responseText );
+							         $('#leirags_fileup').val(''); // Clear file uploaded
+							         if (data.file != 'Error Not Saved'){
+							        	 if(data.fileId) {
+							        		file_link = '<h5>File Uploaded click link to view. <a target="_blank" href="'+data.fileurl+'">'+data.filename+'</a></h5>';
+							        		$('#upload-file-preview').html(file_link);
+							        		file_link = '<p><a target="_blank" href="'+data.fileurl+'">'+data.filename+'</a></p>';
+							        		file_link += data.preview;
+							        		var old_msg = $('#new-msg-cont').val();
+							        		old_msg = old_msg.trim(); // Trim spacess...
+							        		old_msg.replace(/ {2,}/g,' '); // Quit double spaces..
+							        		$('#new-msg-cont').val( old_msg + ((old_msg)?"<br>":"") + file_link);
+							        		insert_mention();
+							        		sendMessageTask();
+							        	 }
+							         }
+						        } else {
+						            alert("Error! Upload ScreenShot failed");
+						        }
+						    };
+						    xhr.onerror = function() {
+						        alert("Error! Upload ScreenShot failed. Can not connect to server.");
+						    };
+						    xhr.open("POST", getUrl().Cabinet+'action=addScreenShotOnTask', true);
+						    $('#upload-action-type').val("addScreenShotOnTask");
+						    var formData = new FormData( $('#leirags_form_upload')[0] );
+						    formData.append("screenshot", btoa(file) );
+						    xhr.send(formData);
+						}
+					</script>
+				</div>
+			</div>
+			<div id="task-messages" class="col-sm-9 commtask-right" style="font-size:10pt">
+				<div class="col-sm-12 tskmsg" style="height:48px">
+					<div class="col-sm-2 msg-avatar">Ariel</div>
+					<div class="col-sm-8 msg-content">Este mensaje es de ejemplo</div>
+					<div class="col-sm-1 msg-action"><a class="btn btn-default btn-sm button">A</a></div>
+				</div>
+				<div class="col-sm-12 tskmsg" style="height:48px">
+					<div class="col-sm-2 msg-avatar">Ariel</div>
+					<div class="col-sm-8 msg-content">Este mensaje es de ejemplo</div>
+					<div class="col-sm-1 msg-action"><a class="btn btn-default btn-sm button">A</a></div>
+				</div>
+			</div>
+		</div>
+		
+		<div id="branch-graph" class="row" style="border:1px dotted blue; margin:12px 12px; height:610px; display:none">
+			<script>
+				WF_wh('<iframe id="branch-graph-cont" frameBorder="0" data-d3ver="v4" src="/core/media/media.nl?id=6569912&c=3461650&h=f5bc03493dfe022510bf&mv=j0pmeh08&_xt=.html" width="99%" height="600"></iframe>',
+					  '<iframe id="branch-graph-cont" frameBorder="0" data-d3ver="v4" src="/core/media/media.nl?id=10384499&c=3461650&h=2bdc861da82b375a73cd&_xt=.html" width="99%" height="600"></iframe>');
+			</script>
+		</div>
+		
+		<!-- div id="branch-graph" class="row" style="margin:12px 12px; height:610px">
+			<iframe id="branch-graph-cont" data-d3ver="v3" src="/core/media/media.nl?id=6569513&c=3461650&h=821a7b809eeea44abfd2&mv=j0o6sgw0&_xt=.html" width="99%" height="600"></iframe>
+		</div>
+		
+		<div id="branch-graph-vert" class="row" style="margin:12px 12px; height:610px">
+			<iframe id="branch-graph-cont-vert" src="/core/media/media.nl?id=6569612&c=3461650&h=26e4b616629dd67357c8&mv=j0oj3v2w&_xt=.html" width="99%" height="600"></iframe>
+		</div -->
+		
+		<!-- div id="branch-graph-circ" class="row" style="margin:12px 12px; height:610px">
+			<iframe id="branch-graph-cont-circ" src="/core/media/media.nl?id=6569613&c=3461650&h=43af309329af69d38677&mv=j0ok0w4g&_xt=.html" width="99%" height="600"></iframe>
+		</div -->
+		
+	</div> <!-- Level 00< -->
+	<br/>
+	<br/>
+	<div id="wffooter">
+		<div class="col-sm-4">
+			<ul class="ul_text" id="wffooter-uleft">
+				<!-- li><label for="wf_gui_debug"><input type="checkbox" id="wf_gui_debug"> Debug</label></li>
+				<li><label for="wf_gui_debug_ajax"><input type="checkbox" id="wf_gui_debug_ajax"> Ajax</label></li>
+				<li><label for="wf_gui_debug_ajax_data"><input type="checkbox" id="wf_gui_debug_ajax_data"> Ajax Data</label></li -->
+			</ul>
+		</div>
+		<div class="col-sm-4">
+			<ul class="ul_text" id="wffooter-umiddle">
+				<!--  <li><label for="wf_gui_debug_a"><input type="radio" id="wf_gui_debug_a"> Tree Data </label></li> -->
+				<li><label for="wf_gui_debug_b"><input type="radio" id="wf_gui_debug_b"> Dependency Chain</label></li>
+				<li><label for="wf_gui_debug_c"><input type="radio" id="wf_gui_debug_c"> Top Menu bar</label></li>
+			</ul>
+		</div>
+		<div class="col-sm-4">
+			<ul class="ul_text" id="wffooter-uright">
+				<li><a href="#" class="buttton">.</a></li>
+				<li><a href="#" class="buttton">.</a></li>
+				<li id="notif-stat">...</li>
+			</ul>
+		</div>
+	</div>
+<!-- Modal -->
+<div id="modalAssignee" class="hide"></div>
+
+	<!-- Latest compiled and minified JavaScript -- >
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.1/js/bootstrap-select.min.js"></script>
+
+	<!-- (Optional) Latest compiled and minified JavaScript translation files -->
+	<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.1/js/i18n/defaults-*.min.js"></script> -->
+
+	<!-- Ajax functions to update, move, change tasks information -->
+	
+	<script src="{{WorkForce-Core-JS}}"></script>
+	
+	<!-- Review: 2017-Feb-05 01:58AM --><!-- Review: 2017-Feb-09 05:59PM --><!-- Review: 2017-Feb-09 11:47PM -->
+	<!-- Review: 2017-Feb-23 04:40AM --><!-- Review: 2017-Feb-23 06:32AM --><!-- Review: 2017-Feb-23 06:42AM -->
+	<!-- Review: 2017-Feb-24 06:42PM --><!-- Review: 2017-Feb-25 05:02PM --><!-- Review: 2017-Feb-25 08:20PM -->
+	<!-- Review: 2017-Feb-26 08:54AM --><!-- Review: 2017-Feb-26 09:12AM --><!-- Review: 2017-Feb-26 01:53PM -->
+	<!-- Review: 2017-Feb-27 11:47AM --><!-- Review: 2017-Feb-27 03:08PM --><!-- Review: 2017-Feb-27 03:42PM -->
+	<!-- Review: 2017-Feb-28 09:00AM --><!-- Review: 2017-Feb-28 11:59AM --><!-- Review: 2017-Feb-28 01:16PM -->
+	<!-- Review: 2017-Feb-28 04:00PM --><!-- Review: 2017-Feb-28 10:28PM -->
+	
+	<!-- Review: 2017-Mar-01 04:33PM --><!-- Review: 2017-Mar-01 07:44PM --><!-- Review: 2017-Mar-02 00:03AM -->
+	<!-- Review: 2017-Mar-02 02:13AM --><!-- Review: 2017-Mar-02 02:21AM --><!-- Review: 2017-Mar-02 03:01AM -->
+	<!-- Review: 2017-Mar-02 11:44AM --><!-- Review: 2017-Mar-02 01:52PM --><!-- Review: 2017-Mar-02 02:21AM -->
+	<!-- Review: 2017-Mar-02 04:11AM --><!-- Review: 2017-Mar-02 05:47AM --><!-- Review: 2017-Mar-02 08:40PM -->
+	<!-- Review: 2017-Mar-03 02:30AM --><!-- Review: 2017-Mar-03 03:29AM --><!-- Review: 2017-Mar-03 06:53PM -->
+	<!-- Review: 2017-Mar-05 08:35AM --><!-- Review: 2017-Mar-05 09:22AM --><!-- Review: 2017-Mar-05 09:58AM -->
+	<!-- Review: 2017-Mar-05 02:32PM --><!-- Review: 2017-Mar-05 06:42PM --><!-- Review: 2017-Mar-05 07:15PM -->
+	<!-- Review: 2017-Mar-06 11:24PM --><!-- Review: 2017-Mar-09 07:06AM --><!-- Review: 2017-Mar-09 09:13AM -->
+	<!-- Review: 2017-Mar-09 09:50AM --><!-- Review: 2017-Mar-09 11:33AM --><!-- Review: 2017-Mar-09 12:23PM -->
+	<!-- Review: 2017-Mar-10 03:25AM --><!-- Review: 2017-Mar-10 11:47AM --><!-- Review: 2017-Mar-10 12:07PM -->
+	<!-- Review: 2017-Mar-10 03:27PM --><!-- Review: 2017-Mar-12 01:48PM --><!-- Review: 2017-Mar-12 04:04PM -->
+	<!-- Review: 2017-Mar-14 12:45AM --><!-- Review: 2017-Mar-14 04:51AM --><!-- Review: 2017-Mar-15 01:29PM -->
+	<!-- Review: 2017-Mar-16 06:22PM --><!-- Review: 2017-Mar-17 07:02AM --><!-- Review: 2017-Mar-19 09:14PM -->
+	<!-- Review: 2017-Mar-20 00:04PM --><!-- Review: 2017-Mar-23 09:14AM --><!-- Review: 2017-Mar-23 04:36PM -->
+	<!-- Review: 2017-Mar-25 09:41PM --><!-- Review: 2017-Mar-31 08:54PM -->
+	
+	<!-- Review: 2017-Apr-02 08:15AM --><!-- Review: 2017-Apr-05 02:13PM --><!-- Review: 2017-Apr-06 10:43AM -->
+	<!-- Review: 2017-Apr-07 07:56AM --><!-- Review: 2017-Apr-07 07:16PM --><!-- Review: 2017-Apr-08 11:40AM -->
+	<!-- Review: 2017-Apr-09 01:13PM --><!-- Review: 2017-Apr-10 04:49AM --><!-- Review: 2017-Apr-10 12:13PM -->
+	<!-- Review: 2017-Apr-11 09:15PM --><!-- Review: 2017-Apr-16 07:31PM --><!-- Review: 2017-Apr-17 07:11PM -->
+	<!-- Review: 2017-Apr-19 04:39PM --><!-- Review: 2017-Apr-20 09:18AM --><!-- Review: 2017-Apr-20 11:34PM -->
+	<!-- Review: 2017-Apr-20 06:36PM --><!-- Review: 2017-Apr-21 12:26PM --><!-- Review: 2017-Apr-21 04:31PM -->
+	<!-- Review: 2017-Apr-23 06:00AM -->
+	<!-- Review: 2017-Apr-24 03:41PM -->
+	<!-- Review: 2017-Apr-24 08:40PM Fix aknowledged, add notifications -->
+	<!-- Review: 2017-Apr-26 11:24AM Fix gocomm and other small bugs  -->
+	<!-- Review: 2017-Apr-26 01:22PM Add link to stats buttons  -->
+	<!-- Review: 2017-Apr-26 06:32PM Add rason to cancel and email to assigneed  -->
+	<!-- Review: 2017-Apr-29 03:23AM Corrections to Duration 1  -->
+	<!-- Review: 2017-Apr-29 12:45PM Add feature WF call whit &ifrmcntnr=T  -->
+	<!-- Review: 2017-Apr-29 12:45PM Fix Corrections -->
+	<!-- Review: 2017-May-02 07:18PM Add assignee on messsages -->
+	<!-- Review: 2017-May-04 12:32PM Add messsages type icoming and outgoin, enable ESOW to Provisioning and FullAccess -->
+	<!-- Review: 2017-May-04 05:06PM Add myteam filter to tab My Work -->
+	<!-- Review: 2017-May-05 08:39AM Add Outgoin messages logic in WF_Chat -->
+	<!-- Review: 2017-May-06 08:28PM Add WF_Chat Skin GOOD -->
+	<!-- Review: 2017-May-09 07:31PM Add NetWork Design and fix some bugs in getallmywork dates -->
+	<!-- Review: 2017-May-11 11:18AM Add Deviation to MyWork -->
+	<!-- Review: 2017-May-11 03:01PM Add Template to GetSalesOrdersbyID  mywork-task-template -->
+	<!-- Review: 2017-May-12 07:00AM Add Cache to Build Tree View (acelerated) -->
+	<!-- Review: 2017-May-16 07:52AM Add Visual Object apply changes, fix staff and departments -->
+	<!-- Review: 2017-May-21 11:08PM Fix Reload SO after changes in ACK, Duration, Add Configuration Circuits -->
+	<!-- Review: 2017-May-22 07:41PM Fix change assigned on MyWork, Cursor Pointer on Items and Services Address -->
+	<!-- Review: 2017-May-24 01:27PM Fix Font Size for Communicator and Notifications other phase mispelling -->
+	<!-- Review: 2017-May-24 03:23PM Add permalink to  -->
+	<!-- Review: 2017-May-24 05:53PM Add sales orders list to be sort by deliveri date correctly  -->
+	<!-- Review: 2017-May-26 01:43PM Add filter to SO tasks WOW better options, issue some tasks dont open communicator, fixed  -->
+	<!-- Review: 2017-May-27 08:16AM Change margins in SOW, ESOW, y Data Sales order, increse font-size to 9pt  -->
+	<!-- Review: 2017-May-28 01:00AM Add functionality WF_Enable_Notification_On_Completed  -->
+</body>
+</html>

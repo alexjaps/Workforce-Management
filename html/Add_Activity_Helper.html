@@ -1,0 +1,3357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+	<title>Add Activity </title>
+
+	<!-- SANDBOX_MARK_PRODUCTION -->
+
+	<script>
+		WF_AddAct_Window = (self == top);
+		WF_AddAct_Close_Status = 'Cancelled';
+		function WF_AddAct_End(){
+			if (!WF_AddAct_Window) {
+				window.parent.document.body.style.overflow = "visible";
+				if (WF_AddAct_Close_Status == 'Task created successfuly.'){
+					window.parent.WF_Refresh_Current_SO();
+				}
+			}
+			/*
+			if (!WF_AddAct_Window)
+				console.log('Add Activity was open on iframe');
+			else
+				console.log('Add Activity was open on window');
+			*/
+			console.log('Add Activity was',WF_AddAct_Close_Status);
+		}
+		
+		WF_taskStructure = {
+				'taskProcess': [],
+				'taskSubProcess': [], 
+				'taskTypes': [], 
+				'taskTypesDepend': [], 
+				'taskKpiAssigned': [],
+				'taskKpiAssignedCity': [],
+				'taskKpiAssignedCountry': [],
+		};
+		processSelected_Prev = 0;
+		
+		tasksStructureTreeBraches = []; // Final Structure to Create on process....
+		
+		not_successor_need = false;
+		predecessorTask_new = 0;
+		successorTask_new = 0;
+		predecessorTask_new_data = {};
+		successorTask_new_data = {};
+		item_salesorder_data = {id:0, type:'undefined'};
+		WF_Sales_Order_Record = {};
+		LeirAGS_NS_Utils.setformat(dateformat);
+		
+		var LeirAGS_Visual_Process = { 
+				LeirAGS_Monitoring: null, 
+				LeirAGS_Monitoring_cb: null, 
+				obj_pro_log: 0, 
+				obj_pro_row: 0, 
+				obj_pro_wait: 0, 
+				obj_pro_wait_limit: 100,
+				Execute_Collector_Results: []
+		};
+		
+	</script>
+	<style>
+	.ags_menu { }
+	.ags_menu div { height:148px; }
+	.ags_menu div a { vertical-align: middle; text-align:center; }
+	.ags_menu div a:hover { color: red; text-decoration: none; }
+	.ags_menu div a h2 { height:76px; }
+	.notselectable { background: #CCB !important; /* #ADE; Casi como Info, #AEA Green #CEC Verde 2  #CED casi success */}
+	.selectAGS{ margin:6px; border: 1px dotted green; background: #DED; }
+	</style>
+</head>
+<body onunload="WF_AddAct_End()">
+
+  <div id="loading-txt" class="container" style="width:100%; border:1px dotted green">
+	<h5>WorkForce Management</h5>
+	<p>Loading...</p>
+  </div>
+
+<div class="divisor" style="clear:both"></div>
+<div class="container" id="add-process-tasks" style="width:100%; display:none;">
+	<div class="row form-group">
+        <div class="col-xs-12">
+            <ul class="nav nav-pills nav-justified thumbnail setup-panel" style="margin-left:0px;">
+                <li class="active"><a href="#step-1">
+                    <h4 class="list-group-item-heading">Step 1</h4>
+                    <p class="list-group-item-text">Predecessor</p>
+                </a></li>
+                <li class="disabled"><a href="#step-2">
+                    <h4 class="list-group-item-heading">Step 2</h4>
+                    <p class="list-group-item-text">Process</p>
+                </a></li>
+                <li class="disabled"><a href="#step-3">
+                    <h4 class="list-group-item-heading">Step 3</h4>
+                    <p class="list-group-item-text">Sub-Process</p>
+                </a></li>
+                <li class="disabled"><a href="#step-4">
+                    <h4 class="list-group-item-heading">Step 4</h4>
+                    <p class="list-group-item-text">Successor</p>
+                </a></li>
+                <li class="disabled"><a href="#step-5">
+                    <h4 class="list-group-item-heading">Step 5</h4>
+                    <p class="list-group-item-text">Item & Address</p>
+                </a></li>
+                <li class="disabled"><a href="#step-6">
+                    <h4 class="list-group-item-heading">Review</h4>
+                    <p class="list-group-item-text">Review</p>
+                </a></li>
+                <li class="disabled"><a href="#step-7">
+                    <h4 class="list-group-item-heading">Apply</h4>
+                    <p class="list-group-item-text">Apply</p>
+                </a></li>
+            </ul>
+        </div>
+	</div>
+	
+    <div class="row setup-content panel-info" id="step-1">
+        <div class="col-xs-12">
+            <div class="col-md-12 well text-center">
+                <!-- h3> Predecessor Task</h3 -->
+                <div class="row">
+			  		<div class="pull-right" style="margin:6px;">Filter: <input type="text" class="filter_table" data-tableid="tasks_table_all_predecessor_selector" data-colnum="2" /></div>
+			  		<h4 class="text-info">Predecessor Task</h4>
+			  	</div>
+			  	<div id="TasksTableDiv_predecessor" class="TasksTableDiv row pre-scrollable text-left">
+			  		<table id="tasks_table_all_predecessor_selector" class="table table-striped fixed_head"></table>
+			  	</div>
+			  	</div>
+			  <div class="col-md-12 well text-center">
+                <button id="activate-step-2" class="btn btn-primary btn-lm"> next</button>
+            </div>
+        </div>
+    </div>
+    <div class="row setup-content" id="step-2">
+        <div class="col-xs-12">
+            <div class="col-md-12 well">
+                <h3 class="text-center"> Select Process</h3>
+                <div id="frm_process" class="col-md-12"></div>
+            </div>
+            <div class="col-md-12 well text-center">
+                <button id="activate-step-3" class="btn btn-primary btn-lm"> next</button>
+            </div>
+        </div>
+    </div>
+    <div class="row setup-content" id="step-3">
+        <div class="col-xs-12">
+            <div class="col-md-12 well">
+                <h3 class="text-center"> Select Sub-Process</h3>
+                <div id="frm_subprocess" class="col-md-12"></div>
+            </div>
+            <div class="col-md-12 well text-center">
+                <button id="activate-step-4" class="btn btn-primary btn-lm"> next</button>
+            </div>
+        </div>
+    </div>
+    <div class="row setup-content" id="step-4">
+        <div class="col-xs-12">
+            <div class="col-md-12 well text-center">
+                <!-- h3> Successor Task</h3 -->
+                <div class="row">
+			  		<div class="pull-right" style="margin:6px;">Filter: <input type="text" class="filter_table" data-tableid="tasks_table_all_successor_selector" data-colnum="2" /></div>
+			  		<h4 class="text-info">Successor Task</h4>
+			  	</div>
+			  	<div id="TasksTableDiv_successor" class="TasksTableDiv row pre-scrollable text-left">
+			  		<table id="tasks_table_all_successor_selector" class="table table-striped"></table>
+			  	</div>
+                <label class="alert alert-warning pull-left" 
+                style="border:1px dotted green; padding:6px; margin-right:16px;" 
+                for="not-successor-need"> This process don't need successor
+                <input type="checkbox" id="not-successor-need" name="not-successor-need" />
+                </label>
+            </div>
+            <div class="col-md-12 well text-center">
+                <button id="activate-step-5" class="btn btn-primary btn-lm"> next</button>
+            </div>
+        </div>
+    </div>
+    <div class="row setup-content" id="step-5">
+        <div class="col-xs-12">
+            <div class="col-md-12 well">
+                <div id="frm_item_srv_address" class="col-md-12">
+                	<div class="col-sm-6">
+                		<h4>Items</h4>
+                		<div id="ListItems_SOnav"></div>
+                	</div>
+                	<div class="col-sm-6">
+	                	<h4>Service Addresses</h4>
+	                	<div id="ListServicesAddresses_SOnav"></div>
+		            </div>
+			        <div class="divisor" style="clear:both"></div>
+                </div>
+            </div>
+            <div class="col-md-12 well text-center">
+                <button id="activate-step-6" class="btn btn-primary btn-lm"> next</button>
+            </div>
+        </div>
+    </div>
+    <div class="row setup-content" id="step-6">
+        <div class="col-xs-12">
+            <div class="col-md-12 well">
+                <h3 class="text-center">Review</h3>
+                <div id="frm_resume" class="col-md-12"></div>
+                <div class="row">
+	                <div class="col-sm-4"> <div id='info_predecessor_new'></div> </div>
+	                <div class="col-sm-4"> <div id='info_item_sa_new'></div> </div>
+	                <div class="col-sm-4"> <div id='info_successor_new'></div> </div>
+                </div>
+                <div class="row" style="display:none">
+                	<h5>Task to create</h5>
+                	<div id='info_tasks_to_create' class="TasksTableDiv pre-scrollable"></div>
+                </div>
+                <div class="row" style="display:none">
+                	<h5>Task depends on</h5>
+                	<div id='info_tasks_to_create_depend_on' class="TasksTableDiv pre-scrollable"></div>
+                </div>
+                <div class="row" style="background:#FFF">
+                	<h5>Sub-Process-Branches to create <span class="pull-right">Select Successor </span></h5>
+                	<div id='info_tasks_to_create_branchs' class="pre-scrollable" style="heigth:600px"></div>
+                </div>
+            </div>
+            <div class="col-md-12 well text-center">
+                <button id="activate-step-7" class="btn btn-primary btn-lm"> Next</button>
+            </div>
+        </div>
+    </div>
+    <div class="row setup-content" id="step-7">
+        <div class="col-xs-12">
+            <div class="col-md-12 well">
+                <h3 class="text-center">Apply</h3>
+                <div id="frm_resume_0" class="col-md-12"></div>
+                <div class="row">
+                	<h5>Sub-Process-Branchs TREE to create <small class="pull-right">Processing</small></h5>
+                	<button type="button" class="btn btn-info btn-sm" onClick="Xtreed_toogle('newtasktreefinal')">Expand/Collapse</button>
+                	<div id='info_tasks_to_create_branchs_tree' class="pre-scrollable Xcontent bg-zebra" style="height:600px; background-color:#FFF;">
+                	</div>
+                </div>
+            </div>
+            <div class="col-md-12 well text-center">
+                <button id="activate-step-8" class="btn btn-primary btn-lm"> Accept</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container" id="add-process-tasks-running" style="width:100%; display:none;">
+	<div class="row">
+	<div class="col-xs-12">
+		<div class="col-md-12 well">
+			<h5>Sale Order</h5>
+			<div id="finalTasks-predecessor"></div>
+			<div id="finalTasks-successor"></div>
+			<div id="finalTasks" style="background-color:#FFF;"></div>
+		</div>
+		<div class="col-md-12 well text-center">
+			<button id="activate-step-back" class="btn btn-primary btn-lm"> Back</button>
+		</div>
+	</div>
+	</div>
+</div>
+	
+
+
+<script>
+// $(document).ready(function() {
+    
+    var navListItems = $('ul.setup-panel li a'),
+        allWells = $('.setup-content');
+
+    allWells.hide();
+
+    navListItems.click(function(e)
+    {
+        e.preventDefault();
+        var $target = $($(this).attr('href')),
+            $item = $(this).closest('li');
+        
+        if (!$item.hasClass('disabled')) {
+            navListItems.closest('li').removeClass('active');
+            $item.addClass('active');
+            allWells.hide();
+            $target.show();
+        }
+    });
+    
+    $('ul.setup-panel li.active a').trigger('click');
+    
+    // LeirAGS Develop..OK //
+    $('#activate-step-2').on('click', function(e) {
+    	e.preventDefault()
+    	// Validate Inputs...
+    	if(predecessorTask_new > 0) {
+    		$('ul.setup-panel li:eq(1)').removeClass('disabled')
+            $('ul.setup-panel li a[href="#step-2"]').trigger('click')
+            // $(this).hide()
+    	}
+    })
+    $('#activate-step-3').on('click', function(e) {
+    	e.preventDefault()
+    	// Validate inputs...
+    	var processSelected = $("input[name='RadioProcess']:checked").val();
+    	if(processSelected){
+    		$('ul.setup-panel li:eq(2)').removeClass('disabled')
+            $('ul.setup-panel li a[href="#step-3"]').trigger('click')
+            //$(this).hide()
+    	}
+    })
+    $('#activate-step-4').on('click', function(e) {
+    	e.preventDefault()
+    	// Validate Inouts
+    	var subprocessLength = $("input[name='RadioSubProcess']").length;
+    	var subprocessSelected = $("input[name='RadioSubProcess']:checked").val();
+    	if(subprocessSelected || subprocessLength == 0){
+    		$('ul.setup-panel li:eq(3)').removeClass('disabled')
+            $('ul.setup-panel li a[href="#step-4"]').trigger('click')
+            //$(this).hide()
+    	}
+    })
+    $('#activate-step-5').on('click', function(e) {
+    	e.preventDefault()
+    	// Validate Inputs...
+    	not_successor_need = $("#not-successor-need").is(':checked');
+    	if(successorTask_new > 0 || not_successor_need) {
+    		$('ul.setup-panel li:eq(4)').removeClass('disabled')
+            $('ul.setup-panel li a[href="#step-5"]').trigger('click')
+            //$(this).hide()
+    	}
+    })
+    $('#activate-step-6').on('click', function(e) {
+    	e.preventDefault()
+    	// Validate Inputs...    	
+    	var it_sa = $( $('.selectAGS').parent()[0] ).data();
+    	if(it_sa) {
+    		$('ul.setup-panel li:eq(5)').removeClass('disabled')
+            $('ul.setup-panel li a[href="#step-6"]').trigger('click')
+            //$(this).hide()
+    	}
+    })
+    $('#activate-step-7').on('click', function(e) {
+    	e.preventDefault()
+    	// Validate Inputs...
+    	var succesorHERE = $("input[name='succesorHERE']:checked").val();
+    	if(succesorHERE){
+	        $('ul.setup-panel li:eq(6)').removeClass('disabled')
+	        $('ul.setup-panel li a[href="#step-7"]').trigger('click')
+	        //$(this).hide()
+    	}
+    })
+    $('#activate-step-8').on('click', function(e) {
+    	e.preventDefault()
+    	// Validate Inputs...
+    	console.info('Final validations....')
+    	if( finalValidations() ){
+	        $('#add-process-tasks').hide();
+	        $('#add-process-tasks-running').show();
+	        setTimeout(function(){ startRunning(); },200);
+    	}
+    })
+    $('#activate-step-back').on('click', function(e) {
+    	e.preventDefault()
+   	    $('#add-process-tasks').show();
+        $('#add-process-tasks-running').hide();
+    })
+    
+    function Xtreed_toogle(id){
+    	$('#'+id+' .branch').each(function(){ $(this).click() })
+    }
+    
+// });
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   <div id="starting-here" class="container" style="width:100%; border:1px dotted green; display:none">
+    <h2 align="center" id="instruction">Select Task Type</h2>
+
+      <div id="all">
+
+          <div id="step1" class="container" style="display:none">
+            <div class="row">
+              <div class="col-sm-4 col-md-4 ags_menu">
+              	<div class="alert alert-info" role="alert" >
+                	<a href="#" id="TaskItem" value="11" class="thumbnail"><h2>Item</h2></a>
+                </div>
+              </div>
+              <div class="col-sm-4 col-md-4 ags_menu">
+                <div class="alert alert-success" role="alert" >
+	                <a href="#" id="TaskServicesA" value="21" class="thumbnail"><h2>Services Address</h2></a>
+	            </div>
+              </div>
+              <div class="col-sm-4 col-md-4 ags_menu">
+                <div class="alert alert-warning" role="alert" >
+                	<a href="#" id="TaskPlanning" value="31" class="thumbnail"><h2>Planning</h2></a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="step1_1" style="display:none;" class="row">
+              <table id="TableRadioItems" class="table table-striped">
+                <thead>
+	                <th width="5%" align="center"></th>
+	                <th width="15%" align="center"><b>Name</b></th>
+	                <th width="15%" align="center"><b>Location A</b></th>
+	                <th width="15%" align="center"><b>Location Z</b></th>
+	                <th width="20%" align="center"><b>Address A</b></th>
+	                <th width="20%" align="center"><b>Address Z</b></th>
+	                <th width="10%" align="center"><b>Subscription</b></th>
+                </thead>
+                <tbody></tbody>
+              </table>
+
+              <div align="middle" >
+                  <a class="btn btn-primary btn-lg" href="#" role="button" onclick="GoBackStep()">
+                    <span class="glyphicon glyphicon-arrow-left" aria-hidden="true">
+                    </span>
+                  </a>
+                  <a class="btn btn-primary btn-lg" href="#" role="button" id="btnNextStep1_1_1">
+                    <span class="glyphicon glyphicon-arrow-right" aria-hidden="true">
+                    </span>
+                  </a>
+              </div>
+          </div>
+
+          <div id="step2_1" style="display:none">
+              <table id="TableServicesAddress" class="table table-striped">
+                <thead>
+                <tr>
+                <th width="5%" align="center"></th>
+                <th width="10%" align="center"><b>Name</b></th>
+                <th width="15%" align="center"><b>Description</b></th>
+                </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+
+              <div align="middle" >
+                  <a class="btn btn-primary btn-lg" href="#" role="button" onclick="GoBackStep()">
+                    <span class="glyphicon glyphicon-arrow-left" aria-hidden="true">
+                    </span>
+                  </a>
+                  <a class="btn btn-primary btn-lg" href="#" role="button" id="btnNextStep2_1_1">
+                    <span class="glyphicon glyphicon-arrow-right" aria-hidden="true">
+                    </span>
+                  </a>
+              </div>
+          </div>
+
+          <div id="step3_1" style="display:none">
+            <table id="TablePlanning" class="table table-striped">
+            	<thead>
+	                <tr>
+		              <th width="5%" align="center"></th>
+		              <th width="10%" align="center"><b>Name</b></th>
+		              <th width="15%" align="center"><b>Description</b></th>
+		            </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+
+            <div align="middle" >
+                <a class="btn btn-primary btn-lg" href="#" role="button" onclick="GoBackStep()">
+                  <span class="glyphicon glyphicon-arrow-left" aria-hidden="true">
+                  </span>
+                </a>
+                <a class="btn btn-primary btn-lg" href="#" role="button" id="btnNextStep3_1_1">
+                  <span class="glyphicon glyphicon-arrow-right" aria-hidden="true">
+                  </span>
+                </a>
+            </div>
+          </div>
+
+          <div id="stepFieldsTask" style="display:none">
+            <div class="container" style="width:100%">
+            	<div class="row">
+            	<div class="col-sm-7">
+
+              <div class="panel panel-primary">
+                <div class="panel-heading">Add Task</div>
+                <div class="panel-body">
+            	<form class="form-horizontal">
+
+                    <div id="hideFieldTask">
+	                    <div class="form-group">
+	                      <label for="processSelect" class="control-label col-sm-3">Process</label>
+	                      <div class="col-sm-9">
+	                      <select id="processSelect" class="form-control"></select>
+	                      </div>
+	                    </div>
+	                   <div class="form-group">
+	                      <label for="subprocessSelect" class="control-label col-sm-3">SubProcess</label>
+	                      <div class="col-sm-9">
+	                      <select id="subprocessSelect" class="form-control"></select>
+	                      </div>
+	                   </div>
+                	</div>
+
+                    <div id="hideThree">
+	                    <div class="form-group">
+	                      <label for="taskField" class="control-label col-sm-3">Task</label>
+	                      <div class="col-sm-9">
+	                      <select id="taskField" class="form-control"></select>
+	                      </div>
+	                    </div>
+                    </div>
+
+                    <div id="hideTwo">
+	                    <div class="form-group">
+	                      <label for="taskfieldName" class="control-label col-sm-3">Task Name</label>
+	                      <div class="col-sm-9">
+	                      <!-- input type="text" class="form-control" id="taskfieldName" placeholder="Task Name" -->
+	                      <textarea class="form-control" rows="4" cols="40" id="taskfieldName"></textarea>
+	                      </div>
+	                    </div>
+                    </div>
+
+                    <!-- div id='info_dependency'>
+	             		<div class="form-group">
+	                      <label for="PtaskDependency" class="control-label col-sm-3">Dependency</label>
+	                      <div class="col-sm-9">
+		                      <select id="PtaskDependency" class="form-control">
+		                      <option value="">-Select-</option>
+		                      <option value="startToFinish">Start To Finish</option>
+		                      <option value="startToStart">Start To Start</option>
+		                      <option value="finishToFinish">Finish To Finish</option>
+		                      <option value="finishToStart">Finish To Start</option>
+		                      </select>
+	                      </div>
+	                    </div>
+	             	</div -->
+
+                    <div class="form-group">
+	                    <label for="durationTask" class="control-label col-sm-3">Duration</label>
+	                    <div class="col-sm-9">
+	                    <input type="text" class="form-control" value="1" id="durationTask">
+	                    </div>
+                    </div>
+
+                    <div class="form-group">
+                    	<div class="control-label col-sm-3"></div>
+	                    <div class="col-sm-9">
+	      					<div class="checkbox">
+	                        <label class="checkbox-inline">
+	                        	<input id="WorkOnWeekend" type="checkbox"> <b>Work on Weekend</b>
+	                        </label>
+	                        </div>
+	    				</div>
+                    </div>
+
+                    <div class="form-group">
+	                   <label for="startDate" class="control-label col-sm-3"> Start Date </label>
+	                   <div class="col-sm-9">
+	                   <input type='text' id='startDate' class="form-control flatpicker" />
+	                   </div>
+                    </div>
+
+                    <div class="form-group">
+	                    <label for="dueDate" class="control-label col-sm-3"> Due Date </label>
+	                    <div class="col-sm-9">
+	                    <input type='text' id='dueDate' class="form-control flatpicker" disabled/>
+	                    </div>
+                    </div>
+
+                    <div class="form-group">
+	                    <label for="AssignedTo" class="control-label col-sm-3">Assigned To</label>
+	                    <div class="col-sm-9" id="showassigned"></div>
+                    </div>
+              </form>
+              </div>
+              </div>
+              </div>
+             <div class="col-sm-5">
+             	<div id='info_predecessor'></div>
+             	<div id='info_successor'><p class="alert alert-success">Select successor task from the <b>"Task List"</b> below...</p></div>
+             	<!-- div id='info_dependency'>
+             		<div class="form-group">
+                      <label for="StaskDependency" class="control-label">Dependency</label>
+	                      <select id="StaskDependency" class="form-control">
+	                      <option value="">-Select-</option>
+	                      <option value="startToFinish">Start To Finish</option>
+	                      <option value="startToStart">Start To Start</option>
+	                      <option value="finishToFinish">Finish To Finish</option>
+	                      <option value="finishToStart">Finish To Start</option>
+	                      </select>
+                    </div>
+             	</div -->
+             </div>
+      		</div> <!--  end row -->
+            <div align="middle" >
+                  <a class="btn btn-primary btn-lg" href="#" role="button" onclick="GoBackStep()">
+                    <span class="glyphicon glyphicon-arrow-left" aria-hidden="true">
+                    </span>
+                  </a>
+                  <a class="btn btn-primary btn-lg" href="#" id="btnSave" role="button" >Save</a>
+              </div>
+          </div>
+          </div>
+
+
+          <div id="StepTaskOrProcess" align="center" style="display:none">
+            <h2 align="center" > Select what do you want to create </h2>
+            <div class="row" >
+              <div align="middle" class="tocenter">
+                <span style="display:none" id="fromStepTask" value="1">1</span>
+
+                  <div class="col-sm-4 col-md-4" align="center">
+                    <div id="OneTask" class="thumbnail">
+                      <div class="caption" >
+                               <h3 class="alert alert-info">Task</h3>
+                          <div align="middle" style="margin-left:2.5%">
+                            <label style="width:95%; margin-right:9px; padding:6px; border:1px solid #AAA;">
+                              <input type="radio" name="RadioTask" value="Template">
+                              <span style="padding-left:8px">Template Task</span>
+                            </label>
+                            <label style="width:95%; margin-right:9px; padding:6px; border:1px solid #AAA;">
+                              <input type="radio" name="RadioTask" value="Custom" checked>
+                                <span style="padding-left:8px">Custom Task</span>
+                            </label>
+                          </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-sm-8 col-md-8">
+                    <div id="Process" class="thumbnail disabledcontent">
+                      <div class="caption" align="center">
+                                <h3 class="alert alert-success">Process</h3>
+                        <div id="TaskProcess" align="left" style="margin-left:5%"></div>
+                      </div>
+                    </div>
+                  </div>
+
+              </div>
+            </div>
+            <div class="row" >
+              <div align="middle">
+                  <a class="btn btn-primary btn-lg" href="#" role="button" onclick="GoBackStep();">
+                    <span class="glyphicon glyphicon-arrow-left" aria-hidden="true">
+                    </span>
+                  </a>
+              </div>
+            </div>
+          </div>
+
+          <div id="SelectTask">
+
+     </div>
+
+  </div>
+  </div>
+ 
+ 
+  <div id="container_TasksTableDiv" class="container" style="width:100%; border:2px dotted green; margin-top:6px; display:none">
+  	<div class="row">
+  		<div class="pull-right" style="margin:6px;">Search: <input type="text" class="filter_table" data-tableid="tasks_table_all" data-colnum="2" /></div>
+  		<h3 class="text-info">Task list</h3>
+  	</div>
+  	<div id="TasksTableDiv" class="TasksTableDiv row pre-scrollable">
+  		<table id="tasks_table_all" class="table table-striped"></table>
+  	</div>
+  </div>
+
+  <script>
+  	var WorkForce_AddAct = {};
+  	var WF_NetSuite_Error = false;
+  	var WF_DEBUG = false;
+  	var WF_DEBUG_AJAX = false;
+  	var WF_DEBUG_AJAX_MIRROR = false;
+  	var StepsArray = [];
+  	var ParameterSalesOrder = 0;
+    var currentIdUser = 0;
+    var ParameterNameSalesorder = '';
+    var ParameterCustomerSalesOrder = '';
+    var AllTaskObj = [];
+    var employeesobj = [{'employeeId':0, 'employeeName':'none', 'deptId':0, 'deptName':'none'}];
+    var lastEmployeesObj = '';
+    var employeesobj_inactive = [{'employeeId':0, 'employeeName':'none', 'deptId':0, 'deptName':'none'}];
+    var predeccesorTask = 0;
+    var successorTask = 0;
+    var predeccesorTask_Branch = [];
+    var CalendarInputFormat = "";
+
+  //--- mirrorLog>
+	function mirrorLog (fromService, debugTitle, data){
+		$.ajax({
+			url: getUrl().MLog,
+			type: 'POST',
+			data: {
+				'origin'	: WorkForce_AddAct.Env, // Sandbox Produccion
+				'module'	: fromService, // Workforce
+				'title'		: debugTitle, // Titulo para el Log
+				'details'	: JSON.stringify(data), // Detalles del Error
+				'nsuser' 	: WorkForce_AddAct.userName , //
+				'nsuserId' 	: WorkForce_AddAct.userID , //
+				'nsuserRole': WorkForce_AddAct.userRole, //
+			}
+		});
+	}
+
+  	function loaderEnd(){
+
+  	}
+
+	function selectassignee(elem){
+		var name = $(elem).val();
+		var id = $('#'+ $(elem).data('onchg') ).val();
+		var defaultDept = WorkForce_AddAct.userDeptId;
+		jQuery.popupSelect({
+			'title'		: 'Select Assignee',
+			'message'	: 'Todo por servir se acaba',
+			'buttons'	: {
+				'Cancel': { 'class'	: 'gray', 'action': function(){
+					//if(callbackNOT) callbackNOT();
+				},},
+				'OK'	: { 'class'	: 'blue', 'action': function(){
+					var empid = $('#popupselected_val').text();
+					if(empid != ''){
+						var currval = $('#'+ $(elem).data('onchg') ).val();
+						if(currval != empid) {
+							var employee = employeesobj.find(function(emp){return emp.employeeId==empid});
+							$(elem).val(employee.employeeName);
+							$('#'+ $(elem).data('onchg') ).val(empid).change();
+						}
+					}
+					// alert('Selected '+empid+' : '+employee.employeeName);
+				},},
+			},
+			'content' : ''+createTableEmployees(),
+			'tablesearch': 'empylst',
+			'tablefilter': 'deptlst',
+			'colNm' : 0, // Column Num to show on clic in table. Remember change if table change...
+			'defaultValues' : {'id':id, 'name':name, 'dept':defaultDept, 'autoFilterDept': true, 'xPos':0, 'yPos':30, }
+		});
+	}
+
+	function createTableEmployees(){
+		if(lastEmployeesObj!='') {
+			return lastEmployeesObj; // Get already previous calcs.
+		}
+		var selDept = 'Depto: <select>';
+		employeesobj.map(function(emp){
+			//console.info('selDept',selDept)
+			if ( selDept.indexOf('e='+emp.deptId+'>') < 0) {
+				selDept += '<option value='+emp.deptId+'>'+emp.deptName+'</option>';
+			}
+		});
+		selDept += '</select><br>';
+
+		var tbld = '';
+		tbld += '<div class="pre-scrollable" style="heigth:320px; width:40%; float:left;">';
+		tbld += '<table id="deptlst" class="table table-condensed table-bordered table-hover table-striped" >';
+		employeesobj.map(function(emp){
+			if ( tbld.indexOf('d='+emp.deptId+'>') < 0) {
+				tbld += '<tr data-deptid='+emp.deptId+'>';
+				tbld += '<td>'+emp.deptName+'</td>';
+				tbld += '</tr>';
+			}
+		});
+		tbld += '</table></div>';
+
+		var tblr_s = '<div class="head">\
+		<span id="popupselected_val" style="color:#DEDEDE; font-size:1.0em; margin-left:6px; display:inline-block; float:left">00</span>\
+		<span id="popupselected_text" style="font-size:1.2em; margin-left:6px;"></span>\
+		<div style="display:inline-block; float:right; margin-right:6px;">Search: <input type="text" autofocus id="popselectsearchinput" class="filtertable" data-tableid="empylst" data-colnum="2" />\
+		</div></div>';
+
+		var tblr = '';
+		tblr += '<div class="pre-scrollable" style="heigth:320px; width:60%; float:right;">';
+		tblr += '<table id="empylst" class="table table-bordered table-hover table-striped" data-filter-dept=0 >';
+		employeesobj.map(function(emp){
+			//tblr += '<tr>';
+			tblr += '<tr data-deptid='+emp.deptId+' data-empid='+emp.employeeId+'>';
+			//-- tblr += '<td>'+emp.employeeId+'</td>'; // disable show employee ID. security
+			tblr += '<td>'+emp.employeeName.latinize()+'</td>';
+			tblr += '</tr>';
+		});
+		tblr += '</table>';
+		tblr += '</div>';
+		//return selDept+tblr_s+' <div class="row" style="margin:6px;">'+tbld+''+tblr+'</div>';
+		lastEmployeesObj = tblr_s+' <div class="row" style="margin:6px;">'+tbld+''+tblr+'</div>';
+
+		return lastEmployeesObj;
+	}
+
+	// Get employee name based on ID, search in actives first, if not found, then lookup in inactives.
+	function getEmployeeName(eid){
+		var empObj = {};
+		var inactive = '';
+		empObj = employeesobj.find(function(emp){return emp.employeeId == eid});
+		if(empObj != undefined){
+
+		} else {
+			inactive = '**';
+			empObj = employeesobj_inactive.find(function(emp){return emp.employeeId == eid});
+		}
+		return inactive + ((empObj != undefined) ? empObj.employeeName : 'Not Found');
+	}
+
+	function getemployeeData(eid){
+		var empObj = {};
+		var inactive = '';
+		empObj = employeesobj.find(function(emp){return emp.employeeId == eid});
+		if(empObj != undefined){
+
+		} else {
+			inactive = '**';
+			empObj = employeesobj_inactive.find(function(emp){return emp.employeeId == eid});
+		}
+		return empObj;
+	}
+
+	// Get task data by id
+	function getTaskbyID(tid){
+		var taskObj = {};
+		taskObj = (AllTaskObj.rows).find(function(tsk){
+			return tsk.taskId == tid
+		});
+		if(taskObj != undefined){
+
+		} else {
+			console.info('Task Not Found ID:',tid)
+		}
+		return taskObj;
+	}
+
+	function showTaskDivP(dv,tsk){
+		if(WF_DEBUG) console.info('dv',dv,'tsk',tsk);
+		if (typeof tsk === 'undefined') return;
+		var taskStatus	= ['','Active','Completed','Deferred','Canceled']
+		var panel_type	= ((dv=='predecessor' || dv=='predecessor_new')? 'info':'success');
+		var badge_type	= ((dv=='predecessor' || dv=='predecessor_new')? 'success':'info');
+		var pred_succ	= ((dv=='predecessor' || dv=='predecessor_new')? 'predecessor':'successor');
+		var pred_succ_id= dv + '_id';
+		
+		$('#info_'+dv).html(
+			'<div class="panel panel-'+panel_type+'">\
+  <div class="panel-heading" style="min-height:92px">'+'<span class="pull-right text-'+badge_type+'" style="display:block; position: relative; top:90px">'+pred_succ+'</span>'+'<h4>'+tsk.taskTitle+'</h4></div>\
+  <div class="panel-body">'+
+			//'<h4>'+tsk.taskTitle+'</h4>'+
+			'<span class="col-sm-12">Assigned to: <b>'+tsk.taskAssigned+'</b></span>'+
+			'<span class="col-sm-4">Start: <b>'+tsk.taskStartDate+'</b></span> <span class="col-sm-4">End: <b>'+tsk.taskDueDate+'</b></span> <span class="col-sm-4">Duration: <b>'+tsk.taskDuration+' days</b></span> <span class="col-sm-12">Dependency: <b>'+tsk.taskDependency+'</b></span>'+
+			'<div id="info_dependency_pred" class="col-sm-12">\
+     		<div class="form-group">\
+            <label for="'+pred_succ_id+'" class="control-label">Dependency</label>\
+            <div>\
+                <select id="'+pred_succ_id+'" class="form-control">\
+                <option value="">-Select-</option>\
+                <option value="startToFinish">Start To Finish</option>\
+                <option value="startToStart">Start To Start</option>\
+                <option value="finishToFinish">Finish To Finish</option>\
+                <option value="finishToStart">Finish To Start</option>\
+                </select>\
+            </div>\
+          </div>\
+   	</div>'+
+			'</div></div>'
+		);
+	}
+
+	function showTaskDivS(dv,tsk){
+		if(WF_DEBUG) console.info('tsk',tsk);
+		var taskStatus	= ['','Active','Completed','Deferred','Canceled']
+		var panel_type	= ((dv=='predecessor' || dv=='predecessor_new')?'info':'success');
+		var badge_type	= ((dv=='predecessor' || dv=='predecessor_new')?'success':'info');
+		var pred_succ	= ((dv=='predecessor' || dv=='predecessor_new')?'predecessor':'successor');
+		
+		if (tsk.taskTitle != 'No Successor')
+		$('#info_'+dv).html(
+			'<div class="panel panel-'+panel_type+'">\
+  <div class="panel-heading" style="min-height:92px">'+'<span class="pull-right text-'+badge_type+'" style="display:block; position: relative; top:90px">'+pred_succ+'</span>'+'<h4>'+tsk.taskTitle+'</h4></div>\
+  <div class="panel-body">'+
+			//'<h4>'+tsk.taskTitle+'</h4>'+
+			'<span class="col-sm-12">Assigned to: <b>'+tsk.taskAssigned+'</b></span>'+
+			'<span class="col-sm-4">Start: <b>'+tsk.taskStartDate+'</b></span> <span class="col-sm-4">End: <b>'+tsk.taskDueDate+'</b></span> <span class="col-sm-4">Duration: <b>'+tsk.taskDuration+' days</b></span> <span class="col-sm-12">Dependency: <b>'+tsk.taskDependency+'</b></span>'+
+			'<div id="info_dependency_succ" class="col-sm-12">\
+     		<div class="form-group">\
+            <label for="StaskDependency" class="control-label">Dependency</label>\
+            <div>\
+                <select id="StaskDependency" class="form-control">\
+                <option value="">-Select-</option>\
+                <option value="startToFinish">Start To Finish</option>\
+                <option value="startToStart">Start To Start</option>\
+                <option value="finishToFinish">Finish To Finish</option>\
+                <option value="finishToStart">Finish To Start</option>\
+                </select>\
+            </div>\
+          </div>\
+   	</div>'+
+			'</div></div>'
+		)
+		else 
+		$('#info_'+dv).html(
+		 '<div class="panel panel-'+panel_type+'">\
+		  <div class="panel-heading" style="min-height:92px">'+'<span class="pull-right text-'+badge_type+'" style="display:block; position: relative; top:90px">'+pred_succ+'</span>'+'<h4>'+tsk.taskTitle+'</h4></div>\
+		  <div class="panel-body"><label class="alert alert-warning">User request no successor</label></div></div>'
+		)
+	}
+
+	function showTaskPredeccesor(){
+		predeccesorTask = $('#custpage_contexttaskid')[0].value;
+		console.info('predeccesorTask',predeccesorTask);
+		if (predeccesorTask) {
+			var pTsk = getTaskbyID(predeccesorTask);
+			showTaskDivP('predeccesor',pTsk);
+		}
+	}
+
+	function showTaskSuccessor(elem){
+		successorTask = $(elem).attr('data-taskid');
+		var sTsk = getTaskbyID(successorTask);
+		showTaskDivS('successor',sTsk);
+	}
+
+//----	
+	function showTaskPredecessorNew(elem){
+		predecessorTask_new = $(elem).attr('data-taskid')
+		if(WF_DEBUG) console.info('predecessorTask_new',predecessorTask_new)
+		predecessorTask_new_data = getTaskbyID(predecessorTask_new)
+		showTaskDivP('predecessor_new',predecessorTask_new_data)
+		setPredecessorsOnSuccessors()
+	}
+	
+	function showTaskSuccessorNew(elem){
+		successorTask_new = $(elem).attr('data-taskid')
+		if(WF_DEBUG) console.info('successorTask_new',successorTask_new)
+		var sTsk = getTaskbyID(successorTask_new)
+		not_successor_need = $("#not-successor-need").is(':checked');
+		if (not_successor_need) {
+			sTsk = { taskTitle : 'No Successor', 
+					taskAssigned: '-none-', 
+					taskStartDate: '',
+					taskDueDate: '',
+					taskDuration: '',
+					taskDependency: ''
+				}
+		}
+		successorTask_new_data = sTsk;
+		showTaskDivS('successor_new', successorTask_new_data )
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	function calculateTaskToCreate(from){
+		applyFilterSubProcess(); // before process... sync...
+		
+		var processSelected 	= $("input[name='RadioProcess']:checked").val()
+		var subprocessSelected 	= $("input[name='RadioSubProcess']:checked").val()
+		var subprocessLength 	= $("input[name='RadioSubProcess']").length
+		if (subprocessLength == 0) subprocessSelected = 0;
+		
+		if(WF_DEBUG) console.info('calculateTaskToCreate, triggered...')
+		if(WF_DEBUG) console.info({'predecessorTask_new':predecessorTask_new,'processSelected':processSelected, 'subprocessSelected':subprocessSelected, 'successorTask_new':successorTask_new});
+		
+		// Clear content
+		$('#info_tasks_to_create').html('')
+		$('#info_tasks_to_create_depend_on').html('')
+		$('#info_tasks_to_create_branchs').html('')
+		$('#info_tasks_to_create_branchs_tree').html('')
+		tasksStructureTreeBraches = [] // Clear Final Structure...
+		$('#predecessor_new_id').val('') // Reset selector
+		$('#successor_new_id').val('') // Reset selector
+		showFinalBranches()
+		
+		// Verify if process selected
+		if (!processSelected) return;
+		
+		// Verify if processSelected_Prev <> processSelected, if so then reser subp
+		if (processSelected_Prev != processSelected) {
+			subprocessSelected = 0
+			// Carry processSelected_Prev
+			processSelected_Prev = processSelected
+			// Disable next steps...
+			$('ul.setup-panel li:eq(2)').removeClass('disabled').addClass('disabled')
+			$('ul.setup-panel li:eq(3)').removeClass('disabled').addClass('disabled')
+			$('ul.setup-panel li:eq(4)').removeClass('disabled').addClass('disabled')
+			$('ul.setup-panel li:eq(5)').removeClass('disabled').addClass('disabled')
+		}
+		
+		// Verify if subprocess is necesary
+		if (subprocessLength && !subprocessSelected) return;
+		
+		// Filter Tasks to be created
+		var tskCr = '', tskHd = '<table class="table table-striped table-bordered" id="relation_task_to_create"><thead>', tskHdBd='</thead><tbody>', tskFt='</tbody></table>';
+		var tmplate_row = '<tr><td>{{name}}</td><td>{{Process}}</td><td>{{subProcess}}</td><td>{{duration}}</td><td>{{wow}}</td><td>{{level}}</td><td>{{assigned}}</td><td>{{Start}}</td><td>{{End}}</td><td>{{id}}</td></tr>';
+		var tmplate_rhd = '<tr><th>Name</th><th>Process</th><th>subProcess</th><th>duration</th><th>wow</th><th>level</th><th>assigned</th><th>Start</th><th>End</th><th>Id</th></tr>';
+		var tasksToCreate = [];
+		window.tasksStructureTree = {};
+		
+		//console.info({'predecessorTask_new':predecessorTask_new,'processSelected':processSelected, 'subprocessSelected':subprocessSelected, 'successorTask_new':successorTask_new});
+		/*
+		WF_taskStructure.taskTypes []
+			Process:"11"
+			assigned:"17161"
+			department:"6"
+			duration:"6"
+			id:"138"
+			level:""
+			name:"Visto bueno de puntos de interconexión"
+			overide:true
+			subProcess:""
+			wow:false
+		*/
+		(WF_taskStructure.taskTypes).forEach(function(tt){
+			if (tt.Process == processSelected){
+				if (tt.subProcess == subprocessSelected || subprocessSelected == 0 || subprocessSelected == ''){
+					tskCr += LeirAGS_Tmpl(tmplate_row, tt)
+					tasksToCreate.push(tt.id)
+					tt.dependency = '';
+					tt.dependency_type = '';
+					tt.dependency_type_txt = '-PREDECCESOR-';
+					tt.project_task_id = 0;
+					tasksStructureTree[tt.id] = {id:tt.id, name:tt.name, data:tt, branch:0, level:0, depend:[] };
+				}
+			}
+		})
+		
+		$('#info_tasks_to_create').html( tskHd + tmplate_rhd + tskHdBd + tskCr + tskFt )
+		
+		var tskCrD = '<table class="table table-striped"><thead><tr><td>Task</td><td>Process</td><td>Dependency</td><td>Type Dep</td></tr></thead><tbody>';
+		var tskCrRowTmpl = '<tr><td>{{taskid}}</td><td>{{Process}}</td><td>{{dependency}}</td><td>{{dependency_type}}</td></tr>';
+		var tskFtD = '</tbody></table>';
+		(WF_taskStructure.taskTypesDepend).forEach(function(ttd){
+			if (ttd.Process == processSelected){
+				if ( tasksToCreate.indexOf( ttd.taskid ) != -1 ){
+					tskCrD += LeirAGS_Tmpl(tskCrRowTmpl, ttd);
+					tasksStructureTree[ttd.taskid].data.dependency_type = ttd.dependency_type;
+					tasksStructureTree[ttd.taskid].data.dependency_type_txt = ttd.dependency_type_txt;
+					(tasksStructureTree[ttd.taskid].depend).push(ttd.dependency);
+				}
+			}
+		})
+		
+		$('#info_tasks_to_create_depend_on').html( tskCrD + tskFtD )
+		
+		var tskCrDt = '<table class="table table-striped"><thead><tr><td>Task</td><td>Name</td><td>Dependencies</td></tr></thead><tbody>';
+		var tskCrRowTmplt = '<tr><td>{{id}}</td><td>{{name}}</td><td>{{dependencies}}</td></tr>';
+		var tskFtDt = '</tbody></table>';
+		
+		var taskHilo = [];
+		
+		tasksToCreate.forEach(function(ttc){
+			var tts = tasksStructureTree[ttc];
+			// var depend_on_txt = LeirAGS_cnvObjTable(tts.depend);
+			var depend_on_txt = '*'+(tts.depend).join('*')+'*';
+			tts.dependencies = depend_on_txt;
+			tskCrDt += LeirAGS_Tmpl(tskCrRowTmplt, tts)
+			if (depend_on_txt == '**') taskHilo.push(tts.id)
+		})
+		
+		$('#info_tasks_to_create_depend_on').html( tskCrDt + tskFtDt )
+	
+		//----- Creaction the final: tasksStructureTreeBraches
+		function follow_depends_on(tskData, level, snake){
+			var snakeElem = tskData;
+			//-- console.info('snakeElem', snakeElem)
+			level++
+			snakeElem.level = level
+			snakeElem.data.level = level
+			snakeElem.newName = createTaskName( tskData );
+			snake.push(snakeElem);
+			//console.info('follow_depends_on',snakeElem)
+			for(var nj in tasksStructureTree){
+				var tj = tasksStructureTree[nj]
+				if ((tj.depend).indexOf(tskData.id) != -1) {
+					snake = follow_depends_on(tj, level, snake)
+				}
+			}
+			return snake
+		}
+		
+		taskHilo.forEach(function(tth){
+			var tts = tasksStructureTree[tth];
+			var snake = follow_depends_on(tts, 0, []);
+			tasksStructureTreeBraches.push (snake);
+		})
+		//------
+		
+		showFinalBranches()
+		
+		// $('#info_tasks_to_create_depend_on').html( tskCrD + tskFtD + tskCrDt + tskFtDt )
+	}
+	
+//----
+
+	function showLastTreeNice(){
+	/* Final Nice Tree */
+		//return true;
+		if (typeof tasksStructureTree == 'undefined') return;
+		var newTaskTree = '<ul id="newtasktreefinal"><li>New Process <ul>';
+		var newTaskTreeHead = '<ul>';
+		var newTaskTreeFoot = '</li></ul></ul>';
+		var newTaskTreeElement = '<li data-level="{{level}}">{{newName}}<span class="pull-right">{{level}}</span> {{depends}}</li>';
+		
+		//console.table(tasksStructureTree)
+		
+		function follow_depends_on_f(tskData, level, snake ){
+			var snakeElem = tskData;
+			level++
+			if ( snakeElem['levelT'] ) return '';
+			snakeElem.levelT = level
+			snakeElem.depends = '';
+			var dpnds = '';
+			for(var nj in tasksStructureTree){
+				var tj = tasksStructureTree[nj]
+				if ((tj.depend).indexOf(tskData.id) != -1) {
+					dpnds += follow_depends_on_f(tj, level, '')
+				}
+			}
+			if (dpnds.length > 1) dpnds = '<ul>'+dpnds+'</ul>';
+			snakeElem.depends = dpnds;
+			return LeirAGS_Tmpl(newTaskTreeElement, snakeElem)
+		}
+		
+		var allTree = '', cntH = 0;
+		
+		// Clear Flag to be redraw...
+		for (var bh in tasksStructureTree){ tasksStructureTree[bh].levelT = ''; }
+		
+		// Recreate Tree
+		for (var bh in tasksStructureTree){ 
+			if(tasksStructureTree[bh].dependencies == '**') {
+				var tts = tasksStructureTree[bh];
+				var snake = follow_depends_on_f(tts, 0, '');
+				allTree += snake;
+			}
+		}
+		
+		$('#info_tasks_to_create_branchs_tree').html( newTaskTree + allTree + newTaskTreeFoot )
+		
+		$('#newtasktreefinal').Xtreed() // Enable Tree Visual Efects...
+		Xtreed_toogle('newtasktreefinal') // Espand all... 
+	}
+//----
+
+	function showFinalBranches(){
+		// Clear...
+		$('#info_tasks_to_create_branchs').html( 'Redrawing...' )
+		
+		var tskHi = '<table class="table table-striped table-bordered bg-default"><thead><tr><td>Branch</td><td>Level</td><td>Id</td><td>Task</td><td>Assigned</td><td>Depto</td><td>Start</td><td>Due</td><td>WoW</td><td>Days</td><td>Dep</td><td>Succesor</td></tr></thead><tbody>';
+		var tskHiRowTmplt = '<tr><td>{{branch}}</td><td>{{level}}</td><td>{{id}}</td><td>{{newName}}</td><td>{{assigned}}</td><td>{{department}}</td><td>{{start}}</td><td>{{due}}</td><td>{{wow}}</td><td>{{duration}}</td><td>{{dependency_type_txt}}</td><td><input type="radio" name="succesorHERE" value="{{id}}"></td></tr>';
+		var tskHiRowEmpty = '<tr><td></td><td colspan="11"></td></tr>';
+		var tskHiFt = '</tbody></table>';
+		var allHilo = '<table class="table">', cntH = 0;
+		
+		allHilo += tskHi;
+		tasksStructureTreeBraches.forEach(function(snake){
+			cntH ++
+			allHilo += '<tr class="success"><td>'+cntH+'</td><td colspan="11">Branch #'+cntH+'</td></tr>';
+			snake.forEach(function(sgm){
+				sgm.newName = createTaskName( sgm );
+				allHilo += LeirAGS_Tmpl(tskHiRowTmplt, sgm)
+			})
+			allHilo += tskHiRowEmpty
+		})
+		allHilo += tskHiFt
+		
+		$('#info_tasks_to_create_branchs').html( allHilo )
+		
+		showLastTreeNice();
+	}
+
+//------
+
+	function recalcTasksNames(){
+// 		for(var bh in tasksStructureTree){
+// 			tasksStructureTree[bh].newName = createTaskName( tasksStructureTree[bh] );
+// 		}
+		showFinalBranches();
+	}
+	
+	function pluscodestr(s,v,d){
+		var v1 = trim(''+v);
+		var d1 = (d)? d : ' - ';
+		if (v1 != '')
+			s += d1 + v1;
+		return s;
+	}
+	
+	function createTaskName( tskData ) {
+		var nName = '';
+		var processSelected = $("input[name='RadioProcess']:checked").val();
+  	  	var subprocessSelected = $("input[name='RadioSubProcess']:checked").val();
+  	  	var proccess = WF_taskStructure.taskProcess.find(function(p){ return p.id == processSelected });
+  	  	var subproccess = {name:'',id:''};
+  	  	if (subprocessSelected)
+  	  		var subproccess = WF_taskStructure.taskSubProcess.find(function(sp){ return sp.id == subprocessSelected });
+  	  
+		nName = WF_Sales_Order_Record.saleorder.tranid;
+		
+		if (item_salesorder_data.type != 'undefined') {
+			if (item_salesorder_data.type == 'item') {
+				nName = pluscodestr(nName, item_salesorder_data.line);
+				var it = WF_Sales_Order_Record.items.find(function(ti){ return ti.id == item_salesorder_data.id });
+				nName = pluscodestr(nName, it.name);
+				nName = pluscodestr(nName, it.capacity);
+				nName = pluscodestr(nName, it.UoM);
+				nName = pluscodestr(nName, it.line);
+				nName = pluscodestr(nName, it.subscriptionName);
+			} else {
+				var sa = WF_Sales_Order_Record.serviceaddress.find(function(sai){ return sai.id == item_salesorder_data.id });
+				nName = pluscodestr(nName, sa.name);
+			}
+		}
+		
+		if (subprocessSelected) {
+			nName = pluscodestr(nName, subproccess.name);
+		} else {
+			nName = pluscodestr(nName, proccess.name);
+		}
+		
+		nName = pluscodestr(nName, tskData.data.name);
+		
+		var sufixElem = $('#processsufix');
+		var sufix = (sufixElem.length)? sufixElem.val() : '';
+		
+		//console.info('nName',nName, 'sufix',sufix);
+		
+		nName = pluscodestr(nName, sufix );
+		
+		return nName;
+	}
+	
+//------ +++ --- *** --- +++  *** --- +++  *** --- +++  *** --- +++ 
+
+function finalValidations(){
+	return true;
+}
+
+WF_running_process = { TasksToCreate : {} };
+
+function startRunning(){
+	createTableTaskToCreate();
+	showTableTaskToCreate();
+	// Step ONE
+	ExecuteCreateNewTask();
+}
+
+function showTableTaskToCreate(){
+	
+	var succesorHERE = $("input[name='succesorHERE']:checked").val();
+	
+	var tskHi = '<table class="table table-striped table-bordered bg-default"><thead><tr><td>Branch</td><td>PS</td><td>Id</td><td>Task</td><td>Assigned</td><td>Depto</td><td>Start</td><td>Due</td><td>WoW</td><td>Days</td><td>Dep</td><td>ID*</td><td>Status</td></tr></thead><tbody>';
+	var tskHiRowTmplt = '<tr id="{{branchName}}"><td>{{branchName}}</td><td>{{p_s}}</td><td>{{pro_task_type}}</td><td>{{pro_title}}</td><td>{{pro_assigned_n}}</td><td>{{pro_department}}</td><td>{{pro_start}}</td><td>{{pro_due}}</td><td>{{pro_wow}}</td><td>{{pro_duration}}</td><td>{{pro_dependency_type_txt}}</td><td>{{final_id}}</td><td id="{{branchName}}-s">.</td></tr>';
+	var tskHiFt = '</tbody></table>';
+	var allHilo = '';
+	allHilo += tskHi;
+	for(var tc in WF_running_process.TasksToCreate){
+		//console.info(WF_running_process.TasksToCreate[tc])
+		allHilo += LeirAGS_Tmpl(tskHiRowTmplt, WF_running_process.TasksToCreate[tc])
+	}
+	allHilo += tskHiFt
+	
+	$('#finalTasks').html( allHilo )
+	
+	var tskHi = '<table class="table table-striped table-bordered bg-default"><thead><tr><td>Class</td><td>Task</td><td>Assigned</td><td>Start</td><td>Due</td><td>WoW</td><td>Days</td></tr></thead><tbody>';
+	var tskHiRowTmplt = '<tr><td>{{class}}</td><td>{{taskTitle}}</td><td>{{taskAssigned}}</td><td>{{taskStartDate}}</td><td>{{taskDueDate}}</td><td>{{taskWorkWeekend}}</td><td>{{taskDuration}}</td></tr>';
+	var tskHiFt = '</tbody></table>';
+	predecessorTask_new_data['class'] = 'PREDECESSOR';
+	successorTask_new_data['class'] = 'SUCCESSOR';
+	
+	$('#finalTasks-predecessor').html( '' 
+			+ tskHi 
+			+ LeirAGS_Tmpl(tskHiRowTmplt, predecessorTask_new_data )
+			+ LeirAGS_Tmpl(tskHiRowTmplt, successorTask_new_data )
+			+ tskHiFt )
+	
+	//$('#finalTasks-successor').html( '<h6>Process task seccessor</h6>' + tskHi + LeirAGS_Tmpl(tskHiRowTmplt, successorTask_new_data ) + tskHiFt )
+	
+	$('#add-process-tasks-running > div > div > div:nth-child(1) > h5').html(
+			' ' + WF_Sales_Order_Record.saleorder.tranid+' <small>'+
+			WF_Sales_Order_Record.saleorder.entity_txt+'</small>'
+	);
+}
+
+function createTableTaskToCreate(){
+	// Collect and clear data 
+	var Xitem = {}, Xsa = {};
+	
+	if (item_salesorder_data.type == 'item')
+		Xitem = WF_Sales_Order_Record
+				.items.find(function(ti){ return ti.id == item_salesorder_data.id });
+	else
+		Xsa = WF_Sales_Order_Record
+				.serviceaddress.find(function(sai){ return sai.id == item_salesorder_data.id });
+	
+	var succesorHERE = $("input[name='succesorHERE']:checked").val();
+	
+	
+	function follow_depends_on_f(tskData, level, branch ){
+		level++
+		if ( tskData['levelT'] ) return '';
+		tskData.levelT = level
+		tskData.branch = branch
+		var branchName = 'B'+(''+branch).padZero(3)+'L'+(''+level).padZero(3)
+		var P_S = ((level == 1) ? 'P' : '') + ((succesorHERE == tskData.id) ? 'S' : '')
+		var assigneeData = getemployeeData(tskData.data.assigned)
+		
+		WF_running_process.TasksToCreate[branchName] = {
+				branch : branch,
+				level : level,
+				branchName : branchName,
+				pro_task_type : tskData.id,
+				pro_title : tskData.newName,
+				pro_assigned : tskData.data.assigned,
+				pro_assigned_n : assigneeData.employeeName,
+				pro_department : assigneeData.deptId,
+				pro_start : tskData.data.start,
+				pro_start_i : tskData.data.start_i,
+				pro_due : tskData.data.due,
+				pro_due_i : tskData.data.due_i,
+				pro_dependency_type : tskData.data.dependency_type,
+				pro_dependency_type_txt : tskData.data.dependency_type_txt,
+				pro_duration : tskData.data.duration * 1,
+				pro_wow : tskData.data.wow,
+				pro_process : tskData.data.Process,
+				pro_subprocess : tskData.data.subProcess,
+				pro_department : tskData.data.department,
+				pro_so_id : WF_Sales_Order_Record.saleorder.internalid,
+				pro_company : WF_Sales_Order_Record.saleorder.entity,
+				pro_item_serviceaddress : item_salesorder_data.type,
+				pro_item : (item_salesorder_data.type == 'item') ? item_salesorder_data.id : 0,
+				pro_item_line : (item_salesorder_data.type == 'item') ? item_salesorder_data.line : 0,
+				pro_location_a : (item_salesorder_data.type == 'item') ? Xitem.idlocA : 0,
+				pro_location_z : (item_salesorder_data.type == 'item') ? Xitem.idlocZ : 0,
+				pro_subscription : (item_salesorder_data.type == 'item') ? Xitem.subscriptionId : 0,
+				pro_service_address : (item_salesorder_data.type != 'item') ? item_salesorder_data.id : 0,
+				
+				depend : tskData.depend,
+				final_id : 0,
+				succesor_end : (succesorHERE == tskData.id) ? successorTask_new : 0,
+				predecessor_start : (level == 1) ? predecessorTask_new : 0,
+				p_s : P_S,
+		}
+		
+		
+		for(var nj in tasksStructureTree){
+			var tj = tasksStructureTree[nj]
+			if ((tj.depend).indexOf(tskData.id) != -1) {
+				follow_depends_on_f(tj, level, branch)
+			}
+		}
+	}
+	
+	// Set Flag clear...
+	for (var bh in tasksStructureTree){ tasksStructureTree[bh].levelT = ''; }
+	
+	var bh_i = 0;
+	// Recreate Tree for all process...
+	for (var bh in tasksStructureTree){
+		if(tasksStructureTree[bh].dependencies == '**') {
+			bh_i ++;
+			var tts = tasksStructureTree[bh];
+			follow_depends_on_f(tts, 0, bh_i );
+		}
+	}
+	
+}
+
+
+//Pause compilation...
+function pausecomp(millis)
+{
+    var date = new Date();
+    var curDate = null;
+    do { curDate = new Date(); }
+    while(curDate-date < millis);
+}
+
+
+function visual_process_log( action, message, title, callback) {
+	var inst = new Date();
+	inst = new Date().toLocaleString();
+	switch (action) {
+	case 'start':
+		LeirAGS_Visual_Process.obj_pro_row = 0;
+		LeirAGS_Visual_Process.obj_pro_log = 0;
+		LeirAGS_Visual_Process.obj_pro_wait= 0;
+		title = ''+title+'<span id="objProFlag" style="font-size:8px; color:#333; float:right;">'+inst+'</span>';
+		message = '<div data-rowid="'+LeirAGS_Visual_Process.obj_pro_row+'" style="border-bottom:1px dotted #EEE"><em>'+
+			message+'</em><span class="logtime" style="font-size:10px; color:#666; float:right;">'+
+			inst+'</span></div><br>';
+		messager(title,message);
+		pausecomp(16)
+		$('#confirmBox').css('width','800px');
+		var d = $('#confirmBox div.msg');
+		d.css('height','280px').css('overflow','auto').css('font-size','12px').css('background-color','#FFF')
+		$('div#confirmButtons a').hide();
+		if (typeof callback == 'function') 
+			LeirAGS_Visual_Process.LeirAGS_Monitoring_cb = callback
+		else
+			LeirAGS_Visual_Process.LeirAGS_Monitoring_cb = null;
+		
+		LeirAGS_Visual_Process.Execute_Collector_Results = [];
+		
+		LeirAGS_Visual_Process.LeirAGS_Monitoring = setInterval(function(){
+			LeirAGS_Visual_Process.obj_pro_wait++;
+			if (LeirAGS_Visual_Process.obj_pro_log < 1 && LeirAGS_Visual_Process.obj_pro_row > 1){
+				clearInterval(LeirAGS_Visual_Process.LeirAGS_Monitoring)
+				LeirAGS_Visual_Process.LeirAGS_Monitoring = null;
+				visual_process_log('close')
+			} else {
+				if (LeirAGS_Visual_Process.obj_pro_wait > LeirAGS_Visual_Process.obj_pro_wait_limit) {
+					//--- alert('Process is wor...')
+					var inst = new Date();
+					inst = new Date().toLocaleString();
+					message = '<div data-rowid="w'+LeirAGS_Visual_Process.obj_pro_row+'" style="border-bottom:1px dotted #EEE">+ '+
+						'<em>Processing, please wait...</em><span class="logtime" style="font-size:10px; color:#666; float:right;">'+
+						inst+'</span></div><br>';
+					d.append(message);
+					d.scrollTop(d.prop("scrollHeight"));
+					pausecomp(37)
+					LeirAGS_Visual_Process.obj_pro_wait = 1;
+				}
+			}
+		}, 200);
+		pausecomp(200)
+		$('div#confirmButtons a').hide();
+		pausecomp(200)
+		break
+	case 'add-only':
+		LeirAGS_Visual_Process.obj_pro_log++
+		break
+	case 'minus-only':
+		LeirAGS_Visual_Process.obj_pro_log--
+		break
+	case 'add':		
+		var d = $('#confirmBox div.msg');
+		LeirAGS_Visual_Process.obj_pro_log++;
+		LeirAGS_Visual_Process.obj_pro_row++;
+		message = '<div data-rowid="'+LeirAGS_Visual_Process.obj_pro_row+'" style="border-bottom:1px dotted #EEE">+ <em>'+
+			message+'</em><span class="logtime" style="font-size:10px; color:#666; float:right;">'+
+			inst+'</span></div><br>';
+		d.append(message);
+		d.scrollTop(d.prop("scrollHeight"));
+		pausecomp(100)
+		break
+	case 'minus':
+		var d = $('#confirmBox div.msg');
+		LeirAGS_Visual_Process.obj_pro_log--;
+		LeirAGS_Visual_Process.obj_pro_row++;
+		message = '<div data-rowid="'+LeirAGS_Visual_Process.obj_pro_row+'" style="border-bottom:1px dotted #EEE">- <em>'+
+			message+'</em><span class="logtime" style="font-size:10px; color:#666; float:right;">'+
+			inst+'</span></div><br>';
+		d.append(message);
+		d.scrollTop(d.prop("scrollHeight"));
+		pausecomp(100)
+		break
+	case 'close':
+		if(typeof LeirAGS_Visual_Process.LeirAGS_Monitoring_cb == 'function') {
+			console.info('calling callback function.')
+			LeirAGS_Visual_Process.LeirAGS_Monitoring_cb();
+		}
+		LeirAGS_Visual_Process.LeirAGS_Monitoring_cb=null;
+		var d = $('#confirmBox div.msg');
+		$('div#confirmButtons a').trigger('click');
+		LeirAGS_Visual_Process.obj_pro_log = 0;
+		break
+	default:
+		break
+	}
+}
+
+
+
+
+
+
+
+
+
+//------ +++ --- *** --- +++  *** --- +++  *** --- +++  *** --- +++ 
+
+
+function ExecuteCreateNewTask(){
+	
+	visual_process_log('start','Creating Tasks','Step 1 - Creating Tasks', 
+		function(){
+			console.info('CreatingTask results',LeirAGS_Visual_Process.Execute_Collector_Results);
+			alert('Creating task was Ok, continue...');
+			// To unlink the second step we call in timeout
+			setTimeout( createDependenciesOnProcessTasks(), 300); // Next Step 2.. create Dependencies....
+		}
+	);
+	
+	// Launch all creations
+	for(var tcx in WF_running_process.TasksToCreate){
+		
+		tc = WF_running_process.TasksToCreate[tcx];
+		
+		var piece = {
+	        'custevent_kpi_sales_order'         : tc.pro_so_id,
+	        'custevent_kpi_department'			: tc.pro_department,
+	        'title'                             : tc.pro_title,
+	        'startdate'                         : tc.pro_start_i,
+	        'duedate'                           : tc.pro_due_i,
+	        'assigned'                          : tc.pro_assigned,
+	        'custevent_kpi_work_on_weekend'     : tc.pro_wow,
+	        'custevent_kpi_duration'            : ''+tc.pro_duration,
+	        'custevent_kpi_task_type'           : tc.pro_task_type,
+	        'transaction'						: tc.pro_so_id,
+			'company'							: tc.pro_company,
+		}
+		
+		if (item_salesorder_data.type == 'item') {
+			piece['custevent_kpi_item'] = tc.pro_item;
+			piece['custevent_kpi_item_line'] = ''+tc.pro_item_line;
+			piece['custevent_kpi_subscription'] = tc.pro_subscription;
+			piece['custevent_kpi_location_a'] = tc.pro_location_a;
+			piece['custevent_kpi_location_z'] = tc.pro_location_z;
+		} else {
+			piece['custevent_kpi_service_address'] = tc.pro_service_address;
+		}
+		
+		var title = tc.pro_title;
+		var branchName = tc.branchName;
+		
+		var actiondata = { action : 'createTaskOnly', action_id: branchName, task: JSON.stringify(piece) };
+		
+		RequestAjaxContolled( branchName, title, actiondata, function(data){ 
+			if (data.result) {
+				$('#'+data.action_id+'-s').html('OK');
+			} else {
+				$('#'+data.action_id+'-s').html('*ERR*');
+			}
+		})
+		
+	}
+	
+}
+
+function ExecuteCreateNewTask_Test(){
+	visual_process_log('start','Testing','Example manualy', function(){ alert('Termine...')})
+	setTimeout(function(){
+		visual_process_log('add','Add One Process')
+		setTimeout(function(){
+			visual_process_log('add','Add Two Process')
+			setTimeout(function(){
+				visual_process_log('add','Add Three Process')
+				setTimeout(function(){
+					visual_process_log('minus','Minus One Process')
+					setTimeout(function(){
+						visual_process_log('minus','Minus Two Process')
+						setTimeout(function(){
+							visual_process_log('minus','Minus Three Process')
+						},300)
+					},300)
+				},4300)
+			},300)
+		},300)
+	},300)
+}
+
+/* Call with Precaution */
+function deleteCreatedTasksByProcess(){
+	var actiondata = { action : 'rollBackTaskOnly', 
+		todeletetasks: JSON.stringify( LeirAGS_Visual_Process.Execute_Collector_Results ) 
+	};
+	RequestAjax (actiondata, function(){ console.info('Finish delete')})
+}
+
+
+/* Create relations predecesors / successors
+ * Dependencies...
+ */
+ 
+function getDependencyValue(Dep){
+	var typeDependency = ['','finishtostart','starttostart','finishtofinish','starttofinish'];
+	return typeDependency.indexOf( Dep.toLowerCase() );
+}
+function createDependenciesOnProcessTasks() {
+	
+	var full_dependencies = [];
+	var pre_dep = $('#predecessor_new_id').val();
+	var succesorHERE = $("input[name='succesorHERE']:checked").val();
+	var suc_dep = $('#StaskDependency').val();
+	
+	// Remember fix all dependencies to toLowerCase()
+	
+	function follow_depends_on_d(tskData) {
+		// Verify if tskData are Successor hold...
+		if (succesorHERE == tskData.pro_task_type) {
+			var newDep = { 
+					taskA: tskData.final_id,
+					taskB: successorTask_new,
+					dependency : getDependencyValue(suc_dep),
+					direction : 'successor',
+					action : 'createDependenciesTwoTasks',
+					taskType : tskData.pro_task_type,
+					branchName : tskData.branchName
+				}
+			full_dependencies.push( newDep );
+		}
+		for(var nj in WF_running_process.TasksToCreate){
+			var tj = WF_running_process.TasksToCreate[nj]
+			if ((tj.depend).indexOf(tskData.pro_task_type) != -1) {
+				var newTask = LeirAGS_Visual_Process.Execute_Collector_Results.find(function(nwt){ return nwt.action_id == tj.branchName });
+				tj.final_id = newTask.newTaskId;
+				tj.pro_dependency_type_txt = tj.pro_dependency_type_txt.toLowerCase();
+				var newDep = { 
+					taskA: tskData.final_id,
+					taskB: tj.final_id,
+					dependency : getDependencyValue(tj.pro_dependency_type_txt),
+					direction : 'predecessor',
+					action : 'createDependenciesTwoTasks',
+					taskType : tj.pro_task_type,
+					branchName : tj.branchName
+				}
+				full_dependencies.push( newDep );
+				follow_depends_on_d( tj )
+			}
+		}
+	}
+	
+	// Step 0 - Predecessor Process to Tasks Branches Root
+	for(var tcx in WF_running_process.TasksToCreate){
+		tc = WF_running_process.TasksToCreate[tcx];
+		if (tc.depend.length == 0) {
+			// console.info(tc.branchName, tc.depend)
+			var newTask = LeirAGS_Visual_Process.Execute_Collector_Results.find(function(nwt){ return nwt.action_id == tc.branchName });
+			tc.final_id = newTask.newTaskId;
+			var newDep = { 
+				taskA: predecessorTask_new,
+				taskB: tc.final_id,
+				dependency : getDependencyValue(pre_dep),
+				direction : 'predecessor',
+				action : 'createDependenciesTwoTasks',
+				taskType : tc.pro_task_type,
+				branchName : tc.branchName
+			}
+			full_dependencies.push( newDep );
+			follow_depends_on_d( tc );
+		}
+	}
+	
+	console.info('full_dependencies',full_dependencies);
+	
+	// Launching creation...
+	var actiondata = { action : 'createDependenciesAllProcess', 
+			processRelations: JSON.stringify(full_dependencies) };
+	
+	RequestAjax (actiondata, function(data){
+		console.info('Results of createDependenciesAllProcess',data)
+		if (!data.result){
+			deleteTasks();
+			messager('Error','An error on register dependencies, rollback all changes...')
+		} else if (data.result) {
+			// Last step.. adjust the successor start date...
+			console.info('All dependencies was ok, final step adjust successor start...')
+		}
+	});
+	
+}
+
+
+//--- RequestAjaxContolled>
+function RequestAjaxContolled (branchName, title, params, callbackFunction, urls, atype ){
+  //console.info('RequestAjaxContolled',branchName, title, params)
+  urls = (urls != undefined)? urls : getUrl().BSL;
+  atype = (atype != undefined)? atype : 'POST';
+  visual_process_log('add','start: '+title )
+  $.ajax({
+		  url		: urls
+		, type		: atype
+		, data		: params
+		, async		: true
+		, dataType	: 'text'
+		, before	: function () { }
+		, success	: function (data) {
+			visual_process_log('minus','end: '+title)
+			data = CleanResponseData(data)
+			LeirAGS_Visual_Process.Execute_Collector_Results.push(data);
+      		callbackFunction( data )
+		}
+		, error		: function (er) {
+     		visual_process_log('minus','error '+er+' on '+title)
+     		Execute_Collector_Results.push({result:false, action_id: branchName, newTaskId:0, err: er });
+		}
+	})
+}
+
+//------ +++ --- *** --- +++  *** --- +++  *** --- +++  *** --- +++ 
+
+
+
+
+
+
+
+
+
+
+
+
+	function showAssigned(){
+		var empName = getEmployeeName(WorkForce_AddAct.userID);
+		var inputs = '<input type="hidden" value="'+WorkForce_AddAct.userID+'" id="AssignedTo"><input class="employeeSelectFly" type="text" value="'+empName+'" onClick="selectassignee(this)" data-onchg="AssignedTo">';
+		$('#showassigned').html(inputs);
+	}
+
+  	function getUrl() {
+		if (WorkForce_AddAct.Env == 'SANDBOX') {
+			return {
+				'RT-Old': '/app/site/hosting/restlet.nl?script=1386&deploy=1',
+				'RT': '/app/site/hosting/scriptlet.nl?script=1481&deploy=1',
+				'BSL': '/app/site/hosting/scriptlet.nl?script=1481&deploy=1',
+				'RT2-Old': '/app/site/hosting/restlet.nl?script=1413&deploy=1',
+				'RT2': '/app/site/hosting/scriptlet.nl?script=1481&deploy=1',
+				'RT3': '/app/site/hosting/restlet.nl?script=1427&deploy=1',
+				'wrike': '/app/site/hosting/scriptlet.nl?script=1393&deploy=1',
+				'Common': "/app/site/hosting/scriptlet.nl?script=837&deploy=1",
+				'MLog' : 'https://y16m9ssk3.transtelco.net/nslogs/debug_wfm',
+				'AddTask' : '/app/site/hosting/scriptlet.nl?script=1699&deploy=1&',
+			}
+		} else {
+			return {
+				'RT-Old': '/app/site/hosting/restlet.nl?script=1307&deploy=1', // Old RT
+				'RT': '/app/site/hosting/scriptlet.nl?script=1346&deploy=1',
+				'BSL': '/app/site/hosting/scriptlet.nl?script=1346&deploy=1',
+				'RT2': '/app/site/hosting/scriptlet.nl?script=1346&deploy=1',
+				'RT3': '/app/site/hosting/restlet.nl?script=1344&deploy=1',
+				'wrike': '/app/site/hosting/scriptlet.nl?script=1246&deploy=1',
+				'Common': '/app/site/hosting/scriptlet.nl?script=837&deploy=1',
+				'MLog' : 'https://y16m9ssk3.transtelco.net/nslogs/debug_wfm',
+				'AddTask': '/app/site/hosting/scriptlet.nl?script=1351&deploy=1&'
+			}
+		}
+	}
+
+  	//--- CleanResponseData>
+  	function CleanResponseData(data) {
+		WF_NetSuite_Error = false;
+		// if(WF_DEBUG)
+		// console.info('CleanResponseData', data);
+		if (data.substring(0,15) == '<!DOCTYPE html>'){
+			WF_NetSuite_Error = true;
+			window.WF_NetSuite_Error_Data = data;
+			var newData = {};
+			var mark_need_login ='>Could not determine customer compid<';
+			if (data.indexOf(mark_need_login) != -1) {
+				alert('Session with NetSuite was ended.\nNeed Reload Workforce Management\n.');
+				/* var forceGet = true; 
+				false - Default. Reloads the current page from the cache.
+				   true - Reloads the current page from the server
+				window.location.reload(forceGet); */
+				newData['error'] = 'NetSuite session was ended.';
+			} else {
+				// console.error('NetSuite return data', data );
+				// try Catch Errors
+				xtable = data.substring( data.indexOf('<table'), data.lastIndexOf('table>') + 6);
+				xob = xtable.substring( xtable.indexOf('{'), xtable.lastIndexOf('}') + 1);
+				if (xob != '') {
+					error_obj = JSON.parse(xob);
+				} else {
+					xob = xtable.substring( xtable.indexOf('org.mozilla.javascript.EcmaError'), xtable.lastIndexOf('</td>') + 1);
+					xob = xob.substring( 0, xob.indexOf('</td>'));
+					if (xob) 
+						error_obj = xob;
+				}
+				/*
+				var niceError = function(o){var m=[]; for(a in o){ b=o[a]; if(typeof b === 'object'){ m.push('<tr><td>'+a+'</td><td>'+niceError(b)+'</td></tr>'); } else m.push('<tr><td>'+a+'</td><td>'+b+'</td></tr>'); }; return '<table class="table table-bordered">'+m.join('')+'</table>'; }
+				$('#contenting').append( '<div class="col-sm-6"><h4>NetSuite error <small>'+(new Date()).toString()+'</small></h4>'+niceError(error_obj.cause)+'</div>' );
+				*/
+				console.error('NetSuite return error on call.', error_obj );
+				newData['error'] = 'NetSuite return error.';
+				newData['desc'] = error_obj;
+			}
+			loaderEnd();
+			return newData;
+		} else {
+			// Fix Object when NetSuite append comments...
+			var newData = String(data).split('<!--');
+			return JSON.parse(newData[0]);
+		}
+	}
+
+  	//--- RequestAjax>
+  	function RequestAjax (params, callbackFunction, urls, atype ){
+  	  urls = (urls != undefined)? urls : getUrl().BSL;
+  	  atype = (atype != undefined)? atype : 'GET';
+//   	  if (atype=='POST'){
+//   		  console.info('Llamada POST',params,urls,atype);
+//   	  }
+      $.ajax({
+			  url		: urls
+			, type		: atype
+			, data		: params
+			, async		: false
+			, dataType	: 'text'
+			, success	: function (data) {
+          		callbackFunction( CleanResponseData(data) );
+			}
+			, error		: function (err) {
+         		console.error('Error on Netsuite Call '+params.action, err);
+			}
+		});
+    }
+
+ 	// Run First Process, Fill table with Sales Order
+    function step1 (){
+      getItemsfromSO(ParameterSalesOrder);
+      getServiceAddresses(ParameterSalesOrder);
+      SelectStep('step1');
+      getNameSalesOrder(ParameterSalesOrder);
+      $('#starting-here').show();
+      $('#loading-txt').hide();
+    }
+
+    function getNameSalesOrder(idSalesOrder){
+      var param = {'action':'getNameTask','idSO':idSalesOrder };
+      RequestAjax(param,function(data){
+    	  if(WF_DEBUG) console.info('nameData',data);
+    	  WF_Sales_Order_Record['saleorder'] = data;
+        ParameterNameSalesorder  = data[0];
+		ParameterCustomerSalesOrder = data[1];
+      });
+    }
+
+    function getAllTaskObj(page){
+    	var param = {
+    			'action':'getTasksTableObj',
+    			'WhichSalesOrder':ParameterSalesOrder,
+    			'pm':false,
+    			'selectPage':page
+    		};
+        RequestAjax(param,function(data){
+          if(page==0) {
+        	  console.info('Download 1 of Tasks record count:',data.rowscount,' down records:',data.rows.length);
+        	  AllTaskObj = data;
+          }else{
+        	  console.info('Download 2 of Tasks record count:',data.rowscount,' down records:',data.rows.length);
+        	  (data.rows).forEach(function(rw){
+        		 (AllTaskObj.rows).push(rw);
+        	  });
+          }
+        });
+    }
+
+    function setPredecessorsOnSuccessors(){
+    	var predeccesorTask_Branch_New = [];
+    	var oldPred = predeccesorTask_Branch;
+    	getPredesesorsBranch(predecessorTask_new); // Get All Predesessors...
+    	predeccesorTask_Branch_New = predeccesorTask_Branch;
+    	predeccesorTask_Branch = oldPred;
+    	if(WF_DEBUG) console.info('predeccesorTask_Branch_New',predeccesorTask_Branch_New);
+    	$('#tasks_table_all_successor_selector tbody tr').removeClass('selected').removeClass('notselectable').removeClass('info');
+    	$('#tasks_table_all_successor_selector tbody tr').each(function(r,e){ 
+    		var tdt = $(e).data();
+    		if ( (predeccesorTask_Branch_New.indexOf('A'+tdt.taskid) != -1) ||
+    			 (tdt.taskid == predecessorTask_new) ) {
+    			$(e).addClass('notselectable')
+    		}
+    	})
+    }
+    
+    function showTasksTable(){
+    	var allFields = [
+    			'KpiTaskType','WrikeID','WrikeLink','taskAck','taskAssigned',
+    			'taskAssignedID','taskDependency','taskDueDate','taskDuration','taskId',
+    			'taskKpiAddress','taskKpiItem','taskKpiLine','taskPredecessor','taskStartDate',
+    			'taskStatus','taskTitle','taskWorkWeekend'
+    			];
+    	var showFields = [
+    		'taskTitle','taskStatus','taskAssigned','taskStartDate','taskDueDate','taskDuration' //,'taskId','taskPredecessor',
+			];
+    	var labelsFields = [
+    		'Title','Status','Assigned','Start Date','Due Date','Duration' //,'tskID','predId',
+			];
+    	var taskStatus = ['','Active','Completed','Deferred','Canceled']
+    	var cnt = 0;
+    	var selectAble = '';
+    	var notFounds = [];
+
+    	getPredesesorsBranch(predeccesorTask); // Get All Predesessors...
+
+    	var tbl = '<table class="table table-striped" id="{{tasks_table_all}}">';
+    	tbl = '';
+
+    	tbl += '<thead><tr>';
+		tbl += '<th>#</th>';
+		labelsFields.forEach(function(lbl){
+			tbl += '<th>'+lbl+'</th>';
+		});
+		tbl += '</tr></thead><tbody>';
+
+    	(AllTaskObj.rows).forEach(function(tsk){
+    		selectAble = '';
+    		if (predeccesorTask_Branch.indexOf('A'+tsk.taskId) != -1) selectAble = ' class="notselectable" ';
+    		else notFounds.push( 'A'+tsk.taskId+'.' );
+    		if (predeccesorTask == tsk.taskId) selectAble = ' class="info" ';
+    		tbl += '<tr data-taskid="'+tsk.taskId+'"'+selectAble+'>';
+    		tbl += '<td>'+(++cnt)+'</td>';
+    		showFields.forEach(function(fld){
+    			if (fld=='taskStatus')
+    				tbl += '<td>'+taskStatus[tsk[fld]]+'</td>';
+    			else
+    				tbl += '<td>'+tsk[fld]+'</td>';
+    		});
+    		tbl += '</tr>';
+    	});
+    	tbl += '</tbody>';
+    	// tbl = '</tbody></table>';
+
+    	//-- console.info('Not Found in Branch:', notFounds);
+    	return tbl;
+    }
+
+    var carryOut = [];
+    function createRutePredecessors( tskId, level ){
+    	var cTsk = getTaskbyID(tskId);
+    	if (!level) { carryOut = []; /* carryOut.push( tskId ); */ }
+    	if(WF_DEBUG) console.info('cTsk', cTsk.taskPredecessor, 'level',level )
+    	if(level > 2000) return 0;
+    	if(WF_DEBUG) console.info('cTsk.taskPredecessor', cTsk.taskPredecessor)
+    	if (cTsk.taskPredecessor){
+    		carryOut.push( cTsk.taskPredecessor );
+    		createRutePredecessors( cTsk.taskPredecessor, ++level );
+    	}
+    }
+
+    function getPredesesorsBranch(wTask){
+    	var cacheVar = cacheVar;
+    	var param = {
+    			'action':'getPredesesorsBranch',
+    			'WhichTask': wTask,
+    		};
+        RequestAjax(param,function(data){
+        	predeccesorTask_Branch = data;
+        	if(WF_DEBUG)
+        		console.info('predeccesorTask_Branch', predeccesorTask_Branch );
+        });
+    }
+
+    function enableFilter_Table(){
+    	// Enable search insensitive -- UpperCase-LowerCase
+	    $.extend($.expr[":"], {
+	      "containsIN": function(elem, i, match, array) {
+	        return (elem.textContent || elem.innerText || "").toLowerCase().indexOf((match[3] || "").toLowerCase()) >= 0;
+	      }
+	      });
+	    // ----------------------
+		$(".filter_table").on('keyup', function() {
+			var tableid = $(this).data('tableid');
+			if (this.value.length < 1) {
+				$("#"+tableid+" tbody tr").css("display", "");
+			} else {
+				$("#"+tableid+" tbody tr:not(:containsIN('"+this.value+"'))").css("display", "none");
+				$("#"+tableid+" tbody tr:containsIN('"+this.value+"')").css("display", "");
+			}
+		});
+		// ----------------------
+    }
+
+
+    function SelectStep (IdStepSelected,type){
+        $('#all').not('#'+IdStepSelected).children().css("display","none");
+        //$('#'+IdStepSelected).css("display","block");
+        $('#'+IdStepSelected).show();
+        var instruction = ''
+        if(IdStepSelected == 'step1'){
+          instruction = 'Select an option';
+        }else if(IdStepSelected == 'step1_1'){
+            instruction = 'Select an Item';
+        }else if(IdStepSelected == 'step1_2'){
+          instruction = 'Select an Item';
+        }else if(IdStepSelected == 'step2_1'){
+          instruction = 'Select a Services Address';
+        }else if(IdStepSelected == 'step3_1'){
+          instruction = 'Select a Services Address';
+        }
+
+        if(IdStepSelected == "stepFieldsTask"){
+          $('#btnSave').show();
+          $('#container_TasksTableDiv').show();
+        }else{
+          $('#container_TasksTableDiv').hide();
+          $('#btnSave').hide();
+          getKpiTaskType('-','-');
+          RestarValues();
+        }
+
+        $('#instruction').text(instruction) //+' '+IdStepSelected);
+
+        if(type!="back")
+        StepsArray.push(IdStepSelected);
+
+        //-- console.log(StepsArray);
+      }
+
+    function GoBackStep (){
+        StepsArray.pop();
+        SelectStep(StepsArray[StepsArray.length-1],'back');
+    }
+
+    function SelectTypeTask(type,idType){
+      if(type!='Template'){
+        $('#hideFieldTask').css("display","none");
+      //  $('#hideTwo').css("display","block");
+        $('#hideThree').css("display","none");
+      }else{
+        $('#hideFieldTask').css("display","block");
+      //  $('#hideTwo').css("display","none");
+        $('#hideThree').css("display","block");
+        getProcessToTaskField($('#fromStepTask').text());
+      }
+      SelectStep('stepFieldsTask');
+    }
+
+	function messager( title, msg, ok_func ){
+		jQuery.confirmar({
+			'title'		: title,
+			'message'	: msg,
+			'buttons'	: {
+				//'Cancel': { 'class'	: 'gray', 'action': function(){} },
+				'OK'	: { 'class'	: 'blue', 'action': function(){ if(typeof ok_func == 'function') { ok_func() } } },
+			},
+		});
+	}
+
+   function validateTask(tsk){
+       var msgs = [];
+       var errors = '';
+
+       if(WF_DEBUG) console.info('validateTask()',tsk);
+
+       if (tsk.taskType == "") msgs.push('Type is undefined');
+       if (tsk.taskField == "") msgs.push('Name or title is mandatory');
+       if (tsk.assigned == "") msgs.push('Task need be assigned to someone');
+       if (tsk.duration == "") msgs.push('Duration cannot be less than 1 day');
+       if (tsk.taskDepy == "") msgs.push('Dependency is mandatory');
+       if (tsk.nstartDate == "") msgs.push('Start Date is mandatory');
+       if (tsk.ndueDate == "") msgs.push('Due Date is mandatory');
+
+       if (msgs.length){
+     	errors ='<span class="center">This errors was found</span><ul>';
+     	msgs.forEach(function(ms){ errors += '<li>'+ms+'</li>'});
+     	errors +='</ul><span class="center">Fix it...</span>';
+     	//console.info('Confirm',errors);
+     	messager('Cannot save',errors);
+     	return false;
+       }
+
+ 	  return true;
+   }
+
+ 
+ //---SaveNewTaskOLD>
+ 
+	function SaveNewTaskOLD (){
+	  if(WF_DEBUG) console.info('try SaveNewTask()');
+
+      var d = getValuesfields();
+
+      if(! validateTask(d)) {
+    		return false;
+      }
+
+      var objF = {
+        'title'                             : d.taskField,
+        'custevent_kpi_sales_order'         : ParameterSalesOrder,
+        'assigned'                          : d.assigned,
+        'custevent_kpi_work_on_weekend'     : d.wow,
+        'custevent_kpi_duration'            : d.duration+"",
+        'startdate'                         : d.nstartDate,
+        'duedate'                           : d.ndueDate,
+        'custevent_kpi_workforce_task'      : true,
+        'custevent_kpi_startdate'           : d.nstartDate,
+        'custevent_kpi_duedate'             : d.ndueDate,
+        'custevent_kpi_planned_startdate'   : d.nstartDate,
+        'custevent_kpi_planned_duedate'     : d.ndueDate,
+        'custevent_kpi_planned_duration'    : d.duration+"",
+        'custevent_kpi_task_type'           : d.taskType,
+        'custevent_kpi_current_predecessor' : predeccesorTask,
+        'custevent_kpi_current_dependency' 	: d.taskDepy,
+		'transaction'						: ParameterSalesOrder,
+		'company'							: ParameterCustomerSalesOrder,
+      }
+
+      var t = getAllValuesfromFields();
+
+      if(t.type=='item'){
+        
+    	objF['custevent_kpi_item'] = t.id;
+        objF['custevent_kpi_item_line'] = t.Nline;
+		objF['custevent_kpi_subscription'] = t.Subs;
+		objF['custevent_kpi_location_a'] = t.locA;
+		objF['custevent_kpi_location_z'] = t.locZ;
+		
+      } else if (t.type == 'servicesA') {
+    	  
+        objF['custevent_kpi_service_address'] = t.id;
+        
+      }
+      
+		objF['custevent_kpi_department'] = getemployeeData(d.assigned).deptId;
+	
+		var typeDependency = ['','finishtostart','starttostart','finishtofinish','starttofinish'];
+	
+		var dependencyPress = typeDependency.indexOf( ($('#PtaskDependency').val()).toLowerCase() );
+		var dependencySucc = typeDependency.indexOf( ($('#StaskDependency').val()).toLowerCase() );
+		
+		if(WF_DEBUG) console.info('Send Data',objF);
+	
+		// OBJECT for PREDECCESSOR RECORD
+		var PPredData = {
+			'custrecord_tp_parent' 			: 0, // will be replace in SL_RT by NEW TASK ID
+			'custrecord_tp_predecessor' 	: predeccesorTask,
+			'custrecord_tp_dependency_type' : dependencyPress,
+		}
+		var PSuccData = {
+			'custrecord_ts_parent'			: predeccesorTask,
+			'custrecord_ts_successor'		: 0, // will be replace in SL_RT by NEW TASK ID
+			'custrecord_ts_dependency_type'	: dependencyPress,
+		}
+		// OBJECT for SUCCESSOR RECORD
+		var SSuccData = {
+			'custrecord_ts_parent' 			: 0, // will be replace in SL_RT by NEW TASK ID
+			'custrecord_ts_successor' 		: successorTask,
+			'custrecord_ts_dependency_type' : dependencySucc,
+		}
+		var SPredData = {
+			'custrecord_tp_parent'			: successorTask,
+			'custrecord_tp_predecessor'		: 0, // will be replace in SL_RT by NEW TASK ID
+			'custrecord_tp_dependency_type'	: dependencySucc,
+		}
+	
+	  var idNewTask = "";
+      var param = {
+				'action'			: 'SaveNewTaskOLD',
+				'objectF'			: JSON.stringify(objF),
+				'PPredData'			: JSON.stringify(PPredData),
+				'PSuccData'			: JSON.stringify(PSuccData),
+				'SPredData'			: JSON.stringify(SPredData),
+				'SSuccData'			: JSON.stringify(SSuccData),
+				'successorTask'		: successorTask,
+				'predeccesorTask'	: predeccesorTask,
+			};
+
+     RequestAjax(param, function(data){ 
+    	 if(WF_DEBUG) console.log('Return Data:',data);
+   	 });
+
+   }
+//---SaveNewTaskOLD<
+
+
+//---SaveNewTask>
+	 
+	function SaveNewTask (){
+	  if(WF_DEBUG) console.info('try SaveNewTask()');
+
+      var d = getValuesfields();
+
+      if(! validateTask(d)) {
+    		return false;
+      }
+      
+      // Dishable button...
+      $('#btnsave').hide();
+
+      // custevent_kpi_process process
+      // custevent_kpi_subprocess
+      
+      var objF = {
+        'title'                             : d.taskField,
+        'custevent_kpi_sales_order'         : ParameterSalesOrder,
+        'assigned'                          : d.assigned,
+        'custevent_kpi_work_on_weekend'     : d.wow,
+        'custevent_kpi_duration'            : d.duration+"",
+        'startdate'                         : d.nstartDate,
+        'duedate'                           : d.ndueDate,
+        'custevent_kpi_workforce_task'      : true,
+        'custevent_kpi_startdate'           : d.nstartDate,
+        'custevent_kpi_duedate'             : d.ndueDate,
+        'custevent_kpi_planned_startdate'   : d.nstartDate,
+        'custevent_kpi_planned_duedate'     : d.ndueDate,
+        'custevent_kpi_planned_duration'    : d.duration+"",
+        'custevent_kpi_task_type'           : d.taskType,
+        'custevent_kpi_current_predecessor' : predeccesorTask,
+        'custevent_kpi_current_dependency' 	: d.taskDepy,
+		'transaction'						: ParameterSalesOrder,
+		'company'							: ParameterCustomerSalesOrder,
+      }
+
+      var t = getAllValuesfromFields();
+
+      if(t.type=='item'){
+        
+    	objF['custevent_kpi_item'] = t.id;
+        objF['custevent_kpi_item_line'] = t.Nline;
+		objF['custevent_kpi_subscription'] = t.Subs;
+		objF['custevent_kpi_location_a'] = t.locA;
+		objF['custevent_kpi_location_z'] = t.locZ;
+		
+      } else if (t.type == 'servicesA') {
+    	  
+        objF['custevent_kpi_service_address'] = t.id;
+        
+      }
+      
+	objF['custevent_kpi_department'] = getemployeeData(d.assigned).deptId;
+	
+	var typeDependency = ['','finishtostart','starttostart','finishtofinish','starttofinish'];
+	var dependencyPress = typeDependency.indexOf( ($('#PtaskDependency').val()).toLowerCase() );
+	var dependencySucc = typeDependency.indexOf( ($('#StaskDependency').val()).toLowerCase() );
+	
+	if(WF_DEBUG) console.info('Send Data',objF);
+	
+	  var idNewTask = "";
+      var param = {
+				'action'			: 'SaveNewTask',
+				'objectF'			: JSON.stringify(objF),
+				'successorTask'		: successorTask,
+				'predeccesorTask'	: predeccesorTask,
+				'dependencySucc'	: dependencySucc,
+				'dependencyPress'	: dependencyPress,
+		};
+
+     RequestAjax(param, function(data){ 
+    	 var objF = objF; // This way we can use a local copy of data between calls anidate.
+    	 if(WF_DEBUG) console.log('Return Data:',data);
+    	 if (data.result){
+    		 setTimeout(function(){
+    			var objF = objF; // Push Data at this level.
+    		 	createWriteRecords(objF, data.newTaskId);
+    		 }, 5);
+    	 } else {
+    		 alert('Error on create Task.');
+    		 $('#btnsave').show();
+    	 }
+   	 });
+
+   }
+//---
+
+	function createWriteRecords(tsk, id){
+		/* var datos = {
+			'action': "task.change",
+			'salesorder': tsk.custevent_kpi_sales_order,
+			"assigned": tsk.assigned,
+			"ack": false,
+			"status": 1,
+			"id": id,
+			"duration": tsk.custevent_kpi_duration,
+			"weekend": tsk.custevent_kpi_work_on_weekend,
+			"startdate": tsk.startdate,
+			"D_startdate": new Date(post_startDate),
+			"duedate": tsk.duedate,
+			"D_duedate": new Date(post_dueDate),
+			"wrikeid": wrikeid,
+			"workspace": true
+		}; */
+		
+		// Nos pusimos de acuerdo con IVAN, y WF hara una llamada asi, mas simple.
+		 var param = {
+				'action' : 'task.new',
+				'id' : id
+			};
+		if(WF_DEBUG) console.info('createWriteRecords',param);
+	     RequestAjax(param, function(data){
+	    	 if(WF_DEBUG) console.log('Return createWriteRecords Data:',data);
+	    	 var Task_Updated_Secund_Pass = [];
+	    	 for (var key in data) {
+					// Protect against inherited properties.
+					if (data.hasOwnProperty(key)) {
+						if (data[key].updated) {
+							if (data[key].id != id) {
+								Task_Updated_Secund_Pass.push( data[key] );
+								var otherData = {
+									'action': "update",
+									"id": data[key].id,
+									"duration": data[key].duration,
+									"startdate": data[key].startDate,
+									"duedate": data[key].dueDate,
+									"currentpredecessor": data[key].currentPredecessor,
+									"currentdependency": data[key].currentDependency,
+									"updatedbytask": id,
+									"pdstartdate": data[key].pdStartDate,
+									"pdduedate": data[key].pdDueDate,
+								};
+
+								if (WF_DEBUG)
+									console.info("ToUpdate", otherData);
+
+								if (WF_DEBUG_AJAX)
+									console.info('createWriteRecords()',"update .Common-2", otherData );
+
+								if (WF_DEBUG_AJAX_MIRROR)
+									mirrorLog('createWriteRecords()','Update Data .Common-2', otherData );
+								
+								$.ajax({
+									url: getUrl().Common,
+									type: 'POST',
+									data: otherData,
+									success: function(data2) {
+										if (WF_DEBUG)
+											console.log("Returned Data step 2 :" + data2);
+									},
+									error: function(err){
+										console.log('Error on update step 2',err);
+									}
+								});
+								
+							} // data[key].id != id
+						} // data[key].updated
+					} // object in data.
+				} // for each key in data.
+	    	 
+	    	 if(Task_Updated_Secund_Pass.length){
+	    		 if(WF_DEBUG) console.info('List nested task updated.');
+	    		 if(WF_DEBUG) console.table(Task_Updated_Secund_Pass);
+			 }
+			 else
+				console.info('No nested task need be update.');
+				
+	    	 alert('Task created successfuly...');
+    		 // Close this frame.
+    		 WF_AddAct_Close_Status = 'Task created successfuly.';
+    		 
+    		 // Close the frame AddActivity...
+    		 window.closePopup();
+    		 
+    		 
+	   	 }, getUrl().Common, 'POST' );
+	     
+	}
+
+
+   function getValuesfields (){
+     return {
+       "duration"  		: $('#durationTask').val(),
+       "wow"       		: $('#WorkOnWeekend').is(':checked'),
+       "startDate" 		: $('#startDate').val(),
+       "dueDate"   		: $('#dueDate').val(),
+       "assigned"  		: $('#AssignedTo').val(),
+       "taskTypeText"	: $('#taskField option:selected').text(),
+       "taskType"  		: $('#taskField option:selected').val(),
+       "taskField"  	: $('#taskfieldName').val(),
+       "nstartDate" 	: $('#startDate').val(),
+       "ndueDate"   	: $('#dueDate').val(),
+       "taskDepy"		: $('#PtaskDependency').val(),
+     	}
+   }
+
+   function computeTaskName(){
+    // console.log(ParameterNameSalesorder);
+    var sourceTask = getAllValuesfromFields();
+    var d = getValuesfields();
+    // console.log(ParameterNameSalesorder +" - "+ sourceTask.line + sourceTask.name+" - "+d.taskType);
+    var name = ParameterNameSalesorder +" - "+ sourceTask.line + sourceTask.name+" - "+d.taskTypeText;
+    $('#taskfieldName').val(name);
+   }
+
+   function getAllValuesfromFields(){
+     var objValuesFields = {};
+
+     if(StepsArray[1] == "step1_1") { // is ITEM
+
+       objValuesFields = {
+        'type'  : 'item',
+        'id'   	: $('input[name=Radiositems]:checked').val(),
+        'name'  : $('input[name=Radiositems]:checked').attr('data-name'),
+        'Nline'	: $('input[name=Radiositems]:checked').attr('data-line'),
+        'line'	: $('input[name=Radiositems]:checked').attr('data-line') + " - ",
+		"Subs"	: $('input[name=Radiositems]:checked').attr('data-subs'),
+		"locA"	: $('input[name=Radiositems]:checked').attr('data-locA'),
+		"locZ"	: $('input[name=Radiositems]:checked').attr('data-locZ'),
+       }
+
+     }else if (StepsArray[1] == "step2_1"){ // is SERVICES ADDRESS
+
+       objValuesFields = {
+         'type'  : 'servicesA',
+         'id'    : $('input[name=RadiosServices]:checked').val(),
+         'name'  : $('input[name=RadiosServices]:checked').attr('data-name'),
+         'line'  : "" // When is SERVICES ADDRESS should not
+       }
+     
+     }
+
+     return objValuesFields;
+
+   }
+
+   function getListEmployees (idEmployeeToSelect){
+     var param = {'action':'getListEmployees'};
+     RequestAjax(param,function(data){
+       $('#AssignedTo').children().remove();
+       var StringHelp = '';
+       data.forEach(function (res){
+           StringHelp = '';
+           if(idEmployeeToSelect == res.id){
+             StringHelp += '<option value="'+res.id+'" checked>';
+           }else{
+             StringHelp += '<option value="'+res.id+'" >';
+           }
+           StringHelp += res.name;
+           StringHelp += '</option>';
+           $('#AssignedTo').append(StringHelp);
+       });
+     });
+   }
+
+   function getTaskInformacion (idTask){
+     var param = {'action':'getTaskInformacion','idTask':idTask };
+     RequestAjax(param,function(data){
+       data.forEach(function (res){
+         $('#durationTask').val(res.duration);
+         $('#WorkOnWeekend').prop('checked',res.WorkOnWeekend);
+         $('#startDate').val( LeirAGS_NS_Utils.dateToStringNetsuite(getToday()) );
+         var d = getValuesfields();
+         if(WF_DEBUG) console.info('d',d);
+         $('#dueDate').val( LeirAGS_NS_Utils.dateToStringNetsuite ( new Date(computeEndByDuration(LeirAGS_NS_Utils.StrNSDateToDate(d.startDate).getTime(),d.duration,d.wow,0))));
+         getListEmployees(currentIdUser);
+         computeTaskName();
+       });
+     });
+   }
+
+   function formatDate(date) {
+		var d = new Date(date)
+			, month = '' + (d.getMonth() + 1)
+			, day = '' + d.getDate()
+			, year = d.getFullYear();
+		if (month.length < 2) month = '0' + month;
+		if (day.length < 2) day = '0' + day;
+		return [year, month, day].join('-');
+	}
+
+    function getKpiTaskType (idProcess,idSubProcess){
+      var param = {'action':'getKpiTaskType','idProcess':idProcess,'idSubProcess':idSubProcess };
+      RequestAjax(param,function(data){
+        $('#taskField').children().remove();
+        $('#taskField').append('<option value=""></option>');
+        var StringHelp = '';
+        data.forEach(function (res){
+            StringHelp = '';
+            StringHelp += '<option value="'+res.id+'">';
+            StringHelp += res.name;
+            StringHelp += '</option>';
+            $('#taskField').append(StringHelp);
+        });
+      });
+    }
+
+    function getProcessToTaskField(idtype){
+      var param = {'action':'getProcess','idType':idtype };
+      RequestAjax(param,function(data){
+        $('#processSelect').children().remove();
+        $('#processSelect').append('<option value="-"></option>');
+        var StringHelp = '';
+        data.forEach(function (res){
+            StringHelp = '';
+            StringHelp += '<option value="'+res.id+'">';
+            StringHelp += res.name;
+            StringHelp += '</option>';
+            $('#processSelect').append(StringHelp);
+        });
+      });
+    }
+
+    function getSubProcessToTaskField(IdProcess){
+      var param = {'action':'getSubProcess','IdProcess':IdProcess };
+      RequestAjax(param,function(data){
+        $('#subprocessSelect').children().remove();
+        $('#subprocessSelect').append('<option value="-"></option>');
+        var StringHelp = '';
+        data.forEach(function (res){
+            StringHelp = '';
+            StringHelp += '<option value="'+res.id+'">';
+            StringHelp += res.name;
+            StringHelp += '</option>';
+            $('#subprocessSelect').append(StringHelp);
+          //  console.log(StringHelp);
+        });
+      });
+    }
+
+    function getProcess (idType){
+      $('#fromStepTask').text(idType); // Assigned type Task in Span
+      var param = {'action':'getProcess','idType':idType };
+      RequestAjax(param,function(data){
+        var StringHelp = '';
+        $("#TaskProcess").children().remove();
+        data.forEach(function (res){
+          //console.log(res.type);
+          StringHelp = '';
+          StringHelp += '<label style="width:45%; margin-right:9px; padding:6px; border:1px solid #AAA;">';
+          StringHelp += '<input type="radio" name="RadioProcess" value="'+res.id+'" checked>';
+          StringHelp += '<span style="padding-left:8px" > '+res.name+'</span>';
+          StringHelp += '</label>';
+          //StringHelp += '<br>';
+          //StringHelp += '<br>';
+          $("#TaskProcess").append(StringHelp);
+        });
+      });
+    }
+     
+     function setupNavItemSA_unique(){
+    	 
+    	$('#frm_item_srv_address .nav a').on('click',function(){ 
+    		$('#frm_item_srv_address .nav a').removeClass('selectAGS')
+    		item_salesorder_data = $(this).parent().data()
+    		$(this).addClass('selectAGS')
+    		var cnt = '<ul class="nav nav-pills nav-stacked" style="margin:0; padding:3px; border: 1px dotted darkgray; background-color:#FFFEFF; color:#000;">'+ $(this).html() +'</ul>';
+    		var panel_cnt = '<div class="panel panel-default">\
+    		  <div class="panel-heading" style="min-height:92px">'+
+    		  '<span class="pull-right text-default" style="display:block; position: relative; top:90px">'+
+    		  item_salesorder_data.type+'</span>'+
+    		  '<h5>Process Sufix</h5><input class="form-control" type="text" id="processsufix" onChange="recalcTasksNames()"></div>\
+    		  <div class="panel-body" style="min-height:150px">'+cnt+'</div></div></div>';
+    		$('#info_item_sa_new').html( panel_cnt )
+    	})
+    	
+     }
+
+     function getItemsfromSO (SalesOrderId){
+       var total = 0;
+       var datos = { action: 'getItemsfromSO', SalesOrderId: SalesOrderId };
+		RequestAjax(datos,
+	 	function (data) {
+			WF_Sales_Order_Record['items'] = data;
+	        //console.log(data)
+	        total = data.length;
+	        if(total){
+	        	var Stringradio = "", item_html = "", item_html2 = "";
+	        	var tmpl_item = '<tr><td align="center">\
+	            <input style="height:18px; width:18px;" type="radio" name="Radiositems" id="Radiositems{{id}}" value="{{id}}" data-name="{{name}}" data-line="{{line}}" data-subs="{{subscriptionId}}" data-locA="{{idlocA}}" data-locZ="{{idlocZ}}" >\
+	            </td><td>{{name}}</td><td>{{locA}}</td><td>{{locZ}}</td>\
+	            <td>{{AddressA}}</td><td>{{AddressA}}</td><td>{{subscriptionName}}</td></tr>';
+	            var tmpl_itemNew = '<tr><td align="center">\
+		            <input style="height:18px; width:18px;" type="radio" name="itemaddress" id="itemaddress-i-{{id}}" value="i-{{id}}" data-name="{{name}}" data-line="{{line}}" data-subs="{{subscriptionId}}" data-locA="{{idlocA}}" data-locZ="{{idlocZ}}" >\
+		            </td><td>{{name}}</td><td>{{locA}}</td><td>{{locZ}}</td>\
+		            <td>{{AddressA}}</td><td>{{AddressA}}</td><td>{{subscriptionName}}</td></tr>';
+		        var tmpl_itemNew2a = '<li data-line="{{line}}" data-item="{{id}}" data-toshow="{{line}}_{{itemid}}"><a href="#"> <h5>{{name}} <span class="label label-info label-as-badge pull-right">{{subscriptionName}}</span> <small class="pulls-right">{{capacity}} {{UoM}}</small> </h5> {{locA}} : {{AddressA}} </a></li>';
+		        var tmpl_itemNew2 = '<li data-type="item" data-id="{{id}}" data-line="{{line}}"><a href="#"> <h5>{{name}} <span class="label label-info label-as-badge pull-right">{{subscriptionName}}</span> <small class="pulls-right">{{capacity}} {{UoM}}</small> </h5> {{locA}} : {{AddressA}} </a></li>';
+				data.forEach(function(res){
+					Stringradio += LeirAGS_Tmpl( tmpl_item, res)
+					if (res.subscriptionName) {
+						//console.info(res)
+						item_html += LeirAGS_Tmpl( tmpl_itemNew, res)
+						item_html2 += LeirAGS_Tmpl( tmpl_itemNew2, res)
+					}
+		         })
+		         
+				$("#TableRadioItems tbody").append(Stringradio)
+				$("#ListItems_SO tbody").append(item_html)
+				$("#ListItems_SOnav").append('<ul class="nav nav-pills nav-stacked" style="margin:0; padding:3px; border: 1px dotted darkgray; background-color:#FFFEFF; color:#000;">'+item_html2+'</ul>')
+				//--- setupNavItemSA_unique()
+	        }
+		})
+       return total;
+     }
+
+    
+    function getServiceAddresses (SalesOrderId){
+      var param = {'action':'getServiceAddresses','SO':SalesOrderId };
+      RequestAjax(param,function(data){
+    	WF_Sales_Order_Record['serviceaddress'] = data;
+        var Stringradio = "", sa_html='', sa_html2='';
+        var tmpl_sa = '<tr><td align="center">\
+        <input style="height:18px; width:18px;" type="radio" name="RadiosServices" \
+        id="RadiosServices{{id}}" value="{{id}}" data-name="{{name}}">\
+        </td><td>{{name}}</td><td>{{address}}</td></tr>';
+        var tmpl_saNew = '<tr><td align="center">\
+            <input style="height:18px; width:18px;" type="radio" name="itemaddress" \
+            id="itemaddress-sa-{{id}}" value="sa-{{id}}" data-name="{{name}}">\
+            </td><td>{{name}}</td><td>{{address}}</td></tr>';
+        var tmpl_saNew2 = '<li data-type="serviceaddress" data-id="{{id}}"> <a href="#"><h5>{{name}}</h5>{{address}}</a></li>';
+        
+        data.forEach(function(res){
+      	  Stringradio += LeirAGS_Tmpl(tmpl_sa, res)
+      	  sa_html += LeirAGS_Tmpl(tmpl_saNew, res)
+      	  sa_html2 += LeirAGS_Tmpl(tmpl_saNew2, res)
+        });
+        $("#TableServicesAddress").append(Stringradio)
+        $("#ListServicesAddresses_SO tbody").append(sa_html)
+        $("#ListServicesAddresses_SOnav").append('<ul class="nav nav-pills nav-stacked" style="margin:0; padding:3px; border: 1px dotted darkgray; background-color:#FFFEFF;">'+sa_html2+'</ul>')
+        setupNavItemSA_unique()
+      })
+    }
+
+    function getServicesAddressPlanning (SalesOrderId){
+      var param = {'action':'getServiceAddresses','SO':SalesOrderId };
+      RequestAjax(param,function(e){
+
+        var Stringradio = "";
+        e.forEach(function(res){
+          //console.log(res);
+
+            Stringradio = "";
+            Stringradio += '<tr>';
+            Stringradio += '  <td align="center">';
+            Stringradio += '      <input style="height:18px; width:18px;" type="radio" name="RadiosServicesPlannning" id="RadiosServicesPlannning'+res.id+'" value="'+res.id+'" checked>';
+            Stringradio += '   </td>';
+            Stringradio += '   <td>'+ res.name+'</td>';
+            Stringradio += '   <td>'+res.address+'</td>';
+            Stringradio += '</tr>';
+
+            $("#TableServicesAddress").append(Stringradio);
+        });
+      });
+    }
+
+    function RestarValues(){
+      $('#durationTask').val("");
+      $('#WorkOnWeekend').prop('checked',false);
+      $('#startDate').val("");
+      $('#taskfieldName').val("");
+      $('#taskField').val("");
+
+    }
+
+    function getToday (){
+      return new Date();
+    }
+    
+//------------
+    function computeEndByDuration(start, duration, weekend, n) {
+		weekend = (typeof weekend === 'undefined') ? false : weekend;
+		var d = new Date(start);
+		//console.debug("computeEndByDuration start ",d,duration)
+		var q = duration - n;
+		while (q > 0) {
+			d.setDate(d.getDate() + 1);
+			if (!isHoliday(d, weekend)) q--;
+		}
+		d.setHours(23, 59, 59, 999);
+		return d.getTime();
+	}
+
+    function isHoliday(date, weekend) {
+		var friIsHoly = false;
+		var satIsHoly = !weekend;
+		var sunIsHoly = !weekend;
+		pad = function (val) {
+			val = "0" + val;
+			return val.substr(val.length - 2);
+		};
+		var holidays = "#01_01#12_25#";
+		var ymd = "#" + date.getFullYear() + "_" + pad(date.getMonth() + 1) + "_" + pad(date.getDate()) + "#";
+		var md = "#" + pad(date.getMonth() + 1) + "_" + pad(date.getDate()) + "#";
+		var day = date.getDay();
+		return (day == 5 && friIsHoly) || (day == 6 && satIsHoly) || (day == 0 && sunIsHoly) || holidays.indexOf(ymd) > -1 || holidays.indexOf(md) > -1;
+	}
+
+    function computeStartByDuration (end, duration, weekend) {
+       weekend = (typeof weekend === 'undefined') ? false : weekend;
+       var d = new Date(end);
+       //console.debug("computeStartByDuration start ",d,duration)
+       var q = duration - 1;
+       while (q > 0) {
+         d.setDate(d.getDate() - 1);
+         if (!isHoliday(d, weekend)) q--;
+       }
+       d.setHours(23, 59, 59, 999);
+       return d.getTime();
+     }
+
+     function computeStartDate (start, weekend, plus) {
+        var d = new Date(start + 3600000 * plus);
+        d.setHours(0, 0, 0, 0);
+        //move to next working day
+        /*
+        while (isHoliday(d)) {
+          d.setDate(d.getDate() + 1);
+        }*/
+        for (; isHoliday(d, weekend) != false;) {
+          d.setDate(d.getDate() + 1);
+        }
+        d.setHours(0, 0, 0, 0);
+        return d;
+      }
+
+      //Verificar Fecha de inicio, con WEEKEND, para determinar que dia recorrerla
+      function computeStart(start, weekend, plus) {
+          weekend = weekend || false;
+          plus = plus || 12;
+          return computeStartDate(start, weekend, plus).getTime();
+      }
+//---------------
+
+      function calculateDateRules(){
+     	  /*
+     	  	Start to Start 		-- can start on same date as predessesor	.
+     	  	Start to Finish 	--
+     	  	Finish to Finish 	--
+     	  	Finish to Start 	-- can start next day after dueDate			.
+     	  */
+
+      }
+
+      /**
+       * On Change :
+       * 	D - Duration
+       * 	S - Start Date
+       * 	D - Dependency
+       * 	W - Work on Weekens
+       */
+      function onChangeDSDW(field) {
+
+    	// return true;
+
+    	var d = getValuesfields();
+			console.info('field change',field,'computestart',new Date( computeEndByDuration(LeirAGS_NS_Utils.StrNSDateToDate(d.startDate).getTime(),d.duration,d.wow,0) ));
+    	switch (field) {
+    		case 'durationTask-change':
+            	$('#dueDate').val( LeirAGS_NS_Utils.dateToStringNetsuite ( new Date( computeEndByDuration(LeirAGS_NS_Utils.StrNSDateToDate(d.startDate).getTime(),d.duration,d.wow,0) )));
+            break;
+    		case 'durationTask-bur':
+	            if ($('#durationTask').val().length <= 0 ){
+	                $('#durationTask').val(1);
+	              }
+	              var d = getValuesfields();
+	              $('#dueDate').val( LeirAGS_NS_Utils.dateToStringNetsuite ( new Date(computeEndByDuration(LeirAGS_NS_Utils.StrNSDateToDate(d.startDate).getTime(),d.duration,d.wow,0) )));
+            break;
+    		case 'startdate':
+	            var d = getValuesfields();
+	            $('#startDate').val( LeirAGS_NS_Utils.dateToStringNetsuite( new Date (computeStart(LeirAGS_NS_Utils.StrNSDateToDate(d.startDate).getTime(),d.wow)) ));
+	            d = getValuesfields();
+	            $('#dueDate').val( LeirAGS_NS_Utils.dateToStringNetsuite ( new Date (computeEndByDuration(LeirAGS_NS_Utils.StrNSDateToDate(d.startDate).getTime(),d.duration,d.wow,0)) ));
+	        break;
+    		case 'workonweekend':
+	            var d = getValuesfields();
+	            $('#startDate').val( LeirAGS_NS_Utils.dateToStringNetsuite ( new Date(computeStart(LeirAGS_NS_Utils.StrNSDateToDate(d.startDate).getTime(),d.wow))));
+	            d = getValuesfields();
+	            $('#dueDate').val( LeirAGS_NS_Utils.dateToStringNetsuite ( new Date( computeEndByDuration(LeirAGS_NS_Utils.StrNSDateToDate(d.startDate).getTime(),d.duration,d.wow,0) )));
+	        break;
+    		case 'dependency':
+
+    			break;
+	        default:
+	        break;
+    	}
+      }
+     	  
+//--- ARIEL
+      function calculateDatesBasedDependency(start, due, wow, dependency, NewDuration ){
+    	  //console.info('calculateDatesBasedDependency', start, due, wow, dependency, NewDuration)
+    	  var result = {'start': new Date(), 'end': new Date(), 'depType': 0, 'depTypeTxt':'' };
+    	  result.depTypeTxt = dependency;
+    	  switch (dependency) {
+    	  	case "finishToStart":
+    	  	case "FinishToStart":
+    	  		// Return Next Day after due
+    	  		var resultstart = LeirAGS_dates.nextWorkDay( due, 1, wow )
+    	  		var depType = '1'
+    		  break;
+    	  	case "startToStart":
+    			// Return Same Day as start
+    	  		var resultstart = LeirAGS_dates.convert ( start )
+    	  		var depType = '2'
+      		  break;
+    		case "startToFinish":
+    			// Return Next Day after due
+    	  		var resultstart = LeirAGS_dates.nextWorkDay( due, 1, wow )
+    	  		var depType = '3'
+      		  break;
+    		case "finishToFinish":
+    			// Return end date same as due of predecessor
+    			var xend = LeirAGS_dates.convert ( due )
+    			// calculate start 
+    	  		var resultstart = LeirAGS_dates.nextWorkDay( xend, - NewDuration, wow )
+    	  		var depType = '4'
+      		  break;
+     		default:
+     			// Return Next Day after due
+    	  		var resultstart  = LeirAGS_dates.nextWorkDay( due, 1, wow )
+    	  		var depType = '1'
+     		  break;
+    	  }
+    	  NewDuration = (NewDuration * 1) - 1; // the IVANs logic say: 1 day are same date.
+    	  result.end = LeirAGS_dates.nextWorkDay( resultstart , NewDuration, wow )
+    	  result.start = resultstart;
+    	  result.depType = depType;
+    	  
+    	  return result
+      }
+      
+      /**
+       * Calculate all dates starting from mainpredecessor
+       * 
+       */
+      function ChangeDependencyPredeccessorByProcess() {
+    	
+    	var predecessor_Dependency = $('#predecessor_new_id').val();
+    	// Based on reunion, allway initial dependency will be FinishToStart
+    	predecessor_Dependency = 'finishToStart';
+    	var predecessor_Start = LeirAGS_NS_Utils.StrNSDateToDate ( predecessorTask_new_data.taskStartDate ).getTime()
+    	var predecessor_Due 	= LeirAGS_NS_Utils.StrNSDateToDate ( predecessorTask_new_data.taskDueDate ).getTime()
+    	var previousDepLevel  = []; // Save dates for current Level...
+    	  
+    	// Protection the new task cannot be in the past.
+    	if ( predecessor_Due < new Date().getTime() ) {
+    		console.info('Correction predecesor due date set today.')
+    		predecessor_Due = new Date().setHours(0,0,0,0);
+    		predecessor_Due = LeirAGS_dates.nextWorkDay( predecessor_Due, 1, false );
+    	}
+    	
+    	// Level 1 starting of branches
+    	var mainPredecessorData = {
+    		  start : predecessor_Start,
+    		  end	: predecessor_Due,
+    		  nxtDep: predecessor_Dependency
+    	};
+    	  
+    	function follow_depends_on(tskData, level ) {
+  			var duration = tskData.data.duration * 1;
+	  		var wow = (tskData.data.wow) ? true : false;
+	  		var nxtDep = tskData.data.dependency_type_txt;
+  		  
+  			level++
+  			
+  			var branch_dates = calculateDatesBasedDependency( 
+  				  previousDepLevel[ level ].start, 
+  				  previousDepLevel[ level ].end,  
+  				  wow, 
+  				  previousDepLevel[ level ].nxtDep, 
+  				  duration );
+  			
+  			previousDepLevel[ level + 1 ] = branch_dates;
+  			
+  			if (level == 1) {
+  				tskData.data['dependency_type_txt'] =  branch_dates.depTypeTxt;
+  				tskData.data['dependency_type'] =  branch_dates.depType;
+  		    }
+  		  
+  			tskData.data['start']	=  LeirAGS_NS_Utils.dateToStringNetsuite ( branch_dates.start );
+  			tskData.data['due'] 	=  LeirAGS_NS_Utils.dateToStringNetsuite ( branch_dates.end );
+  			tskData.data['start_i']	=  (branch_dates.start).getTime();
+  			tskData.data['due_i']	=  (branch_dates.end).getTime();
+  			
+  			for(var nj in tasksStructureTree) {
+  				var tj = tasksStructureTree[nj]
+  				if ((tj.depend).indexOf(tskData.id) != -1) {
+  					follow_depends_on(tj, level )
+  				}
+  			}
+  			
+  		}
+  		
+  		//----- for each task without dependencies.... called branches...
+    	for (var bh in tasksStructureTree){
+    		if(tasksStructureTree[bh].dependencies == '**') {
+    			previousDepLevel  = []; // Reset levels...
+    	    	previousDepLevel.push({ start : 0, end	: 0, nxtDep: '' }); // Level 0 not used
+    	    	previousDepLevel.push( mainPredecessorData );
+    			follow_depends_on ( tasksStructureTree[bh], 0 );
+    		}
+    	}
+  		//------
+  		
+  		calculateAssigneToProcessTask();
+  		
+    	// Redraw....
+  	  	showFinalBranches();
+  		
+      }
+      
+      function calculateAssigneToProcessTask(){
+    	// console.info('calculateAssigneToProcessTask');
+    	  
+    	// After all, the users in SO are mandatory.
+			var set_pm 	= [17]; // Project Management
+			var set_sr1 = [12]; // Sales Representant
+			var set_sr2 = [13]; // Sales Representant
+			var set_pe 	= [ 5]; // Provisioning Engineer
+			
+			
+    	  // -- LeirAGS_findInObj(WF_Sales_Order_Record.serviceaddress,'id',item_salesorder_data.id);
+    	  if (item_salesorder_data.type == 'item') {
+    		  
+    		  for (var bh in tasksStructureTree){
+    			var currAssigne = tasksStructureTree[bh].data.assigned;
+    			var currDepto = tasksStructureTree[bh].data.department;
+    			var newUser = 0;
+    			// Search...
+    			var byKA = WF_taskStructure.taskKpiAssigned.find(function(l){ return l.department == currDepto });
+    			if (typeof byKA !== 'undefined'){
+    				newUser = byKA.user;
+    			} else {
+    				
+    			}
+    			// SO data are mandatory and superior 
+				if (set_pm.indexOf(currDepto) > -1) {
+					if( WF_Sales_Order_Record.saleorder.custbody_project_manager )
+						newUser = WF_Sales_Order_Record.saleorder.custbody_project_manager
+				} else if (set_sr1.indexOf(currDepto) > -1) {
+					if( WF_Sales_Order_Record.saleorder.salesrep )
+						newUser = WF_Sales_Order_Record.saleorder.salesrep
+				} else if (set_sr2.indexOf(currDepto) > -1) {
+					if( WF_Sales_Order_Record.saleorder.salesrep )
+						newUser = WF_Sales_Order_Record.saleorder.salesrep
+				} else if (set_pe.indexOf(currDepto) > -1) {
+					if( WF_Sales_Order_Record.saleorder.custbody_prov_engineer )
+						newUser = WF_Sales_Order_Record.saleorder.custbody_prov_engineer
+				}
+    			
+    			if (newUser) {
+      				// console.info('taskID',tasksStructureTree[bh].data.id,'currAssigne',currAssigne,' change to ',newUser)
+      				tasksStructureTree[bh].data.assigned = newUser;
+      			} else {
+      				// console.info('taskID',tasksStructureTree[bh].data.id,' same Assigne',currAssigne)
+      			}
+        	  }
+    		  
+    	  } else {
+    		  /*
+    		  	Must search in this order:
+    		  		a) country + state + city + municipality
+    		  		b) country + state + city
+    		  		c) country + state
+    		  		d) country
+    		  	if exist one user to be assigned... 
+    		  	all this belong to "department"
+    		  	
+    		  */
+    		  var main_index = [];
+			  // to speed up, we create a index based on the search..
+			  // even we create all four
+			  WF_taskStructure.taskKpiAssignedCity.forEach(function(cscm){
+				  var indexs = cscm.department+'~'+cscm.country+'~'+cscm.state+'~'+cscm.city+'~'+cscm.municipality+'.';
+				  main_index.push( indexs );
+			  });
+			  // console.info('main_index',main_index);
+			  
+			  var main_index_country = [];
+			  // to speed up, we create a index based on the search..
+			  // even we create all four
+			  WF_taskStructure.taskKpiAssignedCountry.forEach(function(cty){
+				  var indexs = cty.department+'~'+cty.country+'.';
+				  main_index_country.push( indexs );
+			  });
+			  // console.info('main_index_country',main_index_country);
+			  
+			  var sa = LeirAGS_findInObj(WF_Sales_Order_Record.serviceaddress,'id',item_salesorder_data.id);
+			  if (sa.length) {
+				  var sa0 = sa[0];
+				  var country = sa0.country.value;
+    			  var state = sa0.state.value;
+    			  var city = sa0.citi.value;
+    			  var municipality = (sa0['municipality'])? sa0.municipality.value : '0';
+    			  /*
+    			  console.info(
+    			  'country',sa0.country.text,
+    			  'state',sa0.state.text,
+    			  'city',sa0.citi.text,
+    			  'municipality',(sa0['municipality'])? sa0.municipality.text : '' );*/
+    			  
+	    		  for (var bh in tasksStructureTree){
+		   			  
+		   				var currAssigne = tasksStructureTree[bh].data.assigned;
+		   				var currDepto = tasksStructureTree[bh].data.department;
+		      			var search_a = currDepto+'~'+country+'~'+state+'~'+city+'~'+municipality+'.';
+		      			var search_b = currDepto+'~'+country+'~'+state+'~'+city+'~.';
+		      			var search_c = currDepto+'~'+country+'~'+state+'~~.';
+		      			var search_d = currDepto+'~'+country+'~~~.';
+		      			var search_e = currDepto+'~'+country+'.';
+		      			var arrExist = [ main_index.indexOf(search_a), main_index.indexOf(search_b), 
+		      				main_index.indexOf(search_c), main_index.indexOf(search_d),
+		      				main_index_country.indexOf(search_e), ];
+		      			
+		      			var newUser = 0;
+		      			/*
+		      			console.info('search_a', search_a, 'exist', main_index.indexOf(search_a) );
+		      			  console.info('search_b', search_b, 'exist', main_index.indexOf(search_b) );
+		      			  console.info('search_c', search_c, 'exist', main_index.indexOf(search_c) );
+		      			  console.info('search_d', search_d, 'exist', main_index.indexOf(search_d) );
+		      			*/
+		      			if ( arrExist[0] > -1) {
+		      				newUser = WF_taskStructure.taskKpiAssignedCity[ arrExist[0] ].user;
+		      			} else if ( arrExist[1] > -1) {
+		      				newUser = WF_taskStructure.taskKpiAssignedCity[ arrExist[1] ].user;
+		      			} else if ( arrExist[2] > -1) {
+		      				newUser = WF_taskStructure.taskKpiAssignedCity[ arrExist[2] ].user;
+		      			} else if ( arrExist[3] > -1) {
+		      				newUser = WF_taskStructure.taskKpiAssignedCity[ arrExist[3] ].user;
+		      			} else if ( arrExist[4] > -1) {
+		      				newUser = WF_taskStructure.taskKpiAssignedCountry[ arrExist[4] ].user;
+		      			} else {
+		      				// Search...
+		      				var byKA = WF_taskStructure.taskKpiAssigned.find(function(l){ return l.department == currDepto });
+		      				if (typeof byKA !== 'undefined'){
+		      					newUser = byKA.user;
+		      				} else {
+		      						
+		      				}
+		      			}
+		      			
+		      			// SO data are mandatory and superior 
+      					if (set_pm.indexOf(currDepto) > -1) {
+      						if( WF_Sales_Order_Record.saleorder.custbody_project_manager )
+      							newUser = WF_Sales_Order_Record.saleorder.custbody_project_manager
+      					} else if (set_sr1.indexOf(currDepto) > -1) {
+      						if( WF_Sales_Order_Record.saleorder.salesrep )
+      							newUser = WF_Sales_Order_Record.saleorder.salesrep
+      					} else if (set_sr2.indexOf(currDepto) > -1) {
+      						if( WF_Sales_Order_Record.saleorder.salesrep )
+      							newUser = WF_Sales_Order_Record.saleorder.salesrep
+      					} else if (set_pe.indexOf(currDepto) > -1) {
+      						if( WF_Sales_Order_Record.saleorder.custbody_prov_engineer )
+      							newUser = WF_Sales_Order_Record.saleorder.custbody_prov_engineer
+      					}
+		      			
+		      			// console.info('taskID',tasksStructureTree[bh].data.id,'search_a', search_a, 'arrExist', arrExist );
+		      			
+		      			if (newUser) {
+		      				// console.info('taskID',tasksStructureTree[bh].data.id,'currAssigne',currAssigne,' change to ',newUser)
+		      				tasksStructureTree[bh].data.assigned = newUser;
+		      			} else {
+		      				// console.info('taskID',tasksStructureTree[bh].data.id,' same Assigne',currAssigne)
+		      			}
+	    		  }
+	    		  
+	    		  
+   			  } else {
+   				console.info('Not Found service addresses on the sale order.')
+   			  }
+    	  }
+    	  
+      }
+     	  
+      function getTaskStructure(){
+          var param = { 'action' : 'getProcessStructure' };
+          RequestAjax(param,function(data){
+        	WF_taskStructure = data;
+        	
+        	$('#frm_process').html(''); // clear
+            var strHlp = '';
+            WF_taskStructure.taskProcess.forEach(function (r){
+            	//if (r.show)
+            	strHlp += '<label style="width:24%; margin-right:9px; padding:6px; border:1px solid #AAA;">'+
+                '<input type="radio" name="RadioProcess" value="'+r.id+'">'+
+                '<span style="padding-left:8px" > '+r.name+'</span>'+
+                '</label>';
+            })
+            $('#frm_process').append(strHlp);
+            
+            $('#frm_subprocess').html(''); // clear
+            var strHlp = '';
+            WF_taskStructure.taskSubProcess.forEach(function (r){
+            	strHlp += '<label style="width:45%; margin-right:9px; padding:6px; border:1px solid #AAA;">'+
+                '<input type="radio" name="RadioSubProcess" value="'+r.id+'">'+
+                '<span style="padding-left:8px" > '+r.name+'</span>'+
+                '</label>';
+            })
+            $('#frm_subprocess').append(strHlp);
+            
+            console.info(WF_taskStructure)
+          })
+        }
+      
+      function applyFilterSubProcess(){
+    	  var processSelected = $("input[name='RadioProcess']:checked").val(); // $("input[name=RadioProcess]").val();
+    	  var subprocessSelected = $("input[name='RadioSubProcess']:checked").val(); // to test and dont change if allready selected
+    	  // console.info('processSelected',processSelected)
+    	  $('#frm_subprocess').html(''); // clear
+          var strHlp = '', lstGpo = '', inList = false;
+          WF_taskStructure.taskSubProcess.forEach(function (r){
+        	if (r.process == processSelected) {
+        		var gpoName = (r.name).split('-');
+        		var difName = gpoName.pop();
+        		gpoName = gpoName.join('-');
+        		inList = inList || (subprocessSelected == r.id);
+        		if (lstGpo != gpoName) strHlp += '<div style="clear:both; width:100%; height:18px; border-bottom:1px solid darkgrey; margin:6px 0; background-color:#FFF; font-size:13px;">'+gpoName+'</div>';
+        		lstGpo = gpoName;
+	          	strHlp += '<label style="width:23%; margin-right:9px; padding:6px; border:1px solid #AAA;">'+
+	              '<input type="radio" name="RadioSubProcess" value="'+r.id+'"'+((subprocessSelected == r.id)?' checked':'')+'>'+
+	              '<span style="padding-left:8px" > '+difName+'</span>'+
+	              '</label>';
+        	}
+          })
+          if (!inList) $("input[name='RadioSubProcess']").val(0);
+          if (!strHlp) strHlp='<p class="alert alert-info">Not subprocess here, press next <b>button</b>.</p>'
+          $('#frm_subprocess').append(strHlp);
+          $("body input[name='RadioSubProcess']").on('change', function() { calculateTaskToCreate('subprocess') })
+          
+          // After this, need to verify process type where:
+       	  // 1 - Service Address
+       	  // 2 - Item
+       	  // 3 - Service Address Or Item
+       	  //------------
+       	  // Show or hide accordly to these
+       	  var proccess = WF_taskStructure.taskProcess[processSelected];
+          // First hide two DIVs
+          $('#frm_item_srv_address > div:nth-child(1)').hide() // Items
+          $('#frm_item_srv_address > div:nth-child(2)').hide() // SA
+          
+          if (proccess.type == 1) {
+        	  $('#frm_item_srv_address > div:nth-child(2)').show() // SA
+          } else if (proccess.type == 2) {
+        	  $('#frm_item_srv_address > div:nth-child(1)').show() // Item
+          } else if (proccess.type == 3) {
+        	  $('#frm_item_srv_address > div:nth-child(1)').show() // Item
+        	  $('#frm_item_srv_address > div:nth-child(2)').show() // SA
+          }
+          
+      }
+
+
+
+// --- READY> ...
+
+    $(document).ready(function () {
+
+    	//-- console.info('CalendarInputFormat',CalendarInputFormat);
+
+    	flatpickr('.flatpicker', { dateFormat: CalendarInputFormat }); // initialized picker
+
+    	employeesobj = JSON.parse( $('input#custpage_employeesobj').val() );
+
+        ParameterSalesOrder = $('input#custpage_contextsales').val();
+        currentIdUser = parseInt($('input#custpage_userid').val());
+        ParameterNameSalesorder = '';
+        if(ParameterSalesOrder == 'undefined' || ParameterSalesOrder==""){
+          alert('Not Sales Order defined.')
+          window.closePopup();
+        };
+
+        $('body').on('click','[href$="#"]',function(e){
+          e.preventDefault();
+        });
+
+        $('#TableRadioItems tbody tr').click(function() {
+			// $(this).addClass('selected').siblings().removeClass("selected");
+		});
+
+        step1(); // Run First Step
+        
+        getTaskStructure() // New Begin HERE
+        
+        getAllTaskObj(0)
+        
+        if (AllTaskObj.rowscount > 1000) getAllTaskObj(1);
+
+        showAssigned();
+
+        showTaskPredeccesor();
+
+        // Action in First Step (Menu)
+        $('body').on('click','#TaskItem',function(e){ SelectStep('step1_1'); });
+
+        $('body').on('click','#TaskServicesA',function(e){ SelectStep('step2_1'); });
+
+        $('body').on('click','#TaskPlanning',function(e){ SelectStep('step3_1'); });
+
+        $('body').on('click','#btnNextStep1_1_1',function(e){
+          getProcess(2); // Value 2 is equal to ITEM
+          SelectStep('StepTaskOrProcess');
+        });
+
+        $('body').on('click','#btnNextStep2_1_1',function(e){
+          getProcess(1); // Value 1 is equal to SERVICES ADDRESS
+          SelectStep('StepTaskOrProcess');
+        });
+
+        $("#Process").click(function() {
+           $("#Process").removeClass("disabledcontent");
+           $("#OneTask").addClass("disabledcontent");
+        });
+
+        $("#OneTask").click(function() {
+           $("#OneTask").removeClass("disabledcontent");
+           $("#Process").addClass("disabledcontent");
+        });
+
+        $("body").on('click',"input:radio[name=RadioTask]",function(e){
+            SelectTypeTask( $(this).val() );
+        });
+
+        $('body').on('change','#processSelect',function(e){
+            getSubProcessToTaskField($(this).val());
+            getKpiTaskType($(this).val(),'-');
+            RestarValues();
+        });
+
+        $('body').on('change','#subprocessSelect',function(e){
+            getKpiTaskType($('#processSelect').val(),$(this).val());
+            RestarValues();
+        });
+
+        $('body').on('change','#taskField',function(e){
+          if ($(this).val() == ""){
+              RestarValues();
+          }else{
+            getTaskInformacion($(this).val());
+          }
+        });
+
+//----- Handle> Changes on Dates and Duration ----------
+        $('body').on('change','#durationTask',function(e){
+        	onChangeDSDW('durationTask-change');
+          /* var d = getValuesfields();
+          $('#dueDate').val( formatDate(computeEndByDuration(d.startDate,d.duration,d.wow,0)) );
+          */
+          //  console.log(formatDate(computeEndByDuration(d.startDate,d.duration,d.wow,1)) );
+        });
+
+        $('body').on('blur','#durationTask',function(e){
+        	onChangeDSDW('durationTask-blur');
+        	/* if ($('#durationTask').val().length <= 0 ){
+            $('#durationTask').val(1);
+          }
+          var d = getValuesfields();
+          $('#dueDate').val( formatDate(computeEndByDuration(d.startDate,d.duration,d.wow,0)) );
+          */
+        });
+
+        $('body').on('change','#startDate',function(e){
+        	onChangeDSDW('startdate');
+        	/*var d = getValuesfields();
+          $('#startDate').val( formatDate(computeStart(d.startDate,d.wow)) );
+          d = getValuesfields();
+          $('#dueDate').val( formatDate(computeEndByDuration(d.startDate,d.duration,d.wow,0)) );
+          */
+        });
+
+        $('body').on('change','#WorkOnWeekend',function(e){
+        	onChangeDSDW('workonweekend');
+          /* var d = getValuesfields();
+          $('#startDate').val( formatDate(computeStart(d.startDate,d.wow)) );
+          d = getValuesfields();
+          $('#dueDate').val( formatDate(computeEndByDuration(d.startDate,d.duration,d.wow,0)) );
+          */
+        });
+        $('body').on('change','#PtaskDependency', function(e){
+        	onChangeDSDW('dependency');
+        });
+        
+        $('body').on('change','#predecessor_new_id', function(e){
+        	ChangeDependencyPredeccessorByProcess('predecessor');
+        });
+        
+//----- Handle< Changes on Dates and Duration ----------
+
+        $('body').on('click','#btnSave',function(e){
+        	SaveNewTask();
+        })
+
+        //$('#TasksTableDiv').html( showTasksTable() );
+        var SaleOrder_Tasks_Table = (showTasksTable()).latinize()
+        
+        $('#tasks_table_all').append( SaleOrder_Tasks_Table )
+        
+        $('#tasks_table_all_predecessor_selector').append( SaleOrder_Tasks_Table )
+        $('#tasks_table_all_predecessor_selector tbody tr').removeClass('selected').removeClass('notselectable').removeClass('info')
+
+        $('#tasks_table_all_successor_selector').append( SaleOrder_Tasks_Table )
+        $('#tasks_table_all_successor_selector tbody tr').removeClass('selected').removeClass('notselectable').removeClass('info')
+
+        enableFilter_Table()
+        
+        $("body input[name='RadioProcess']").on('change', function() { calculateTaskToCreate('process') })
+        
+        $("body input[name='RadioSubProcess']").on('change', function() { calculateTaskToCreate('subprocess') })
+
+        $("#not-successor-need").on('change', function() {
+        	var not_successor_need = $(this).is(':checked');
+        	if (not_successor_need) {
+        		successorTask_new = 0
+        		$('#tasks_table_all_successor_selector tbody tr').removeClass('selected')
+        		var sTsk = { taskTitle : 'No Successor', 
+					taskAssigned: '-none-', 
+					taskStartDate: '', 
+					taskDueDate: '', 
+					taskDuration: '', 
+					taskDependency: '' }
+				showTaskDivS('successor_new',sTsk)
+        	} else {
+        		$('ul.setup-panel li:eq(4)').removeClass('disabled').addClass('disabled')
+    			$('ul.setup-panel li:eq(5)').removeClass('disabled').addClass('disabled')
+        	}
+        })
+        
+        $("#TasksTableDiv tbody tr").click(function() {
+        	//Predessesor have "info" class.
+        	if( ! $(this).hasClass('info')  && ! $(this).hasClass('notselectable')){
+        		$(this).addClass('selected').siblings().removeClass("selected");
+    			//$('#popselectsearchinput').val('');
+    			showTaskSuccessor(this);
+        	}
+		});
+        
+        $("#TasksTableDiv_predecessor tbody tr").click(function() {
+        	//Predessesor have "info" class.
+        	if( ! $(this).hasClass('info')  && ! $(this).hasClass('notselectable')){
+        		$(this).addClass('selected').siblings().removeClass("selected");
+    			//$('#popselectsearchinput').val('');
+    			showTaskPredecessorNew(this);
+        	}
+		});
+        
+        $("#TasksTableDiv_successor tbody tr").click(function() {
+        	//Successor have "info" class.
+        	var not_successor_need = $('#not-successor-need').is(':checked');
+        	if( ! $(this).hasClass('info')  && ! $(this).hasClass('notselectable') && ! not_successor_need ){
+        		$(this).addClass('selected').siblings().removeClass("selected");
+    			//$('#popselectsearchinput').val('');
+    			showTaskSuccessorNew(this);
+        	}
+		});
+
+        $('#add-process-tasks').show()
+        $('#starting-here').hide()
+        
+        if (!WF_AddAct_Window) {
+        	window.parent.document.body.style.overflow = "hidden"
+        }
+        
+    });//End JQUERY
+  </script>
+	<!-- Review: 2017-Feb-26 02:35PM -->
+	<!-- Review: 2017-Feb-27 03:42PM -->
+	<!-- Review: 2017-Mar-01 04:33PM -->
+	<!-- Review: 2017-Mar-14 12:47AM -->
+	<!-- Review: 2017-May-17 07:29PM Add By Process -->
+	<!-- Review: 2017-May-18 05:59AM Add Validations -->
+	<!-- Review: 2017-May-20 02:12AM Add By Process new Interface -->
+	<!-- Review: 2017-May-21 05:59AM Add Validations -->
+	<!-- Review: 2017-May-22 16:05PM Fix creation branch on process -->
+	<!-- Review: 2017-May-23 07:22AM Add Tree last review -->
+</body>
+</html>

@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+	<title>Mobile Project Management - Workspace</title>
+
+	<!-- SANDBOX_MARK_PRODUCTION -->
+
+	<script>
+		const WF_MODE_TESTING = false;
+		const WF_MODE_NORMAL = true;
+		var WF_NetSuite_Error = false; // true when ajax return some error.
+		var WF_DEBUG = false;
+		var WF_DEBUG_AJAX = false;
+		var WF_DEBUG_AJAX_DATA = false;
+		var WF_DEBUG_AJAX_MIRROR = false;
+		var WF_DEBUG_NOTIFICATIONS_CALLS = false;
+		var WF_LOADER_LEVEL = 0;
+		var WF_LOADER_AUTO = false;
+		var WORKFORCE_MODE = WF_MODE_NORMAL; // Set to WF_MODE_NORMAL then save the changes..
+		var WorkForce_Obj = {};
+		var WorkForce_MyTeam = {};
+		var delimiterdates = '\t';
+		var showmemorystatus = false;
+		var CalendarInputFormat = "Y-m-d";
+		var ViewTableLayout = 15;
+		var Branch_review = {}; // Storage last predeccesor branchdependency.
+		var Branch_Succ_review = {}; // Storage last succesor branchdependency
+		var Branch_Succ_review_flare = { "name": "Succesor Tree", "children": [] }; // storage last successor branchdependency to show in graph.
+		var WF_Develop_State = false; // When true, enable edit task no matter what verifications.
+		var NotesTask_review = [];
+		var enableChangeAssigned = false; // Standar user cannot change the assigned.
+		var WF_G_TaskStatus = ['','Active','Completed','Deferred','Cancelled'];
+		var WF_Error_on_Update = false;
+		var PredecessorRealBlocking = false;
+		var employeesobj = [{'employeeId':0, 'employeeName':'none', 'deptId':0, 'deptName':'none'}];
+		var employeesobj_inactive = [{'employeeId':0, 'employeeName':'none', 'deptId':0, 'deptName':'none'}];
+		var lastEmployeesObj = '';
+		var departmentsobj = { 0:{'dptId':0, 'dptName':'none'} }
+		var Tracing_Tasks_Obj = { count:0 };
+		var Tracing_List_Items = ['all'];
+		var Tracing_List_Address = ['all'];
+		var Tracing_List_Assigned = ['all'];
+		var Tracing_List_Customers = ['all'];
+		// Write HTML_element based on environment...
+		function WF_wh(sbx_elem, prd_elem) { if (WorkForce_Obj.Env == 'SANDBOX') document.write(sbx_elem); else document.write(prd_elem); }
+		// Get HTML_element based on environment...
+		function WF_whs(sbx_elem, prd_elem) { if (WorkForce_Obj.Env == 'SANDBOX') return sbx_elem; else return prd_elem; }
+	</script>
+</head>
+<body class="theme-red">
+
+<div class="theme-red" style="background: #FAFCFA">
+    <!-- Page Loader -->
+    <div class="page-loader-wrapper" style="display: none;">
+        <div class="loader">
+            <div class="preloader">
+                <div class="spinner-layer pl-red">
+                    <div class="circle-clipper left">
+                        <div class="circle"></div>
+                    </div>
+                    <div class="circle-clipper right">
+                        <div class="circle"></div>
+                    </div>
+                </div>
+            </div>
+            <p>Please wait...</p>
+        </div>
+    </div>
+    <!-- #END# Page Loader -->
+    <!-- Overlay For Sidebars -->
+    <div class="overlay"></div>
+    <!-- #END# Overlay For Sidebars -->
+    <!-- Search Bar -->
+    <div class="search-bar">
+        <div class="search-icon">
+            <i class="material-icons">search</i>
+        </div>
+        <input type="text" placeholder="START TYPING...">
+        <div class="close-search">
+            <i class="material-icons">close</i>
+        </div>
+    </div>
+    <!-- #END# Search Bar -->
+    <!-- Top Bar -->
+    <nav class="navbar">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a href="#" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse" aria-expanded="false"></a>
+                <a href="#" class="bars" style="display: none;"></a>
+                <a class="navbar-brand" href="#">WORKFORCE MANAGEMENT</a>
+            </div>
+            <div class="collapse navbar-collapse" id="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <!-- Call Search -->
+                    <li><a href="#" class="js-search" data-close="true"><i class="material-icons">search</i></a></li>
+                    <!-- #END# Call Search -->
+                    <!-- Notifications -->
+                    <li class="dropdownA">
+                        <a href="#" class="dropdownA-toggle" data-toggle="dropdownA" role="button">
+                            <i class="material-icons">notifications</i>
+                            <span class="label-count">7</span>
+                        </a>
+                        <ul class="dropdownA-menu">
+                            <li class="header">NOTIFICATIONS</li>
+                            <li class="body">
+                                <div class="slimScrollDiv" style="position: relative; overflow: hidden; width: auto; height: 254px;">
+                                <ul class="menu" style="overflow: hidden; width: auto; height: 254px;">
+                                   <!-- <li>
+                                        <a href="#" class=" waves-effect waves-block">
+                                            <div class="icon-circle bg-light-green"><i class="material-icons">person_add</i></div>
+                                            <div class="menu-info">
+                                                <h4>12 new members joined</h4>
+                                                <p><i class="material-icons">access_time</i> 14 mins ago</p>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#" class=" waves-effect waves-block">
+                                            <div class="icon-circle bg-cyan"><i class="material-icons">add_shopping_cart</i></div>
+                                            <div class="menu-info">
+                                                <h4>4 sales made</h4>
+                                                <p><i class="material-icons">access_time</i> 22 mins ago</p>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#" class=" waves-effect waves-block">
+                                            <div class="icon-circle bg-red"><i class="material-icons">delete_forever</i></div>
+                                            <div class="menu-info">
+                                                <h4><b>Nancy Doe</b> deleted account</h4>
+                                                <p><i class="material-icons">access_time</i> 3 hours ago</p>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#" class=" waves-effect waves-block">
+                                            <div class="icon-circle bg-orange"><i class="material-icons">mode_edit</i></div>
+                                            <div class="menu-info">
+                                                <h4><b>Nancy</b> changed name</h4>
+                                                <p><i class="material-icons">access_time</i> 2 hours ago</p>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#" class=" waves-effect waves-block">
+                                            <div class="icon-circle bg-blue-grey">
+                                                <i class="material-icons">comment</i>
+                                            </div>
+                                            <div class="menu-info">
+                                                <h4><b>John</b> commented your post</h4>
+                                                <p><i class="material-icons">access_time</i> 4 hours ago</p>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#" class=" waves-effect waves-block">
+                                            <div class="icon-circle bg-light-green">
+                                                <i class="material-icons">cached</i>
+                                            </div>
+                                            <div class="menu-info">
+                                                <h4><b>John</b> updated status</h4>
+                                                <p><i class="material-icons">access_time</i> 3 hours ago</p>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#" class=" waves-effect waves-block">
+                                            <div class="icon-circle bg-purple">
+                                                <i class="material-icons">settings</i>
+                                            </div>
+                                            <div class="menu-info">
+                                                <h4>Settings updated</h4>
+                                                <p><i class="material-icons">access_time</i> Yesterday</p>
+                                            </div>
+                                        </a>
+                                    </li>  --> 
+                                </ul>
+                                <div class="slimScrollBar" style="background: rgba(0, 0, 0, 0.498039); width: 4px; position: absolute; top: 0px; opacity: 0.4; display: block; border-radius: 0px; z-index: 99; right: 1px;"></div>
+                                <div class="slimScrollRail" style="width: 4px; height: 100%; position: absolute; top: 0px; display: none; border-radius: 0px; background: rgb(51, 51, 51); opacity: 0.2; z-index: 90; right: 1px;"></div>
+                                </div>
+                            </li>
+                            <li class="footer">
+                                <a href="#" class=" waves-effect waves-block">View All Notifications</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <!-- #END# Notifications -->
+                    <!-- Tasks -->
+                    <li class="dropdownA">
+                        <a href="#" class="dropdownA-toggle" data-toggle="dropdownA" role="button">
+                            <i class="material-icons">flag</i>
+                            <span class="label-count">9</span>
+                        </a>
+                        <ul class="dropdownA-menu">
+                            <li class="header">TASKS</li>
+                            <li class="body">
+                                <div class="slimScrollDiv" style="position: relative; overflow: hidden; width: auto; height: 254px;">
+                                <ul class="menu tasks" style="overflow: hidden; width: auto; height: 254px;">
+                                    <!-- <li>
+                                        <a href="#" class=" waves-effect waves-block">
+                                            <h4>Footer display issue<small>32%</small></h4>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-pink" role="progressbar" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100" style="width: 32%">
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#" class=" waves-effect waves-block">
+                                            <h4>Make new buttons<small>45%</small></h4>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-cyan" role="progressbar" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100" style="width: 45%">
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#" class=" waves-effect waves-block">
+                                            <h4>Create new dashboard<small>54%</small></h4>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-teal" role="progressbar" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100" style="width: 54%">
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#" class=" waves-effect waves-block">
+                                            <h4>Solve transition issue<small>65%</small></h4>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-orange" role="progressbar" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100" style="width: 65%">
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#" class=" waves-effect waves-block">
+                                            <h4>Answer GitHub questions<small>92%</small></h4>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-purple" role="progressbar" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100" style="width: 92%">
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </li>  -->
+                                </ul>
+                                <div class="slimScrollBar" style="background: rgba(0, 0, 0, 0.498039); width: 4px; position: absolute; top: 0px; opacity: 0.4; display: block; border-radius: 0px; z-index: 99; right: 1px;"></div>
+                                <div class="slimScrollRail" style="width: 4px; height: 100%; position: absolute; top: 0px; display: none; border-radius: 0px; background: rgb(51, 51, 51); opacity: 0.2; z-index: 90; right: 1px;"></div>
+                                </div>
+                            </li>
+                            <li class="footer">
+                                <a href="#" class=" waves-effect waves-block">View All Tasks</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <!-- #END# Tasks -->
+                    <li class="pull-right"><a href="#" class="js-right-sidebar" data-close="true"><i class="material-icons">more_vert</i></a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <!-- #Top Bar -->
+    <section>
+        <!-- Left Sidebar -->
+        <aside id="leftsidebar" class="sidebar">
+            <!-- User Info -->
+            <div class="user-info">
+                <div class="image">
+                    <img src="/core/media/media.nl?id=6572840&c=3461650&h=f3d4afddd91f80a59713&name=user.png" width="48" height="48" alt="User">
+                </div>
+                <div class="info-container">
+                    <div class="name" data-toggle="dropdownA" aria-haspopup="true" aria-expanded="false"></div>
+                    <div class="email">none@transtelco.com</div>
+                    <div class="btn-group user-helper-dropdownA">
+                        <i class="material-icons" data-toggle="dropdownA" aria-haspopup="true" aria-expanded="true">keyboard_arrow_down</i>
+                        <ul class="dropdownA-menu pull-right">
+                            <li><a href="#" class=" waves-effect waves-block"><i class="material-icons">person</i>Profile</a></li>
+                            <li role="seperator" class="divider"></li>
+                            <li><a href="#" class=" waves-effect waves-block"><i class="material-icons">group</i>Followers</a></li>
+                            <li><a href="#" class=" waves-effect waves-block"><i class="material-icons">shopping_cart</i>Sales</a></li>
+                            <li><a href="#" class=" waves-effect waves-block"><i class="material-icons">favorite</i>Likes</a></li>
+                            <li role="seperator" class="divider"></li>
+                            <li><a href="#" class=" waves-effect waves-block"><i class="material-icons">input</i>Sign Out</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <!-- #User Info -->
+            <!-- Menu -->
+            <div class="menu">
+                <div class="slimScrollDiv" style="position: relative; overflow: hidden; width: auto; height: 649px;">
+                <ul class="list" style="margin-left: 0; overflow: hidden; width: auto; height: 649px;">
+                    <li class="header">MAIN NAVIGATION</li>
+                    <li class="active"><a href="#" class=" waves-effect waves-block"><i class="material-icons">home</i><span>My Work</span></a></li>
+                    <li><a href="#" class=" waves-effect waves-block"><i class="material-icons">text_fields</i><span>Sales Orders</span></a></li>
+                    <li><a href="#" class=" waves-effect waves-block"><i class="material-icons">layers</i><span>Notifications</span></a></li>
+                    <!-- <li class="active">
+                        <a href="#" class="menu-toggle toggled waves-effect waves-block">
+                            <i class="material-icons">widgets</i>
+                            <span>Widgets</span>
+                        </a>
+                        <ul class="ml-menu" style="display: block;">
+                            <li class="active">
+                                <a href="#" class="menu-toggle toggled waves-effect waves-block">
+                                    <span>Cards</span>
+                                </a>
+                                <ul class="ml-menu" style="display: block;">
+                                    <li><a href="#" class=" waves-effect waves-block">Basic</a></li>
+                                    <li class="active"><a href="#" class="toggled waves-effect waves-block">Colored</a></li>
+                                    <li><a href="#" class=" waves-effect waves-block">No Header</a></li>
+                                </ul>
+                            </li>
+                            <li>
+                                <a href="#" class="menu-toggle waves-effect waves-block">
+                                    <span>Infobox</span>
+                                </a>
+                                <ul class="ml-menu">
+                                    <li><a href="#" class=" waves-effect waves-block">Infobox-1</a></li>
+                                    <li><a href="#" class=" waves-effect waves-block">Infobox-2</a></li>
+                                    <li><a href="#" class=" waves-effect waves-block">Infobox-3</a></li>
+                                    <li><a href="#" class=" waves-effect waves-block">Infobox-4</a></li>
+                                    <li><a href="#" class=" waves-effect waves-block">Infobox-5</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>  -->
+                    <li class="header">LABELS</li>
+                    <li>
+                        <a href="#" class=" waves-effect waves-block">
+                            <i class="material-icons col-red">donut_large</i>
+                            <span>Past Due</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class=" waves-effect waves-block">
+                            <i class="material-icons col-amber">donut_large</i>
+                            <span>This Week</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class=" waves-effect waves-block">
+                            <i class="material-icons col-light-blue">donut_large</i>
+                            <span>Future</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class=" waves-effect waves-block">
+                            <i class="material-icons col-light-blue">donut_large</i>
+                            <span>Future</span>
+                        </a>
+                    </li>
+                </ul>
+                <div class="slimScrollBar" style="background: rgba(0, 0, 0, 0.498039); width: 4px; position: absolute; top: 79.0208px; opacity: 0.4; display: block; border-radius: 0px; z-index: 99; right: 1px; height: 281.95px;"></div>
+                <div class="slimScrollRail" style="width: 4px; height: 100%; position: absolute; top: 0px; display: none; border-radius: 0px; background: rgb(51, 51, 51); opacity: 0.2; z-index: 90; right: 1px;"></div>
+              </div>
+            </div>
+            <!-- #Menu -->
+            
+            <!-- Footer -->
+            <div class="legal">
+                <div class="copyright">© 2017 <a href="transtelco.net" target="_blank">Transtelco, inc</a>.</div>
+                <div class="version">Version: <b> 1.0</b></div>
+            </div>
+            <!-- #Footer -->
+        </aside>
+        <!-- #END# Left Sidebar -->
+        <!-- Right Sidebar -->
+        <aside id="rightsidebar" class="right-sidebar">
+            <ul class="nav nav-tabs tab-nav-right" role="tablist">
+                <li role="presentation" class="active"><a href="#skins" data-toggle="tab">SKINS</a></li>
+                <li role="presentation"><a href="#settings" data-toggle="tab">SETTINGS</a></li>
+            </ul>
+            <div class="tab-content">
+                <div role="tabpanel" class="tab-pane fade in active in active" id="skins">
+                    <div class="slimScrollDiv" style="position: relative; overflow: hidden; width: auto; height: 250px;"><ul class="demo-choose-skin" style="overflow: hidden; width: auto; height: auto;">
+                        <li data-theme="red" class="active"><div class="red"></div><span>Red</span></li>
+                        <li data-theme="pink"><div class="pink"></div><span>Pink</span></li>
+                        <li data-theme="purple"><div class="purple"></div><span>Purple</span></li>
+                        <li data-theme="deep-purple"><div class="deep-purple"></div><span>Deep Purple</span></li>
+                        <li data-theme="indigo"><div class="indigo"></div><span>Indigo</span></li>
+                        <li data-theme="blue"><div class="blue"></div><span>Blue</span></li>
+                        <li data-theme="light-blue"><div class="light-blue"></div><span>Light Blue</span></li>
+                        <li data-theme="cyan"><div class="cyan"></div><span>Cyan</span></li>
+                        <li data-theme="teal"><div class="teal"></div><span>Teal</span></li>
+                        <li data-theme="green"><div class="green"></div><span>Green</span></li>
+                        <li data-theme="light-green"><div class="light-green"></div><span>Light Green</span></li>
+                        <li data-theme="lime"><div class="lime"></div><span>Lime</span></li>
+                        <li data-theme="yellow"><div class="yellow"></div><span>Yellow</span></li>
+                        <li data-theme="amber"><div class="amber"></div><span>Amber</span></li>
+                        <li data-theme="orange"><div class="orange"></div><span>Orange</span></li>
+                        <li data-theme="deep-orange"><div class="deep-orange"></div><span>Deep Orange</span></li>
+                        <li data-theme="brown"><div class="brown"></div><span>Brown</span></li>
+                        <li data-theme="grey"><div class="grey"></div><span>Grey</span></li>
+                        <li data-theme="blue-grey"><div class="blue-grey"></div><span>Blue Grey</span></li>
+                        <li data-theme="black"><div class="black"></div><span>Black</span></li>
+                    </ul></div>
+                </div>
+                <div role="tabpanel" class="tab-pane fade" id="settings">
+                    <div class="slimScrollDiv" style="position: relative; overflow: hidden; width: auto; height: 250px;"><div class="demo-settings" style="overflow: hidden; width: auto; height: auto;">
+                        <p>GENERAL SETTINGS</p>
+                        <ul class="setting-list">
+                            <li>
+                                <span>Report Panel Usage</span>
+                                <div class="switch">
+                                    <label><input type="checkbox" checked=""><span class="lever"></span></label>
+                                </div>
+                            </li>
+                            <li>
+                                <span>Email Redirect</span>
+                                <div class="switch">
+                                    <label><input type="checkbox"><span class="lever"></span></label>
+                                </div>
+                            </li>
+                        </ul>
+                        <p>SYSTEM SETTINGS</p>
+                        <ul class="setting-list">
+                            <li>
+                                <span>Notifications</span>
+                                <div class="switch">
+                                    <label><input type="checkbox" checked=""><span class="lever"></span></label>
+                                </div>
+                            </li>
+                            <li>
+                                <span>Auto Updates</span>
+                                <div class="switch">
+                                    <label><input type="checkbox" checked=""><span class="lever"></span></label>
+                                </div>
+                            </li>
+                        </ul>
+                        <p>ACCOUNT SETTINGS</p>
+                        <ul class="setting-list">
+                            <li>
+                                <span>Offline</span>
+                                <div class="switch">
+                                    <label><input type="checkbox"><span class="lever"></span></label>
+                                </div>
+                            </li>
+                            <li>
+                                <span>Location Permission</span>
+                                <div class="switch">
+                                    <label><input type="checkbox" checked=""><span class="lever"></span></label>
+                                </div>
+                            </li>
+                        </ul>
+                    </div></div>
+                </div>
+            </div>
+        </aside>
+        <!-- #END# Right Sidebar -->
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="block-header">
+                <h2>MY TASKS</h2>
+            </div>
+            <div class="row clearfix">
+            </div>
+            
+<script id="task-template" type="text/x-handlebars-template">
+<div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+    <div class="card">
+        <div class="header bg-{{classCard}}">
+            <h2>{{SalesOrder_txt}}<small>{{title}}</small></h2>
+            <ul class="header-dropdownA m-r--5">
+                <li class="dropdownA">
+                    <a href="#" class="dropdownA-toggle" data-toggle="dropdownA" role="button" aria-haspopup="true" aria-expanded="false">
+                        <i class="material-icons">more_vert</i></a>
+                    <ul class="dropdownA-menu pull-right">
+                        <li><a href="#" class=" waves-effect waves-block">Acknowledge</a></li>
+                        <li><a href="#" class=" waves-effect waves-block">Completed</a></li>
+                        <li><a href="#" class=" waves-effect waves-block">Cancel</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+		<div class="ags-card">
+				<div class="col-sm-6 bg-light-blue">Start <span>{{StartDate}}</span></div>
+			    <div class="col-sm-6 bg-orange">Due <span>{{DueDate}}</span><span class="tx-blue pull-right">{{Duration}}</span></div>
+			</div> 
+        <div class="body ags-card">
+			
+			<div class="row">
+				<div class="col-sm-12">
+				Assignee <span>{{Assigned_txt}} {{classDate}}</span>
+				</div>
+			</div>
+		</div>
+    </div>
+</div>
+</script>
+            <!-- Basic Example -- >
+            <div class="row clearfix">
+                <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                    <div class="card">
+                        <div class="header bg-red">
+                            <h2>
+                                Red - Title <small>Description text here...</small>
+                            </h2>
+                            <ul class="header-dropdownA m-r--5">
+                                <li class="dropdownA">
+                                    <a href="#" class="dropdownA-toggle" data-toggle="dropdownA" role="button" aria-haspopup="true" aria-expanded="false">
+                                        <i class="material-icons">more_vert</i>
+                                    </a>
+                                    <ul class="dropdownA-menu pull-right">
+                                        <li><a href="#" class=" waves-effect waves-block">Action A</a></li>
+                                        <li><a href="#" class=" waves-effect waves-block">Another action A</a></li>
+                                        <li><a href="#" class=" waves-effect waves-block">Something else here A</a></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="body">
+                            Quis pharetra a pharetra fames blandit. Risus faucibus velit Risus imperdiet mattis neque volutpat, etiam lacinia netus dictum magnis per facilisi sociosqu. Volutpat. Ridiculus nostra.
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                    <div class="card">
+                        <div class="header bg-cyan">
+                            <h2>
+                                Cyan - Title <small>Description text here...</small>
+                            </h2>
+                            <ul class="header-dropdownA m-r--5">
+                                <li><a href="#"><i class="material-icons">mic</i></a></li>
+                                <li class="dropdownA">
+                                    <a href="#" class="dropdownA-toggle" data-toggle="dropdownA" role="button" aria-haspopup="true" aria-expanded="false">
+                                        <i class="material-icons">more_vert</i>
+                                    </a>
+                                    <ul class="dropdownA-menu pull-right">
+                                        <li><a href="#" class=" waves-effect waves-block">Action B</a></li>
+                                        <li><a href="#" class=" waves-effect waves-block">Another action B</a></li>
+                                        <li><a href="#" class=" waves-effect waves-block">Something else here B</a></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="body">
+                            Quis pharetra a pharetra fames blandit. Risus faucibus velit Risus imperdiet mattis neque volutpat, etiam lacinia netus dictum magnis per facilisi sociosqu. Volutpat. Ridiculus nostra.
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                    <div class="card">
+                        <div class="header bg-green">
+                            <h2>Green - Title <small>Description text here...</small></h2>
+                            <ul class="header-dropdownA m-r-0">
+                                <li><a href="#"><i class="material-icons">info_outline</i></a></li>
+                                <li><a href="#"><i class="material-icons">help_outline</i></a></li>
+                            </ul>
+                        </div>
+                        <div class="body">
+                            Quis pharetra a pharetra fames blandit. Risus faucibus velit Risus imperdiet mattis neque volutpat, etiam lacinia netus dictum magnis per facilisi sociosqu. Volutpat. Ridiculus nostra.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- <div class="row">
+                <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                    <div class="card">
+                        <div class="header bg-orange">
+                            <h2>
+                                Orange - Title <small>Description text here...</small>
+                            </h2>
+                            <ul class="header-dropdownA m-r--5">
+                                <li class="dropdownA">
+                                    <a href="#" class="dropdownA-toggle" data-toggle="dropdownA" role="button" aria-haspopup="true" aria-expanded="false">
+                                        <i class="material-icons">more_vert</i></a>
+                                    <ul class="dropdownA-menu pull-right">
+                                        <li><a href="#" class=" waves-effect waves-block">Action C</a></li>
+                                        <li><a href="#" class=" waves-effect waves-block">Another action C</a></li>
+                                        <li><a href="#" class=" waves-effect waves-block">Something else here C</a></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="body">
+                            Quis pharetra a pharetra fames blandit. Risus faucibus velit Risus imperdiet mattis neque volutpat, etiam lacinia netus dictum magnis per facilisi sociosqu. Volutpat. Ridiculus nostra.
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                    <div class="card">
+                        <div class="header bg-blue-grey">
+                            <h2>Blue Grey - Title <small>Description text here...</small></h2>
+                            <ul class="header-dropdownA m-r--5">
+                                <li><a href="#"><i class="material-icons">mic</i></a></li>
+                                <li class="dropdownA">
+                                    <a href="#" class="dropdownA-toggle" data-toggle="dropdownA" role="button" aria-haspopup="true" aria-expanded="false">
+                                        <i class="material-icons">more_vert</i>
+                                    </a>
+                                    <ul class="dropdownA-menu pull-right">
+                                        <li><a href="#" class=" waves-effect waves-block">Action D</a></li>
+                                        <li><a href="#" class=" waves-effect waves-block">Another action D</a></li>
+                                        <li><a href="#" class=" waves-effect waves-block">Something else here D</a></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="body">
+                            Quis pharetra a pharetra fames blandit. Risus faucibus velit Risus imperdiet mattis neque volutpat, etiam lacinia netus dictum magnis per facilisi sociosqu. Volutpat. Ridiculus nostra.
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                    <div class="card">
+                        <div class="header bg-pink">
+                            <h2>
+                                Pink - Title <small>Description text here...</small>
+                            </h2>
+                            <ul class="header-dropdownA m-r-0">
+                                <li><a href="#"><i class="material-icons">info_outline</i></a></li>
+                                <li><a href="#"><i class="material-icons">help_outline</i></a></li>
+                            </ul>
+                        </div>
+                        <div class="body">
+                            Quis pharetra a pharetra fames blandit. Risus faucibus velit Risus imperdiet mattis neque volutpat, etiam lacinia netus dictum magnis per facilisi sociosqu. Volutpat. Ridiculus nostra.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            < !-- #END# Basic Example -->
+            
+            <!-- Colored Card - With Loading -- >
+            <div class="block-header">
+                <h2>
+                    COLORED CARDS - WITH LOADING
+                    <small>Please click the refresh button right top of cards you want to activate loading. Taken from <a href="https://github.com/vadimsva/waitMe" target="_blank">https://github.com/vadimsva/waitMe</a></small>
+                </h2>
+            </div>
+            <div class="row">
+                <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                    <div class="card">
+                        <div class="header bg-light-blue">
+                            <h2>
+                                Light Blue - Title <small>Description text here...</small>
+                            </h2>
+                            <ul class="header-dropdownA m-r--5">
+                                <li>
+                                    <a href="#" data-toggle="cardloading" data-loading-effect="timer" data-loading-color="lightBlue">
+                                        <i class="material-icons">loop</i>
+                                    </a>
+                                </li>
+                                <li class="dropdownA">
+                                    <a href="#" class="dropdownA-toggle" data-toggle="dropdownA" role="button" aria-haspopup="true" aria-expanded="false">
+                                        <i class="material-icons">more_vert</i>
+                                    </a>
+                                    <ul class="dropdownA-menu pull-right">
+                                        <li><a href="#" class=" waves-effect waves-block">Action</a></li>
+                                        <li><a href="#" class=" waves-effect waves-block">Another action</a></li>
+                                        <li><a href="#" class=" waves-effect waves-block">Something else here</a></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="body">
+                            Quis pharetra a pharetra fames blandit. Risus faucibus velit Risus imperdiet mattis neque volutpat, etiam lacinia netus dictum magnis per facilisi sociosqu. Volutpat. Ridiculus nostra.
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                    <div class="card">
+                        <div class="header bg-light-green">
+                            <h2>
+                                Light Green - Title <small>Description text here...</small>
+                            </h2>
+                            <ul class="header-dropdownA m-r--5">
+                                <li>
+                                    <a href="#" data-toggle="cardloading" data-loading-effect="rotation" data-loading-color="lightGreen">
+                                        <i class="material-icons">loop</i>
+                                    </a>
+                                </li>
+                                <li class="dropdownA">
+                                    <a href="#" class="dropdownA-toggle" data-toggle="dropdownA" role="button" aria-haspopup="true" aria-expanded="false">
+                                        <i class="material-icons">more_vert</i>
+                                    </a>
+                                    <ul class="dropdownA-menu pull-right">
+                                        <li><a href="#" class=" waves-effect waves-block">Action</a></li>
+                                        <li><a href="#" class=" waves-effect waves-block">Another action</a></li>
+                                        <li><a href="#" class=" waves-effect waves-block">Something else here</a></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="body">
+                            Quis pharetra a pharetra fames blandit. Risus faucibus velit Risus imperdiet mattis neque volutpat, etiam lacinia netus dictum magnis per facilisi sociosqu. Volutpat. Ridiculus nostra.
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                    <div class="card">
+                        <div class="header bg-amber">
+                            <h2>
+                                Amber - Title <small>Description text here...</small>
+                            </h2>
+                            <ul class="header-dropdownA m-r--5">
+                                <li>
+                                    <a href="#" data-toggle="cardloading" data-loading-effect="pulse" data-loading-color="amber">
+                                        <i class="material-icons">loop</i>
+                                    </a>
+                                </li>
+                                <li class="dropdownA">
+                                    <a href="#" class="dropdownA-toggle" data-toggle="dropdownA" role="button" aria-haspopup="true" aria-expanded="false">
+                                        <i class="material-icons">more_vert</i>
+                                    </a>
+                                    <ul class="dropdownA-menu pull-right">
+                                        <li><a href="#" class=" waves-effect waves-block">Action</a></li>
+                                        <li><a href="#" class=" waves-effect waves-block">Another action</a></li>
+                                        <li><a href="#" class=" waves-effect waves-block">Something else here</a></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="body">
+                            Quis pharetra a pharetra fames blandit. Risus faucibus velit Risus imperdiet mattis neque volutpat, etiam lacinia netus dictum magnis per facilisi sociosqu. Volutpat. Ridiculus nostra.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            < !-- #END# Colored Card - With Loading -->
+        </div>
+    </section>
+</div>
+
+<!-- SANDBOX_MARK_FOOTER_PRODUCTION -->
+
+<script src="{{WorkForce-Core-JS}}"></script>
+
+</body>
+</html>

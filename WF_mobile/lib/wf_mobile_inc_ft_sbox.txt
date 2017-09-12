@@ -1,0 +1,25 @@
+<!-- /* Ariel Garcia - Created - 2017-May-07 12:42pm */ -->
+<!-- add css, js, styles to wf_mobile FOOTER SBOX here -->
+<!-- jquery.min.js ver 1.12.4 -->
+<script type='text/javascript' src="/core/media/media.nl?id=6572837&c=3461650&h=ffc54972eefd0450b962&_xt=.js"></script>
+<!-- bootstrap.js v3.3.6 -->
+<script type='text/javascript' src='/core/media/media.nl?id=6572834&c=3461650&h=5df42c12ce9336cd55f0&_xt=.js'></script>
+<!-- jquery_confirm.js -->
+<script type='text/javascript' src="/core/media/media.nl?id=6566921&c=3461650&h=dc4605202ce06adb7ea2&_xt=.js"></script>
+<!-- bootstrap-select.js -->
+<script type='text/javascript' src='/core/media/media.nl?id=6572833&c=3461650&h=f107cfa648aacd64d5af&_xt=.js'></script>
+<!-- jquery.slimscroll.js -->
+<script type='text/javascript' src='/core/media/media.nl?id=6572836&c=3461650&h=d6ba77f5dc30df81e307&_xt=.js'></script>
+<!-- waves.js -->
+<script type='text/javascript' src='/core/media/media.nl?id=6572839&c=3461650&h=5af4e51ddadd49678154&_xt=.js'></script>
+<!-- waitMe.js -->
+<script type='text/javascript' src='/core/media/media.nl?id=6572838&c=3461650&h=f9df953dde752dfe188a&_xt=.js'></script>
+<!-- admin.js -->
+<script type='text/javascript' src='/core/media/media.nl?id=6572841&c=3461650&h=e6ddd7eced7e12e0e02f&_xt=.js'></script>
+<!-- colored.js -->
+<script type='text/javascript' src='/core/media/media.nl?id=6572832&c=3461650&h=e50798d29b224f9e3747&_xt=.js'></script>
+<!-- demo.js -->
+<script type='text/javascript' src='/core/media/media.nl?id=6572835&c=3461650&h=840e68314baf85376da3&_xt=.js'></script>
+<!-- wf_ns_utils.js -->
+<script type='text/javascript' src='/core/media/media.nl?id=6573343&c=3461650&h=ad79863fcb9a7ba6f540&_xt=.js'></script>
+<!-- end css, js links -->

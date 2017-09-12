@@ -1,0 +1,1759 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+    	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+    	<meta name="viewport" content="width=device-width, initial-scale=1">
+    	<!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+		<title>Project Management - Workspace</title>
+		<!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.css" crossorigin="anonymous">
+		<!-- GANTT -->
+		<!-- dhtmlxgantt_meadow.css -->
+		<link href="https://system.sandbox.netsuite.com/core/media/media.nl?id=5804207&c=3461650&h=f81ebb1b5c2017b85dbc&_xt=.css" type="text/css" rel="stylesheet">		
+		<style>
+			/* New set of styles - Beginning  */
+			th {
+				bgcolor: #485973;
+				vertical-align: middle !important; /* The bootstrap code is overrided here */
+				border-bottom: 2px solid #ddd;
+				font-size: 11px;
+				font-weight: bold;
+				text-transform: uppercase;				
+			}
+			table#salesorder td {
+			  vertical-align: middle;			  
+			}
+			.fa-5x {
+			  font-size: 8em;
+			}
+			.fa {
+			  color: #333;
+			}
+			.hotTitles-grey {
+			  color: #0085B2;
+			  font-size: 18px;
+			  font-weight: bold;
+			  background: #fff;
+			  background: -moz-linear-gradient(top, #dedede 0%, #ffffff 100%);
+			  background: -webkit-linear-gradient(top, #dedede 0%, #ffffff 100%);
+			  background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #dedede), color-stop(1, #ffffff));
+			  background: -o-linear-gradient(top, #dedede 0%, #ffffff 100%);
+			  background: -ms-linear-gradient(top, #dedede 0%, #ffffff 100%);
+			  background: linear-gradient(top, #dedede 0%, #ffffff 100%);
+			  margin: 22px auto;
+			  width: 25%;
+			  padding: 10px;
+			  text-align: center;
+			  position: relative;
+			  box-shadow: rgba(0, 0, 0, 0.3) 2px 2px 2px;
+			  border-radius: 12px;
+			}
+			
+			.hotTitles-grey:after {
+				content: "";
+				border-color: transparent #fff #fff transparent;
+				border-style: solid;
+				border-width: 10px;
+				bottom: -10px;
+				box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.3);
+				content: "";
+				left: 50%;
+				position: absolute;
+				-moz-transform: rotate(45deg);
+			    -webkit-transform: rotate(45deg);
+			}
+			#salesorder {
+				border-collapse: separate;
+				border-radius: 12px !important;
+    			-moz-border-radius: 12px !important;
+    		    border: 1px solid #f3f3f3;
+			}
+			
+			.bloc { display:inline-block; vertical-align:top; overflow:hidden; border:solid grey 1px; }
+			.bloc select { padding:10px; margin:-5px -20px -5px -5px; }
+			
+			.bg-success-z {			 
+			  background-color: #47728c;		  
+			  color: white;		
+			  text-align: center;	 			  
+			}
+			tr.success th {			 
+			  background-color: #004C66 !important;		  
+			  color: white;		  
+			}
+			.rounded-th-left {
+			  border-top-left-radius: 12px; 
+			}
+			.rounded-th-right {
+			  border-top-right-radius: 12px; 
+			}
+			.bg-success-z > th {
+			  border-bottom-width: 0 !important;
+			  bgcolor: none !important;
+			}
+			.styleToEntity { font-weight: normal; color: #525252; text-shadow: 1px 0 1px #ffffff; }			
+			.styleToEntity:hover { color: #008000; text-shadow: 1px 1px 0 #FFFFFF; }
+			.styleToId, .styleToAddressName, .styleToServiceItems, .styleToPlanningTask, .styleToTaskByAddress, .styleToService { font-weight: bold; color: #008000; }
+			/* CSS Banner for heading */
+			.arrow{
+			  display:block;
+			  height:auto;
+			  background-color: #ebebeb;
+			  cursor:pointer;
+			  -webkit-border-radius: 12px;
+			  -moz-border-radius: 12px;
+			  border-radius: 12px;
+			  /* margin-left: auto ;
+  			  margin-right: auto ; */
+  			  width: 25%;
+			}
+			
+			.arrow span{
+			  display:inline-block;
+			  line-height:0;
+			  padding:15px;
+			  color: #333333;
+			}
+			
+			.arrow:hover{
+			   background-color: #CBCBCB;
+			   text-shadow: 1px 1px 0 #FFFFFF;
+			}
+			/* New set of styles - End  */
+			/* Styles for Highcharts */
+			#gauge_pendtasks, #gauge_todaytasks, #gauge_newtasks, #gauge_overduetasks {
+			    min-width: 200px; max-width: 224px; height: 260px; margin: 0 auto; 
+			    padding: 2px outset #6d6d6d;
+			}
+			#mygraph {
+				position:relative;
+				height:100%;
+			}
+			
+			/* End of Styles for Highcharts */
+			/* Style for containers */
+			.container {
+			    display:table;
+			    width: 100%;
+			    margin-top: -50px;
+			    padding: 50px 0 0 0; /*set left/right padding according to needs*/
+			    -moz-box-sizing: border-box;
+			    box-sizing: border-box;
+			}
+			.row {
+			    height: 100%;
+			    display: table-row;
+			}
+			.no-float {
+			    float: none;
+			    vertical-align: top;
+			}
+			.col-md-2
+			{
+			    display: table-cell;			    
+			    padding-left: 0px;
+			    padding-right: 0px;
+			    width: 20%;
+			    vertical-align: text-top;
+			}
+			.col-md-10
+			{
+			    display: table-cell;
+			    background: yellow;
+			    width: 80%;
+			}
+			.col-md-10 > .row {
+			  display: unset;
+			  float: none;
+			  width: 100%;
+			}
+			.center-row-elements { text-align: center; width: auto; display: block; }
+			.lightline {
+				border: 0;
+				height: 1px;
+				background: #060606;
+				background-image: -webkit-linear-gradient(left, #333, #8c8c8c, #333);
+				background-image: -moz-linear-gradient(left, #333, #8c8c8c, #333);
+				background-image: -ms-linear-gradient(left, #333, #8c8c8c, #333);
+				background-image: -o-linear-gradient(left, #333, #8c8c8c, #333);
+				opacity: 0.82;
+				width: 95%;
+				filter: alpha(opacity=82);
+				filter: progid:DXImageTransform.Microsoft.Alpha(opacity=50);
+				-moz-opacity: 0.50;
+			}
+			.details-row-block { display: block; padding:3px 20px; overflow:hidden; height:100%; }
+			.taskinator-badge {
+				color: #9e9e9e;
+				display:inline-block;
+				float: left;
+			} 
+			.sp-usrdetails {
+				color: #e5e5e5;
+				display:inline-block;
+				float: right;
+			}
+			.title-detalles {
+			  background-color:#0e1112;
+			  filter:progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr=#0e1112, endColorstr=#6c6f70);
+			  background-image:-moz-linear-gradient(top, #0e1112 0%, #6c6f70 92%,#112630 100%);
+			  background-image:linear-gradient(top, #0e1112 0%, #6c6f70 92%,#112630 100%);
+			  background-image:-webkit-linear-gradient(top, #0e1112 0%, #6c6f70 92%,#112630 100%);
+		 	  background-image:-o-linear-gradient(top, #0e1112 0%, #6c6f70 92%,#112630 100%);
+			  background-image:-ms-linear-gradient(top, #0e1112 0%, #6c6f70 92%,#112630 100%);
+			  background-image:-webkit-gradient(linear, right top, right bottom, color-stop(0%,#0e1112), color-stop(92%,#6c6f70),color-stop(100%,#112630));
+			  cursor: pointer;
+			  font-size: 12px;
+			  line-height: 34px;
+			  padding: 0 10px;	
+			  color: white;	
+			}
+			/* Vertical menu styles on left side */
+			
+			#vertical-menu {
+			    background: #333333;
+			    width: 100%;
+			    margin: 0;
+			    color: white;	
+			    bottom: 18px;
+			    position: relative;		    	
+			    /*box-shadow: 
+					0 5px 15px 1px rgba(0, 0, 0, 0.6), 
+					0 0 200px 1px rgba(255, 255, 255, 0.5);*/
+			}
+			/*heading styles*/
+			 #vertical-menu h3 {
+				  background-color:#0e1112;
+				  filter:progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr=#0e1112, endColorstr=#6c6f70);
+				  background-image:-moz-linear-gradient(top, #0e1112 0%, #6c6f70 92%,#112630 100%);
+				  background-image:linear-gradient(top, #0e1112 0%, #6c6f70 92%,#112630 100%);
+				  background-image:-webkit-linear-gradient(top, #0e1112 0%, #6c6f70 92%,#112630 100%);
+			 	  background-image:-o-linear-gradient(top, #0e1112 0%, #6c6f70 92%,#112630 100%);
+				  background-image:-ms-linear-gradient(top, #0e1112 0%, #6c6f70 92%,#112630 100%);
+				  background-image:-webkit-gradient(linear, right top, right bottom, color-stop(0%,#0e1112), color-stop(92%,#6c6f70),color-stop(100%,#112630));
+				  cursor: pointer;
+				  font-size: 12px;
+				  line-height: 34px;
+				  padding: 0 10px;	
+				  color: white;	
+				  border-bottom: 1px solid #7d7d7d;
+			}
+			/*heading hover effect*/
+			 #vertical-menu h3:hover {
+			    text-shadow: 0 0 1px rgba(255, 255, 255, 0.7);
+			}
+			/*iconfont styles*/
+			 #vertical-menu h3 span {
+			    font-size: 16px;
+			    margin-right: 10px;
+			}
+			/*list items*/
+			#vertical-menu li {
+			    list-style-type: none;			
+			}
+			#vertical-menu .mainli li {
+			    list-style-type: none;			
+			}
+			#vertical-menu li.mainli {
+			    list-style-type: none;
+			    margin-bottom: -20px;
+			}			 
+			/*links*/
+			 #vertical-menu ul ul li a {
+			    color: white;
+			    text-decoration: none;
+			    font-size: 11px;
+			    line-height: 27px;
+			    display: block;
+			    padding: 0 15px;
+			    /*transition for smooth hover animation*/
+			    transition: all 0.15s;			    		    
+			}
+			/*hover effect on links*/
+			 #vertical-menu ul ul li a:hover {
+			    background: #383838;
+			    border-left: 1px solid #FFF4D5;
+			    color: #00FFFF;
+			    /* text-shadow: 0px 0px 1px #f0f0f0 */	
+			}
+			/*Lets hide the non active LIs by default*/
+			 #vertical-menu ul ul {
+			    display: none;
+			}
+			#vertical-menu li.active ul {
+			    display: block;
+			}
+			#vertical-menu > ul {
+				margin-left: 0px;				
+  			}
+			/* End of Vertical menu styles on left side */
+			select#salesord {
+			  background: #333 none repeat scroll 0 0;
+			  color: #f2f2f2;
+			  cursor: pointer;
+			  cursor: hand;
+			}
+			#salesorder tr {
+			  cursor: pointer;
+			}
+			.fa_green {
+			  color: green;
+			  text-shadow: none;
+			}
+			.fa_yellow {
+			  color: #6d6d6d;
+			  text-shadow: none;
+			}
+			.fa_red {
+			  color: #F4F4F4;
+			  text-shadow: none;
+			}
+			.label.label-warning.btn-lg.yellow {
+				background-image: -ms-linear-gradient(bottom, #DDDF0D 0%, #F5F578 20%, #DDDF0D 100%);
+				background-image: -moz-linear-gradient(bottom, #DDDF0D 0%, #F5F578 20%, #DDDF0D 100%);
+				background-image: -o-linear-gradient(bottom, #DDDF0D 0%, #F5F578 20%, #DDDF0D 100%);
+				background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #DDDF0D), color-stop(20, #F5F578), color-stop(100, #DDDF0D));
+				background-image: -webkit-linear-gradient(bottom, #DDDF0D 0%, #F5F578 20%, #DDDF0D 100%);
+				background-image: linear-gradient(to top, #DDDF0D 0%, #F5F578 20%, #DDDF0D 100%);
+				display: block;
+				padding: 2px 50px;
+				border: 2px solid #DDDF0D;				
+			    color: #747474;
+			    text-shadow: 1px 2px 1px #ffffff;
+			    width: 100%;
+			    
+			}
+			.label.label-warning.btn-lg.red {
+				background-image: -ms-linear-gradient(bottom, #ff0000 0%, #BA0000 100%);
+				background-image: -moz-linear-gradient(bottom, #ff0000 0%, #BA0000 100%);
+				background-image: -o-linear-gradient(bottom, #ff0000 0%, #BA0000 100%);
+				background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #ff0000), color-stop(100, #BA0000));
+				background-image: -webkit-linear-gradient(bottom, #ff0000 0%, #BA0000 100%);
+				background-image: linear-gradient(to top, #ff0000 0%, #BA0000 100%);
+				display: block;
+				padding: 2px 50px;
+				border: 2px solid #d52323;				
+			    color: #FFFFFF;
+			    text-shadow: 1px 2px 1px #333333;
+			    width: 100%;
+			    
+			}
+			.label.label-warning.btn-lg.green {
+				background-image: -ms-linear-gradient(bottom, #D5E6A0 0%, #b7df2d 100%);	
+				background-image: -moz-linear-gradient(bottom, #D5E6A0 0%, #b7df2d 100%);
+				background-image: -o-linear-gradient(bottom, #D5E6A0 0%, #b7df2d 100%);
+				background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #D5E6A0), color-stop(100, #b7df2d));
+				background-image: -webkit-linear-gradient(bottom, #D5E6A0 0%, #b7df2d 100%);
+				background-image: linear-gradient(to top, #D5E6A0 0%, #b7df2d 100%);
+				display: block;
+				padding: 2px 50px;
+				border: 2px solid #AFD823;				
+			    color: #FFFFFF;
+			    text-shadow: 1px 2px 1px #666666;
+			    width: 100%;
+			    
+			}
+			.h1_tasks {
+				color: #125986;
+				font-size: 16px;
+				font-weight: bold;
+			}
+			/* End of style for containers */
+			.showrolesspan { font-weight:  bold; }
+			.panel-warning {
+				background: #F0AD4E;
+			}			
+			select.roles {
+			    padding:3px;
+			    margin: 0;
+			    -webkit-border-radius:4px;
+			    -moz-border-radius:4px;
+			    border-radius:4px;
+			    -webkit-box-shadow: 0 3px 0 #222, 0 -1px #000 inset;
+			    -moz-box-shadow: 0 3px 0 #222, 0 -1px #000 inset;
+			    box-shadow: 0 3px 0 #222, 0 -1px #000 inset;
+			    background: #333;
+			    color:#cbcbcb;
+			    border:none;
+			    outline:none;
+			    display: inline-block;
+			    -webkit-appearance:none;
+			    -moz-appearance:none;
+			    appearance:none;
+			    cursor:pointer;
+			    text-align: center;
+			}
+			
+			/* Targetting Webkit browsers only. FF will show the dropdown arrow with so much padding. */
+			@media screen and (-webkit-min-device-pixel-ratio:0) {
+			    select.roles {padding-right:18px}
+			}
+			
+			label.roles {position:relative}
+			label.roles:after {
+			    content:'<>';
+			    font:11px "Consolas", monospace;
+			    color:#aaa;
+			    -webkit-transform:rotate(90deg);
+			    -moz-transform:rotate(90deg);
+			    -ms-transform:rotate(90deg);
+			    transform:rotate(90deg);
+			    right:8px; top:2px;
+			    padding:0 0 2px;
+			    border-bottom:1px solid #ddd;
+			    position:absolute;
+			    pointer-events:none;
+			}
+			label.roles:before {
+			    content:'';
+			    right:6px; top:0px;
+			    width:20px; height:20px;
+			    background:#f8f8f8;
+			    position:absolute;
+			    pointer-events:none;
+			    display:block;
+			}
+			/* Styles for Highcharts */
+			.highcharts-background {
+				fill: #f2f2f2;
+			}
+			.panel-heading {			  
+				background-color: #f2f2f2;
+			}
+			.highcharts-title {
+			    fill: #125986 !important;
+			    font-weight: bold;
+			    letter-spacing: 0.3em;
+			    font-size: 2em;
+			    text-shadow: 1px 0px 1px white;
+			}
+			.gantt_data_area {
+			  height: 500px !important;
+			}
+			.gantt_task {
+				height: 480px;
+				overflow: scroll;
+				width: 546px !important;
+			}
+			
+			/* End of Styles for Highcharts */
+		</style>		
+		<style>
+		.selectRow {
+		    display : block;
+		    padding : 20px;
+		}
+		.select2-container {
+		    width: 180px;
+		}		
+		#s2id_autogen1 {
+			border: none;
+			border-color: transparent;
+		}
+		input:focus {
+		    outline-width: none !important;
+		} 
+		*:focus {
+		    outline: none !important;
+		}
+		input::-moz-focus-inner {
+		  border: 0;
+		}
+		input[type="text"]:enabled:active, input[type="text"]:enabled:focus, input[type="password"]:enabled:active, input[type="password"]:enabled:focus, input.text:enabled:active, input.text:enabled:focus, select:enabled:active, select:enabled:focus, textarea:enabled:active, textarea:enabled:focus, .bigouter .checkbox_ck, .bigouter .checkbox_unck, .uir-field-active, .dropdownDiv:active {
+		  border: none !important;
+		  box-shadow: none;
+		}
+		/* Style for thetabtogants */ 
+		/*----- thetabtogants -----*/
+		.thetabtogants {
+		    width:100%;
+		    display:inline-block;
+		    font-family: "Lucida Grande","Lucida Sans Unicode",Arial,Helvetica,sans-serif;		    
+		}
+		 
+		    /*----- tabtogant Links -----*/
+		    /* Clearfix */
+		    .tabtogant-links:after {
+		        display:block;
+		        clear:both;
+		        content:'';
+		    }
+		 
+		    .tabtogant-links li {
+		        margin:0px 2px;
+		        float:left;
+		        list-style:none;
+		    }
+		 
+		        .tabtogant-links a {
+		            padding:9px 15px;
+		            display:inline-block;
+		            border-radius: 8px 8px 0px 0px;
+		            background: #004C66;
+		            font-size:13px;
+		            font-weight:600;
+		            color:#f4f4f4;
+		            transition:all linear 0.15s;
+		            text-decoration: none;
+		        }
+		 
+		        .tabtogant-links a:hover {
+		            background: -moz-linear-gradient(top, #dedede 0%, #ffffff 100%);
+					background: -webkit-linear-gradient(top, #dedede 0%, #ffffff 100%);
+					background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #dedede), color-stop(1, #ffffff));
+					background: -o-linear-gradient(top, #dedede 0%, #ffffff 100%);
+					background: -ms-linear-gradient(top, #dedede 0%, #ffffff 100%);
+					background: linear-gradient(top, #dedede 0%, #ffffff 100%);
+		            text-decoration:none;
+		            color: #0085b2; /* #4c4c4c */
+		        }
+		 
+		    .tabtogant-links li.active a, li.active a:hover {
+		        background: -moz-linear-gradient(top, #dedede 0%, #ffffff 100%);
+				background: -webkit-linear-gradient(top, #dedede 0%, #ffffff 100%);
+				background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #dedede), color-stop(1, #ffffff));
+				background: -o-linear-gradient(top, #dedede 0%, #ffffff 100%);
+				background: -ms-linear-gradient(top, #dedede 0%, #ffffff 100%);
+				background: linear-gradient(top, #dedede 0%, #ffffff 100%);
+		        color: #0085b2; /* #4c4c4c */
+		        text-shadow: 1px 1px 1px #ffffff;
+		    }
+		 
+		    /*----- Content of thetabtogants -----*/
+		    .tabtogant-content {
+		        padding:15px;
+		        border-radius:3px;
+		        box-shadow:-1px 1px 1px rgba(0,0,0,0.15);
+		        background:#fbfbfb;
+		        /* border: 1px solid red; 
+		        width: 1020px;*/
+		    }
+		 
+		    .tabtogant {
+		        display:none;
+		    }
+		
+		    .tabtogant.active {
+		        display:block;
+		    }
+		    .gantt_task {			  
+			  overflow-y: hidden;			  
+			}
+		
+		/*Termina el style for TABS */
+		
+		</style>
+		<!--  Styling select2.js -->
+		<link rel="stylesheet" href="https://system.sandbox.netsuite.com/core/media/media.nl?id=6514725&c=3461650&h=837f09b494ee4c44488c&_xt=.css">
+
+		<!-- We do a test call to the SVG Jquery -->
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+		<script type="text/javascript" src="http://jquery-svg.berneti.ir/dist/jquery.svg.es5.min.js"></script>
+		<!-- Pending Knowledge -->
+		
+		
+	</head>
+	<body>
+	<div id="taskinator-layout" class="row">
+      <div class="col-md-2 no-float" style="background:#333333;">
+      	<div class="title-detalles"><img src="/core/media/media.nl?id=6512822&c=3461650&h=4aa747e58ac52e772b91" alt="" />&nbsp;&nbsp;&nbsp;&nbsp;User Details</div>
+      	<div class="details-row-block"><span class="taskinator-badge">ID: </span><span id="badge-id" class="sp-usrdetails"></span></div>
+      	<div class="details-row-block"><span class="taskinator-badge">NAME: </span><span id="badge-name" class="sp-usrdetails"></span></div>
+      	<div class="details-row-block"><span class="taskinator-badge">ACTIVE ROLE: </span><span id="badge-active-role" class="sp-usrdetails"></span></div>
+      	<div class="details-row-block"><span class="taskinator-badge">E-MAIL: </span><span id="badge-email" class="sp-usrdetails"></span></div>
+      	<div class="details-row-block"><span class="taskinator-badge">DEPARTMENT(S): </span><span id="badge-department" class="sp-usrdetails"></span></div>      	
+      	<div class="details-row-block"><span class="taskinator-badge">JOB TITLE: </span><span id="badge-job-title" class="sp-usrdetails"></span></div>
+      	<div class="details-row-block"><span class="taskinator-badge">OTHER ROLES: </span><span id="badge-other-roles" class="sp-usrdetails"></span></div>
+      	<hr class="lightline" />           		
+      	<div id="vertical-menu">
+		    <ul>
+		        <li class="mainli active">
+	            	<h3>
+		            	<span class="plus">
+		            		<img src="/core/media/media.nl?id=6512716&c=3461650&h=555db1f077f4c2e90951" alt="" title="Dashboard" />
+		            	</span>Dashboard
+	            	</h3>		
+		            <ul>
+		                <li><a href="#">Reports</a>
+		                </li>
+		                <li><a href="#">Search</a>
+		                </li>
+		                <li><a href="#">Graphs</a>
+		                </li>
+		                <li><a href="#">Settings</a>
+		                </li>
+		            </ul>
+		        </li>
+		        <!-- Show Orders-->
+		        <li class="mainli">
+	            	<h3>
+	            		<span class="plus">
+	            			<img src="/core/media/media.nl?id=6512818&c=3461650&h=21992eec2940eb857a57" alt="" title="Team Members" />
+	            		</span>Team
+	            	</h3>	            		
+		            <ul>
+		                <li>
+		                	<span id="badge-team"></span>   
+							
+							<br/><br/>
+		                </li>
+		            </ul>
+		        </li>
+		        <li class="mainli">
+		            <h3>
+		            	<span class="plus">
+		            		<img src="/core/media/media.nl?id=6512817&c=3461650&h=7dc887d768acee3bde8e" alt="" title="Tasks" />
+		            	</span>Tasks
+		            </h3>		
+		            <ul>
+		                <li><a href="#">Today Tasks</a>
+		                </li>
+		                <li><a href="#"></a>
+		                </li>
+		                <li><a href="#">Pending Aknowledge +</a>
+		                </li>
+		                <li><a href="#">New Tasks</a>
+		                </li>
+		                <li><a href="#">Overdue</a>
+		                </li>
+		            </ul>
+		        </li>
+		        <li class="mainli">
+		            <h3>
+		            	<span class="plus">
+		            		<img src="/core/media/media.nl?id=6512821&c=3461650&h=fc759375c513197a622a" alt="" title="KPI Indicators" />
+		            	</span>KPI Indicators
+		            </h3>
+		            <ul>
+		                <li><a href="#">Global favs</a>
+		                </li>
+		                <li><a href="#">My favs</a>
+		                </li>
+		                <li><a href="#">Team favs</a>
+		                </li>
+		                <li><a href="#">Settings</a>
+		                </li>
+		            </ul>
+		        </li>
+		    </ul>
+		</div>      	
+      </div>
+      <div class="col-md-10 no-float" style="background:#F2F2F2;"><br/>
+	      <!--  <div class="container" style="100% !important;">  -->
+				<div class="row">
+	                <div class="col-lg-3 col-md-6">
+	                    <div class="panel">
+	                        <div class="panel-heading">
+	                            <div class="row">
+	                            	<div id="gauge_pendtasks"></div>
+	                            		<h1>
+	                            			<span id="gaugeAcknowledge" class="label label-warning btn-lg yellow">
+	                                	    	<i id="faAknowledge" class="fa fa-check-square fa-1x"></i>
+	                                	 	       <span class="acknowledge"></span>
+	                                	 	</span>
+	                                	</h1>                                
+	                            </div>
+	                        </div>	                        
+	                    </div>
+	                </div>                
+	                <div class="col-lg-3 col-md-6">
+	                    <div class="panel">
+	                        <div class="panel-heading">
+	                            <div class="row">
+	                            	<div id="gauge_newtasks"></div>
+	                            		<h1>
+	                            			<div id="gaugeNew" class="label label-warning btn-lg yellow">
+	                                	    	<i id="faNew" class="fa fa-check-square fa-1x"></i>
+	                                	 	       <span class="new"></span>
+	                                	 	</div>
+	                                	</h1>                                
+	                            </div>
+	                        </div>
+	                    </div>
+	                </div>
+	                <div class="col-lg-3 col-md-6">
+	                    <div class="panel panel-yellow">
+	                        <div style="height:346px;" class="panel-heading">
+	                            <div class="row center-row-elements">
+	                            	    <h1 class="h1_tasks">Today Tasks</h1>
+	                            		<h1>
+	                            			<div id="gaugeToday"  style="margin: 0 auto; padding: 8px 0; width: 70%;" class="label label-warning btn-lg green">
+	                                	    	<i id="faToday" class="fa fa-check-square fa-1x"></i>
+	                                	 	       <span class="today"></span>
+	                                	 	</div>
+	                                	</h1>        
+	                                	<h1 class="h1_tasks">Overdue Tasks</h1>
+	                                	<h1>
+	                            			<div id="gaugeOverdue" style="margin: 0 auto; padding: 8px 0; width: 70%" class="label label-warning btn-lg red">
+	                                	    	<i id="faOverdue" class="fa fa-check-square fa-1x"></i>
+	                                	 	       <span class="overdue"></span>
+	                                	 	</div>
+	                                	</h1>                  
+	                            </div>
+	                        </div>	                        
+	                    </div>
+	                </div>
+	                <div class="col-lg-3 col-md-6">
+	                    <div class="panel panel-yellow">
+	                        <div style="height:346px;" class="panel-heading">
+	                            <div class="row center-row-elements">
+	                            	    <h1 class="h1_tasks">Sales Orders Filter</h1>	                            		
+	                                	<div class="selectRow">
+									        <!-- Using data-placeholder below to set place holder value versus putting in configuration -->
+									        <select id="multipleSelectSalesOrders" data-placeholder="Select Type of Sales Order" multiple>
+									            <option value="A">Pending Approval</option>
+									            <option value="B">Pending Fufillment</option>
+									            <option value="C">Cancelled</option>
+									            <option value="D">Partially Fulled</option>
+									            <option value="E">Pending Billing/Partially Fulfilled</option>
+									            <option value="F">Pending Billing</option>
+									            <option value="G">Billed</option>
+									            <option value="H">Closed</option>
+									        </select>
+									    </div>   
+									    <h1 class="h1_tasks">Task Filter</h1>	                            		
+	                                	<div class="selectRow">
+									        <!-- Using data-placeholder below to set place holder value versus putting in configuration -->
+									        <select id="multipleSelectTasksStatus" data-placeholder="Select Status of Tasks" multiple>
+									            <option value="notstarted">Not Started</option>
+									            <option value="inprogress">In Progress</option>
+									            <option value="cancelled">Cancelled</option>
+									            <option value="complete">Complete</option>
+									        </select>
+									    </div>                        
+	                            </div>
+	                        </div>	                        
+	                    </div>
+	                </div>
+	            </div> <!-- End of boxes -->
+	        
+	        <!-- Se agregan los Tabs de navegacion entre las tareas -->
+				
+			<div class="thetabtogants">
+			    <ul class="tabtogant-links">
+			        <li class="active"><a href="#tabtogant1">Sales Orders</a></li>
+			        <li><a href="#tabtogant2">Service Addresses</a></li>
+			        <li><a href="#tabtogant3">Service Items</a></li>
+			        <li><a href="#tabtogant4">Gantt</a></li>
+			        <li><a href="#tabtogant5">Planning Tasks</a></li>
+			        <li><a href="#tabtogant6">Task by Address Yea</a></li>
+			        <li><a href="#tabtogant7">Service</a></li>
+			    </ul>
+			 
+			    <div class="tabtogant-content">
+			        <div id="tabtogant1" class="tabtogant active">
+			        	<!-- <div class="hotTitles-grey">Sales Orders</div> -->
+			            <table id="salesorder" class="table table-hover"> <!--  This class was removed from here table-bordered -->
+			    		<thead>
+			    			<tr>
+			    				<th class="bg-success-z" title="Sales Order">Order</th> <!-- Class removed rounded-th-left -->	    				
+			    				<th class="bg-success-z">Customer</th>
+			    				<th class="bg-success-z">Description</th>
+			    				<th class="bg-success-z">Project Manager</th>
+			    				<th class="bg-success-z">Sales Rep</th> <!-- Class removed rounded-th-right -->
+			    			</tr>    			
+			    		</thead>
+			    		<tbody>
+			    		</tbody>    		
+			  			</table>
+			        </div>
+			 
+			        <div id="tabtogant2" class="tabtogant">
+			            <!-- div class="hotTitles-grey" style="display:none;">Service Addresses</div> -->
+			            <table id="addresses" class="table table-striped table-bordered">
+						<thead>
+							<tr class="success">
+								<th>Address Name</th>
+								<th>Address</th>
+								<th>City</th>
+								<th>Type</th>
+								<th>New Build</th>
+								<th>Last Mile Type</th>
+							</tr>
+						</thead>
+						<tbody>
+						</tbody>
+						</table>
+			        </div>
+			 
+			        <div id="tabtogant3" class="tabtogant">
+			        	<!-- <div class="hotTitles-grey" style="display:none;">Service Items</div>  -->
+			            <table id="services" class="table table-striped table-bordered">
+						<thead>
+							<tr class="success">
+								<th>Service</th>
+								<th>Capacity</th>
+								<th>UoM</th>
+								<th>Location A</th>
+								<th>Location Z</th>
+							</tr>
+						</thead>
+						<tbody>
+						</tbody>
+						</table>
+			        </div>
+			 
+			        <div id="tabtogant4" class="tabtogant">
+				        <div style="position: relative; width: auto;">
+							<div class="mygantt" id='gantt1' style='width:100%; height:500px;'></div>			
+						</div>	
+			        </div>
+			        <div id="tabtogant5" class="tabtogant">
+				       <div id="planning"></div>	
+			        </div>
+			        <div id="tabtogant6" class="tabtogant">
+				       <div id="address"></div>
+			        </div>
+			        <div id="tabtogant7" class="tabtogant">
+				       <div id="service"></div>
+			        </div>
+			    </div>
+			</div>
+			<div id="LoadSomeThingHere" style="text-align:center; position: relative; display: none;">			
+			<!-- Terminan los divs de los tabs  -->        
+	            <hr style="border: 1px solid #004c66"/>	            
+				<div class="row">
+					<div class="col-md-12">
+						<!--  There was Order Sales here -->
+					</div>			
+				</div>
+				
+				<div class="row" style="display:none;">
+					<div class="col-md-12">
+						<!--  There was Addresses here -->						
+					</div>
+				</div>				
+				<div class="row" style="display:none;">			
+					<div class="col-md-12">
+						<!--  There was Services here -->						
+					</div>
+				</div>
+				<div class="row">
+			    	<div class="col-md-12">
+						<!-- There was Gantt here	
+						<div class="mygantt" id='gantt1' style='width:100%; height:500px;'></div> -->			
+					</div>					
+				</div>	
+				<div class="row">
+					<div class="col-md-12">
+						<!--  There was Plannning here -->								
+					</div>
+				</div>
+				
+				<div class="row">
+					<div class="col-md-6">
+						<!--  There was Address here -->						
+					</div>
+					<div class="col-md-6">
+						<!--  There was Service here -->						
+					</div>
+				</div>			
+			<!-- </div> -->
+			
+      
+      </div> <!--  End of right column -->
+   	</div>	
+		
+		<!-- jQuery 2.x -->
+		<script   src="https://code.jquery.com/jquery-2.2.3.min.js" integrity="sha256-a23g1Nt4dtEYOj7bR+vTu7+T8VP13humZFBJNIYoEJo="   crossorigin="anonymous"></script>
+		<!-- Latest compiled and minified JavaScript -->
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+		<!-- GANTT -->
+		<script src="/core/media/media.nl?id=5879979&c=3461650&h=8be1a3c98517f2b0ad3b&_xt=.js"></script>  	
+   		<!-- dhtmlxgantt_tooltip.js -->
+		<script src="/core/media/media.nl?id=5880037&c=3461650&h=8a8dd26e8a30deca440c&_xt=.js" type="text/javascript" charset="utf-8"></script>
+		<!-- dhtmlxgantt_auto_scheduling.js -->
+		<script src="/core/media/media.nl?id=5880028&c=3461650&h=efe7b1336a22fe56e323&_xt=.js" type="text/javascript" charset="utf-8"></script>
+		<!--  dhtmlxgantt_critical_path.js -->
+		<script src="/core/media/media.nl?id=5880029&c=3461650&h=b8aee7db43fa27f4b1ff&_xt=.js" type="text/javascript" charset="utf-8"></script>  		
+  		<script>
+  			gantt.init("gantt1");
+			gantt.config.columns = [
+		    	{ name:"text", label:"Task", width:180, tree:true, resize: true },
+		        { name:"start_time", label:"Start time", template:function(obj){
+		        	return gantt.templates.date_grid(obj.start_date);
+		        }, 
+		        align: "center", width:100 },
+				{ name:"assigned", label:"Assigned", align:"center", width:100, template: function(item){
+					if (!item.users) return "Nobody";
+		            	return item.users.join(", ");
+						}},
+		        	{	name:"duration", label:"Duration", align:"center", width:60},
+				];
+  		
+  		</script>
+		
+		<script>
+		
+			$(document).ready(function(){
+				
+				var newID = $('input#custpage_userid').val();				
+				if (newID == '') { alert('Undetermined user, please login'); }
+				// We collect the user ID which is current in the active session
+				newID = Math.round(newID);
+				//alert(newID);
+				var newName        = $('input#custpage_useridname').val(); // Ya
+				var newRole        = $('input#custpage_useridrole').val(); // Ya
+				var newEmail       = $('input#custpage_useridemail').val(); // Ya
+				var newDepto       = $('input#custpage_useriddepto').val(); // Ya
+				var newOtherRoles  = $('input#custpage_useridotherroles').val(); 
+				var newJobTitle    = $('input#custpage_useridjobtitle').val(); // Ya
+				var newTeam        = $('input#custpage_useridteam').val();
+				
+				// Fill Badge section
+				$('span#badge-id').html(newID);
+				$('span#badge-name').html(newName);
+				$('span#badge-active-role').html(newRole);
+				$('span#badge-email').html(newEmail);
+				$('span#badge-department').html(newDepto);
+				$('span#badge-other-roles').html(newOtherRoles);
+				$('span#badge-job-title').html(newJobTitle);
+				$('span#badge-team').html(newTeam);
+				// End filling
+				
+				// Get the selected Sales Order Type to show
+				$('#salesord').change(function(e) {
+			        var opts = e.target.options;
+			        var len = opts.length;
+			        var selected = [];
+			        for (var i = 0; i < len; i++) {
+			            if (opts[i].selected) {
+			                selected.push(opts[i].value);
+			            }
+			        }
+			        console.dir(selected);
+			        
+			    }); 
+				
+				
+				$("#vertical-menu h3").click(function () {
+				    //slide up all the link lists
+				    $("#vertical-menu ul ul").slideUp();
+				    //slide down the link list below the h3 clicked - only if its closed
+				    if (!$(this).next().is(":visible")) {
+				        $(this).next().slideDown();
+				        //$(this).remove("span").append('<span class="minus">-</span>');
+				    }
+				})
+				
+				$("#gantt1").show();
+				
+				var getUrlParameter = function getUrlParameter(sParam) {
+				    var sPageURL = decodeURIComponent(window.location.search.substring(1)),
+				        sURLVariables = sPageURL.split('&'),
+				        sParameterName,
+				        i;
+		
+				    for (i = 0; i < sURLVariables.length; i++) {
+				        sParameterName = sURLVariables[i].split('=');
+		
+				        if (sParameterName[0] === sParam) {
+				            return sParameterName[1] === undefined ? true : sParameterName[1];
+				        }
+				    }
+				};
+				// id: newID }
+				$.ajax({
+					  url: '/app/site/hosting/restlet.nl?script=957&deploy=1',
+					  data: {'action':'getActiveSalesOrder'},
+					  dataType: 'json',
+					  success: function(data){
+						  var row ='';
+						  data.forEach(function(d){
+								row += "<tr data-id="+ d.id + ">"
+									//+ "<td>" + d.id + "</td>"
+									+ "<td class='styleToId'>" + d.tranid + "</td>"
+									+ "<td class='styleToEntity'>" + d.entity + "</td>"
+									+ "<td>" + d.description + "</td>"
+									+ "<td>" + d.projectManager + "</td>"
+									+ "<td>" + d.salesRep + "</td>"
+									+"</tr>";
+								
+							});	
+						  $("#salesorder.table > tbody").append(row);
+					  }
+						 
+					});
+				
+				$("#salesorder").on('click','tr', function(){
+				    
+					var id = $(this).data('id');
+					
+					$.ajax({
+						  url: '/app/site/hosting/restlet.nl?script=957&deploy=1',
+						  // data: {'action':'getServiceAddresses', 'so': id, 'user': window.location.search.substring().split('&')[4].split("=")[1]},
+						  data: {'action':'getServiceAddresses', 'so': id, 'user': newID },
+						  
+						  dataType: 'json',
+						  beforeSend: function(){
+							  //$("#addresses.table > tbody").html('<tr><td colspan="6" align="center"><img src="/core/media/media.nl?id=6510409&c=3461650&h=8b322efcf575838dcfff" alt="Loading..." /></td></tr>');
+							  $("#LoadSomeThingHere").show();
+							  $("#LoadSomeThingHere").html('<div id="loadingthings" style="text-align:center; position: relative;"><img src="/core/media/media.nl?id=6510409&c=3461650&h=8b322efcf575838dcfff" alt="Loading..." /></div>');
+						  },
+						  success: function(data){
+							  $("#LoadSomeThingHere").html('');
+							  var row='';
+							  data.forEach(function(d){
+								row += "<tr data-id="+ d.id + ">"						
+									+ "<td class='styleToAddressName'>" + d.name + "</td>"
+									+ "<td>" + d.address + "</td>"
+									+ "<td>" + d.city + "</td>"
+									+ "<td></td>"
+									+ "<td></td>"
+									+ "<td></td>"
+									+"</tr>";
+							   });	
+							   $("#addresses.table > tbody").html(row);
+						  }
+							
+					});
+					
+					//
+					$.ajax({
+						  url: '/app/site/hosting/restlet.nl?script=957&deploy=1',
+						  //data: {'action':'getServiceItems', 'so': id, 'user': window.location.search.substring().split('&')[4].split("=")[1]},
+						  data: {'action':'getServiceItems', 'so': id, 'user': newID },
+						  dataType: 'json',
+						  beforeSend: function(){
+							  //$("#services.table > tbody").html('<tr><td colspan="5" align="center"><img src="/core/media/media.nl?id=6510409&c=3461650&h=8b322efcf575838dcfff" alt="Loading..." /></td></tr>');
+							  $("#LoadSomeThingHere").html('<div id="loadingthings" style="text-align:center; position: relative;"><img src="/core/media/media.nl?id=6510409&c=3461650&h=8b322efcf575838dcfff" alt="Loading..." /></div>');
+						  },
+						  success: function(data){
+							  $("#LoadSomeThingHere").html('');
+							  var row='';
+							  data.forEach(function(d){
+								row += "<tr data-id="+ d.id + ">"						
+									+ "<td class='styleToServiceItems'>" + d.name + "</td>"
+									+ "<td>" + d.capacity + "</td>"
+									+ "<td>" + d.uom + "</td>"
+									+ "<td>" + d.locationa + "</td>"
+									+ "<td>" + d.locationz + "</td>"							
+									+"</tr>";
+							  });	
+							  $("#services.table > tbody").html(row);
+						  }
+							
+					});
+					
+					
+					$.ajax({
+						  url: '/app/site/hosting/restlet.nl?script=957&deploy=1',
+						  data: {'action':'getTasks','so': id, 'user': newID },
+						  dataType: 'json',
+						  beforeSend: function(){
+							  //$("#tasks.table > tbody").html('<tr><td colspan="5" align="center"><img src="/core/media/media.nl?id=6510409&c=3461650&h=8b322efcf575838dcfff" alt="Loading..." /></td></tr>');
+							  $("#LoadSomeThingHere").html('<div id="loadingthings" style="text-align:center; position: relative;"><img src="/core/media/media.nl?id=6510409&c=3461650&h=8b322efcf575838dcfff" alt="Loading..." /></div>');
+						  },
+						  success: function(data){							  
+							  $("#LoadSomeThingHere").html('');
+							  //RAW VERSION 2016.05.17
+							  var row='';
+							  
+							  if(data['planning'].length > 0){
+								 	var planning = '<h3>Planning Tasks</h3>'
+								 		+ '<table title="'+id+'" id="planning_table" class="table  table-bordered">'
+										+ '<thead>'
+										+ '<tr class="success">'
+										+ '<th>Task</th>'
+										+ '<th>Start</th>'
+										+ '<th>Duration</th>'
+										+ '<th>End</th>'
+										+ '<th>Status</th>'
+										+ '<th>Assigned</th>'
+										+ '</tr>'
+										+ '</thead>'
+										+ '<tbody>'; 
+										
+									data['planning'].forEach(function(task){
+										planning += "<tr data-id="+ task.id + " class=\"active\">"						
+											+ "<td class='styleToPlanningTask'>" + task.title + "</td>"
+											+ "<td>" + task.start + "</td>"
+											+ "<td>" + task.duration + "</td>"
+											+ "<td>" + task.due + "</td>"
+											+ "<td>" + task.status + "</td>"
+											+ "<td>" + task.assigned + "</td>"
+											+"</tr>";
+									});
+									planning + '</tbody></table>'; 
+								 
+								  $('#planning').append(planning);
+							  }
+							  
+							  //address
+							  //var veces = 1;
+							  if(!$.isEmptyObject(data['address'])){
+								  //alert('veces: ' + veces);
+								  //veces++;
+								  for(var prop in data['address']){
+									  var addressTable = '<h3>' + data['address'][prop]['name'] + '</h3>'
+									 		+ '<table id="address_' + prop + '" class="table  table-bordered">'
+											+ '<thead>'
+											+ '<tr class="success">'
+											+ '<th>Task</th>'
+											+ '<th>Start</th>'
+											+ '<th>Duration</th>'
+											+ '<th>End</th>'
+											+ '<th>Status</th>'
+											+ '<th>Assigned</th>'
+											+ '</tr>'
+											+ '</thead>'
+											+ '<tbody>'; 
+											
+									  data['address'][prop]['tasks'].forEach(function(task){
+										  addressTable += "<tr data-id="+ task.id + " class=\"active\">"						
+											+ "<td class='styleToTaskByAddress'>" + task.title + "</td>"
+											+ "<td>" + task.start + "</td>"
+											+ "<td>" + task.duration + "</td>"
+											+ "<td>" + task.due + "</td>"
+											+ "<td>" + task.status + "</td>"
+											+ "<td>" + task.assigned + "</td>"
+											+"</tr>";
+									  });
+									  addressTable + '</tbody></table>';
+									  
+									  $("#address").append(addressTable);
+								  }  
+							  }
+							  
+							  if(!$.isEmptyObject(data['service'])){
+								  for(var prop in data['service']){
+									  var addressTable = '<h3>' + data['service'][prop]['name'] + '</h3>'
+									 		+ '<table id="service_"' + data['service'][prop] + ' class="table  table-bordered">'
+											+ '<thead>'
+											+ '<tr class="success">'
+											+ '<th>Task</th>'
+											+ '<th>Start</th>'
+											+ '<th>Duration</th>'
+											+ '<th>End</th>'
+											+ '<th>Status</th>'
+											+ '<th>Assigned</th>'
+											+ '</tr>'
+											+ '</thead>'
+											+ '<tbody>'; 
+											
+									  data['service'][prop]['tasks'].forEach(function(task){
+										  addressTable += "<tr data-id="+ task.id + " class=\"active\">"						
+											+ "<td class='styleToService'>" + task.title + "</td>"
+											+ "<td>" + task.start + "</td>"
+											+ "<td>" + task.duration + "</td>"
+											+ "<td>" + task.due + "</td>"
+											+ "<td>" + task.status + "</td>"
+											+ "<td>" + task.assigned + "</td>"
+											+"</tr>";
+									  });
+									  addressTable + '</tbody></table>';
+									  
+									  $("#service").append(addressTable);
+								  }  
+							  }
+							  
+							  
+						  
+						  }
+						  
+						});
+					
+					
+					// Gantt
+					$.ajax({
+						method: "GET",
+						dataType: "json",
+						beforeSend: function(){
+							$("#gantt1").hide();
+							//alert('Gant hidden');
+						},
+						url: '/app/site/hosting/restlet.nl?script=873&deploy=1&so=' + id,
+			        }).done(function( data ) {
+			        	if(data.data.length > 0){
+			        		//alert('Gant has data');
+			        		$("#gantt1").show();	
+			        	}
+			        	
+						gantt.parse(data);
+					});
+
+					
+				});
+				
+				// pending acknowledge
+				$.ajax({
+					  url: '/app/site/hosting/restlet.nl?script=957&deploy=1',
+					  // data: {'action':'getPendingAck', 'user': window.location.search.substring().split('&')[4].split("=")[1]},
+					  data: {'action':'getPendingAck', 'user': newID },
+					  dataType: 'json',
+					  success: function(data){
+						  $('.acknowledge').html(data.count);
+						  var acknowledge = data.count;
+						  //var gaugeAknowledgeHasThisClass = $('#gaugeAcknowledge').attr('class');
+						  //var gaugeAknowHasThisClassFA    = $('#gaugeAcknowledge i fa').attr('class');
+						  //alert(acknowledge);
+						  //acknowledge = 1400;
+						  if (acknowledge>=0 && acknowledge<=50) {						  
+							  $('#gaugeAcknowledge').removeClass('yellow');
+							  $('#gaugeAcknowledge').removeClass('red');
+		 					  $('#gaugeAcknowledge').addClass('green');
+							  
+		 					  $('#faAknowledge').removeClass('fa_yellow').removeClass('fa_red');
+		 					  $('#faAknowledge').removeClass('fa_yellow').removeClass('fa_red');
+							  $('#faAknowledge').addClass('fa_green');
+						  }
+						  if (acknowledge>=51 && acknowledge<=100) {						  
+							  $('#gaugeAcknowledge').removeClass('green');
+							  $('#gaugeAcknowledge').removeClass('red');
+		 					  $('#gaugeAcknowledge').addClass('yellow');
+							  
+		 					  $('#faAknowledge').removeClass('fa_green').removeClass('fa_red');
+		 					  $('#faAknowledge').removeClass('fa_green').removeClass('fa_red');
+							  $('#faAknowledge').addClass('fa_yellow');
+						  }
+						  if (acknowledge>100) {						  
+							  $('#gaugeAcknowledge').removeClass('yellow');
+							  $('#gaugeAcknowledge').removeClass('green');
+		 					  $('#gaugeAcknowledge').addClass('red');
+							  
+		 					  $('#faAknowledge').removeClass('fa_yellow').removeClass('fa_green');
+		 					  $('#faAknowledge').removeClass('fa_yellow').removeClass('fa_green');
+							  $('#faAknowledge').addClass('fa_red');
+						  }
+						  
+						  $('#gauge_pendtasks').highcharts({
+								
+						        chart: {
+						            type: 'gauge',
+						            plotBackgroundColor: null,
+						            plotBackgroundImage: null,
+						            plotBorderWidth: 0,
+						            plotShadow: false
+						        },
+						        exporting: { enabled: false },
+						        title: {
+						            text: 'Pending Knowledge'
+						        },
+						
+						        pane: {
+						            startAngle: -150,
+						            endAngle: 150,
+						            background: [{
+						                backgroundColor: {
+						                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+						                    stops: [
+						                        [0, '#FFF'],
+						                        [1, '#333']
+						                    ]
+						                },
+						                borderWidth: 0,
+						                outerRadius: '109%'
+						            }, {
+						                backgroundColor: {
+						                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+						                    stops: [
+						                        [0, '#333'],
+						                        [1, '#FFF']
+						                    ]
+						                },
+						                borderWidth: 1,
+						                outerRadius: '107%'
+						            }, {
+						                // default background
+						            }, {
+						                backgroundColor: '#333',
+						                borderWidth: 0,
+						                outerRadius: '105%',
+						                innerRadius: '103%'
+						            }]
+						        },
+						
+						        // the value axis
+						        yAxis: {
+						            min: 0,
+						            max: 100,
+						
+						            minorTickInterval: 'auto',
+						            minorTickWidth: 1,
+						            minorTickLength: 10,
+						            minorTickPosition: 'inside',
+						            minorTickColor: '#666',
+						
+						            tickPixelInterval: 30,
+						            tickWidth: 2,
+						            tickPosition: 'inside',
+						            tickLength: 10,
+						            tickColor: '#666',
+						            labels: {
+						                step: 2,
+						                rotation: 'auto'
+						            },
+						            title: {
+						                text: 'Tasks'
+						            },
+						            plotBands: [{
+						                from: 0,
+						                to: 20,
+						                color: '#55BF3B' // green
+						            }, {
+						                from: 21,
+						                to: 50,
+						                color: '#DDDF0D' // yellow
+						            }, {
+						                from: 51,
+						                to: 100,
+						                color: '#DF5353' // red
+						            }]
+						        },
+						
+						        series: [{
+						            name: 'Acknowledge Tasks',
+						            data: [data.count],
+						            tooltip: {
+						                valueSuffix: ''
+						            }
+						        }]
+						
+						    },		    
+						    function (chart) {
+						        if (!chart.renderer.forExport) {
+						        }
+						    });
+						  // end of gauge section
+					  }
+						 
+				});
+				
+				// new tasks
+				
+				$.ajax({
+					  url: '/app/site/hosting/restlet.nl?script=957&deploy=1',
+					  data: {'action':'getNewTasks', 'user': newID },
+					  dataType: 'json',
+					  success: function(data){
+						  $('.new').html(data.count);	  
+						  var nNew = data.count;
+						  //var gaugeTodayHasThisClass = $('#gaugeToday').attr('class');
+						  //var gaugeTodayHasThisClassFA    = $('#gaugeToday i fa').attr('class');
+						  //alert(acknowledge);
+						  //acknowledge = 1400;
+						  //alert('nNew is ' + nNew);
+						  if (nNew>=0 && nNew<=50) {							  
+							  $('#gaugeNew').removeClass('yellow');
+							  $('#gaugeNew').removeClass('red');
+		 					  $('#gaugeNew').addClass('green');
+							  
+		 					  $('#faNew').removeClass('fa_yellow').removeClass('fa_red');
+		 					  $('#faNew').removeClass('fa_yellow').removeClass('fa_red');
+							  $('#faNew').addClass('fa_green');
+						  }
+						  if (nNew>=51 && nNew<=100) {							  
+							  $('#gaugeNew').removeClass('green');
+							  $('#gaugeNew').removeClass('red');
+		 					  $('#gaugeNew').addClass('yellow');
+							  
+		 					  $('#gaugeNew').removeClass('fa_green').removeClass('fa_red');
+		 					  $('#gaugeNew').removeClass('fa_green').removeClass('fa_red');
+							  $('#gaugeNew').addClass('fa_yellow');
+						  }
+						  if (nNew>100) {							  
+							  $('#gaugeNew').removeClass('yellow');
+							  $('#gaugeNew').removeClass('green');
+		 					  $('#gaugeNew').addClass('red');
+							  
+		 					  $('#faNew').removeClass('fa_yellow').removeClass('fa_green');
+		 					  $('#faNew').removeClass('fa_yellow').removeClass('fa_green');
+							  $('#faNew').addClass('fa_red');
+						  }
+						  
+						  $('#gauge_newtasks').highcharts({
+								
+						        chart: {
+						            type: 'gauge',
+						            plotBackgroundColor: null,
+						            plotBackgroundImage: null,
+						            plotBorderWidth: 0,
+						            plotShadow: false
+						        },
+						        exporting: { enabled: false },
+						        title: {
+						            text: 'New Tasks'
+						        },
+						
+						        pane: {
+						            startAngle: -150,
+						            endAngle: 150,
+						            background: [{
+						                backgroundColor: {
+						                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+						                    stops: [
+						                        [0, '#FFF'],
+						                        [1, '#333']
+						                    ]
+						                },
+						                borderWidth: 0,
+						                outerRadius: '109%'
+						            }, {
+						                backgroundColor: {
+						                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+						                    stops: [
+						                        [0, '#333'],
+						                        [1, '#FFF']
+						                    ]
+						                },
+						                borderWidth: 1,
+						                outerRadius: '107%'
+						            }, {
+						                // default background
+						            }, {
+						                backgroundColor: '#333',
+						                borderWidth: 0,
+						                outerRadius: '105%',
+						                innerRadius: '103%'
+						            }]
+						        },
+						
+						        // the value axis
+						        yAxis: {
+						            min: 0,
+						            max: 1500,
+						
+						            minorTickInterval: 'auto',
+						            minorTickWidth: 1,
+						            minorTickLength: 10,
+						            minorTickPosition: 'inside',
+						            minorTickColor: '#666',
+						
+						            tickPixelInterval: 30,
+						            tickWidth: 2,
+						            tickPosition: 'inside',
+						            tickLength: 10,
+						            tickColor: '#666',
+						            labels: {
+						                step: 2,
+						                rotation: 'auto'
+						            },
+						            title: {
+						                text: 'Tasks'
+						            },
+						            plotBands: [{
+						                from: 0,
+						                to: 800,
+						                color: '#55BF3B' // green
+						            }, {
+						                from: 800,
+						                to: 1300,
+						                color: '#DDDF0D' // yellow
+						            }, {
+						                from: 1300,
+						                to: 1500,
+						                color: '#DF5353' // red
+						            }]
+						        },
+						
+						        series: [{
+						            name: 'New Tasks',
+						            data: [data.count],
+						            tooltip: {
+						                valueSuffix: ''
+						            }
+						        }]
+						
+						    },		    
+						    function (chart) {
+						        if (!chart.renderer.forExport) {
+						        }
+						    });
+						  // End of gauge section
+					  }
+						 
+				});
+				
+				// Today tasks
+				
+				$.ajax({
+					  url: '/app/site/hosting/restlet.nl?script=957&deploy=1',
+					  data: {'action':'getTodayTasks', 'user': newID },
+					  dataType: 'json',
+					  success: function(data){
+						  $('.today').html(data.count);	  
+						  var nToday = data.count;
+						  $('#faToday').addClass('fa_green');
+						  //var gaugeTodayHasThisClass = $('#gaugeToday').attr('class');
+						  //var gaugeTodayHasThisClassFA    = $('#gaugeToday i fa').attr('class');
+						  //alert(acknowledge);
+						  //acknowledge = 1400;
+						  //alert('nToday is ' + nToday);						  
+						  
+						  $('#gauge_todaytasks').highcharts({
+								
+						        chart: {
+						            type: 'gauge',
+						            plotBackgroundColor: null,
+						            plotBackgroundImage: null,
+						            plotBorderWidth: 0,
+						            plotShadow: false
+						        },
+						        exporting: { enabled: false },
+						        title: {
+						            text: 'Today Tasks'
+						        },
+						
+						        pane: {
+						            startAngle: -150,
+						            endAngle: 150,
+						            background: [{
+						                backgroundColor: {
+						                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+						                    stops: [
+						                        [0, '#FFF'],
+						                        [1, '#333']
+						                    ]
+						                },
+						                borderWidth: 0,
+						                outerRadius: '109%'
+						            }, {
+						                backgroundColor: {
+						                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+						                    stops: [
+						                        [0, '#333'],
+						                        [1, '#FFF']
+						                    ]
+						                },
+						                borderWidth: 1,
+						                outerRadius: '107%'
+						            }, {
+						                // default background
+						            }, {
+						                backgroundColor: '#333',
+						                borderWidth: 0,
+						                outerRadius: '105%',
+						                innerRadius: '103%'
+						            }]
+						        },
+						
+						        // the value axis
+						        yAxis: {
+						            min: 0,
+						            max: 100,
+						
+						            minorTickInterval: 'auto',
+						            minorTickWidth: 1,
+						            minorTickLength: 10,
+						            minorTickPosition: 'inside',
+						            minorTickColor: '#666',
+						
+						            tickPixelInterval: 30,
+						            tickWidth: 2,
+						            tickPosition: 'inside',
+						            tickLength: 10,
+						            tickColor: '#666',
+						            labels: {
+						                step: 2,
+						                rotation: 'auto'
+						            },
+						            title: {
+						                text: 'Tasks'
+						            },
+						            plotBands: [{
+						                from: 0,
+						                to: 100,
+						                color: '#55BF3B' // green
+						            }]
+						        },
+						
+						        series: [{
+						            name: 'Today Tasks',
+						            data: [data.count],
+						            tooltip: {
+						                valueSuffix: ''
+						            }
+						        }]
+						
+						    },		    
+						    function (chart) {
+						        if (!chart.renderer.forExport) {
+						        }
+						    });
+						  // End of gauge section
+					  }
+						 
+				});
+				
+				// Overdue tasks
+				
+				$.ajax({
+					  url: '/app/site/hosting/restlet.nl?script=957&deploy=1',
+					  data: {'action':'getOverdueTasks', 'user': newID },
+					  dataType: 'json',
+					  success: function(data){
+						  $('.overdue').html(data.count);						  
+						  var nOverdue = data.count;
+						  $('#faOverdue').addClass('fa_red');
+						  //var gaugeTodayHasThisClass = $('#gaugeToday').attr('class');
+						  //var gaugeTodayHasThisClassFA    = $('#gaugeToday i fa').attr('class');
+						  //alert(acknowledge);
+						  //acknowledge = 1400;
+						  //alert('nOverdue is ' + nOverdue);						  
+						  
+						  $('#gauge_overduetasks').highcharts({
+								
+						        chart: {
+						            type: 'gauge',
+						            plotBackgroundColor: null,
+						            plotBackgroundImage: null,
+						            plotBorderWidth: 0,
+						            plotShadow: false
+						        },
+						        exporting: { enabled: false },
+						        title: {
+						            text: 'Overdue Tasks'
+						        },
+						
+						        pane: {
+						            startAngle: -150,
+						            endAngle: 150,
+						            background: [{
+						                backgroundColor: {
+						                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+						                    stops: [
+						                        [0, '#FFF'],
+						                        [1, '#333']
+						                    ]
+						                },
+						                borderWidth: 0,
+						                outerRadius: '109%'
+						            }, {
+						                backgroundColor: {
+						                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+						                    stops: [
+						                        [0, '#333'],
+						                        [1, '#FFF']
+						                    ]
+						                },
+						                borderWidth: 1,
+						                outerRadius: '107%'
+						            }, {
+						                // default background
+						            }, {
+						                backgroundColor: '#333',
+						                borderWidth: 0,
+						                outerRadius: '105%',
+						                innerRadius: '103%'
+						            }]
+						        },
+						
+						        // the value axis
+						        yAxis: {
+						            min: 0,
+						            max: 100,
+						
+						            minorTickInterval: 'auto',
+						            minorTickWidth: 1,
+						            minorTickLength: 10,
+						            minorTickPosition: 'inside',
+						            minorTickColor: '#666',
+						
+						            tickPixelInterval: 30,
+						            tickWidth: 2,
+						            tickPosition: 'inside',
+						            tickLength: 10,
+						            tickColor: '#666',
+						            labels: {
+						                step: 2,
+						                rotation: 'auto'
+						            },
+						            title: {
+						                text: ' Overdue Tasks'
+						            },
+						            plotBands: [{
+						                from: 0,
+						                to: 100,
+						                color: '#DF5353' // green
+						            }]
+						        },
+						
+						        series: [{
+						            name: 'Overdue Tasks',
+						            data: [data.count],
+						            tooltip: {
+						                valueSuffix: ''
+						            }
+						        }]
+						
+						    },		    
+						    function (chart) {
+						        if (!chart.renderer.forExport) {
+						        }
+						    });
+						  // End of gauge section
+					  }
+						 
+				});
+			});
+			
+			
+		</script>	
+		<script>		
+			$(document).ready(function(){
+				// Select processor of Sales Orders
+				$("#multipleSelectSalesOrders").select2();
+				
+				var whichSOFilters;
+				$('#multipleSelectSalesOrders').on('change',function() {
+				  whichSOFilters = ($(this).val());
+				  console.log('Sales Orders Type Filter: ' + whichSOFilters);
+				});
+				
+				// Select processor of Tasks Status
+				$("#multipleSelectTasksStatus").select2();
+				
+				var whichtasksFilters;
+				$('#multipleSelectSalesOrders').on('change',function() {
+					whichtasksFilters = ($(this).val());
+				  console.log('Tasks Type Filter: ' + whichtasksFilters);
+				});
+				
+				//#multipleSelectSalesOrders - Another way to get keys with values
+				/* var selected=[];
+				$('#multipleSelectSalesOrders :selected').each(function(){
+					selected[$(this).val()]=$(this).text();   
+				});
+				for (var prop in selected) {
+					if (selected.hasOwnProperty(prop)) { 
+						// or if (Object.prototype.hasOwnProperty.call(obj,prop)) for safety...
+						console.log("Letter: " + prop + " Order Sales Type: " + selected[prop])
+					}
+				} */
+				
+				setTimeout(function(){ 
+					$("svg").find("text:contains(Highcharts.com)").hide();						
+				}, 2700);
+			});
+		</script>		
+		<script>
+		// Script for Dynamic Tabs
+		jQuery(document).ready(function() {
+		    jQuery('.thetabtogants .tabtogant-links a').on('click', function(e)  {
+		        var currentAttrValue = jQuery(this).attr('href');
+		 
+		        // Show/Hide thetabtogants
+		      //  jQuery('.thetabtogants ' + currentAttrValue).show().siblings().hide();
+		 
+		        // Show/Hide Tabs
+				jQuery('.thetabtogants ' + currentAttrValue).slideDown(400).siblings().slideUp(400);
+		        
+		        // Change/remove current tabtogant to active
+		        jQuery(this).parent('li').addClass('active').siblings().removeClass('active');
+		 
+		        e.preventDefault();
+		    });
+		});
+		</script>
+
+		<!-- We call the HighCharts library to make our dynamic graphs -->
+		<script src="https://code.highcharts.com/highcharts.js"></script>
+		<script src="https://code.highcharts.com/highcharts-more.js"></script>
+		<!-- <script src="/core/media/media.nl?id=6513223&c=3461650&h=e5eefda872e2332add7f&_xt=.js"></script> -->
+		<script src="https://code.highcharts.com/modules/exporting.js"></script>	
+		<!--  Calling select2.js -->
+		<script src="/core/media/media.nl?id=6514726&c=3461650&h=96e6333ea6e0d850234c&_xt=.js"></script>
+	</body>	
+</html>

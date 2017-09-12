@@ -1,0 +1,53 @@
+	<!-- PRODUCTION -->
+
+	<!-- Bootstrap css 3.3.7 -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.1/css/bootstrap-select.min.css">
+
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" crossorigin="anonymous">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.css" crossorigin="anonymous">
+	<!-- dhtmlxtreeview.css -->
+	<link href="/core/media/media.nl?id=8215749&c=3461650&h=7b30bf9c154170662fa2&_xt=.css" type="text/css" media="screen" charset="utf-8" rel="stylesheet">
+	<!-- Styles CSS Main -->
+	<link href="/core/media/media.nl?id=9026163&c=3461650&h=87d6a926ce3d2d329e13&_xt=.css" type="text/css" media="screen" charset="utf-8" rel="stylesheet">
+	<!-- Styling select2.css -->
+	<link rel="stylesheet" href="https://system.sandbox.netsuite.com/core/media/media.nl?id=6514725&c=3461650&h=837f09b494ee4c44488c&_xt=.css">
+	<!-- GANTT Style -->
+	<!-- dhtmlxgantt_meadow.css -->
+	<link rel="stylesheet" type="text/css" href="https://system.sandbox.netsuite.com/core/media/media.nl?id=5804207&c=3461650&h=f81ebb1b5c2017b85dbc&_xt=.css">
+	<!-- jquery.qtip.css -->
+	<link href="/core/media/media.nl?id=8215649&c=3461650&h=37bc6d324a381bd3aa66&_xt=.css" type="text/css" media="screen" rel="stylesheet">
+	<!-- dhtmlx.css -->
+	<link href="https://cdn.datatables.net/1.10.13/css/jquery.dataTables.min.css" type="text/css" media="screen" charset="utf-8" rel="stylesheet">
+	<link href="https://cdn.datatables.net/1.10.12/css/dataTables.material.min.css" type="text/css" media="screen" charset="utf-8" rel="stylesheet">
+	<!-- Bootstrap js  -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<!-- Jquery  2.1.4 -->
+	<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+	<!-- Polyfiller -->
+	<script src="https://cdn.jsdelivr.net/webshim/1.15.10/polyfiller.js"></script>
+	<!-- Call to Table Sorter jquery api -->
+	<script type="text/javascript" src="https://cdn.datatables.net/1.10.13/js/jquery.dataTables.min.js"></script>
+
+	<!-- https://cdn.datatables.net/1.10.13/js/jquery.dataTables.min.js -->
+	<!-- Call to jquery.qtip.js -->
+	<script type="text/javascript" src="/core/media/media.nl?id=8215849&c=3461650&h=27e875f6bd30d0744acb&_xt=.js"></script>
+	<!-- Table TreeGrid JS -->
+	<script type="text/javascript" src="/core/media/media.nl?id=8215951&c=3461650&h=d8552aa75a496a4efd87&_xt=.js"></script>
+
+	<!-- GANTT -->
+	<script src="/core/media/media.nl?id=5879979&c=3461650&h=8be1a3c98517f2b0ad3b&_xt=.js"></script>
+	<!-- dhtmlxgantt_tooltip.js -->
+	<script src="/core/media/media.nl?id=5880037&c=3461650&h=8a8dd26e8a30deca440c&_xt=.js" type="text/javascript" charset="utf-8"></script>
+	<!-- dhtmlxgantt_auto_scheduling.js -->
+	<script src="/core/media/media.nl?id=5880028&c=3461650&h=efe7b1336a22fe56e323&_xt=.js" type="text/javascript" charset="utf-8"></script>
+	<!-- dhtmlxgantt_critical_path.js -->
+	<script src="/core/media/media.nl?id=5880029&c=3461650&h=b8aee7db43fa27f4b1ff&_xt=.js" type="text/javascript" charset="utf-8"></script>
+	<!--  Calling select2.js -->
+	<script src="/core/media/media.nl?id=8216251&c=3461650&h=1a31b8069a9529a92694&_xt=.js"></script>
+
+	<!-- flatpickr.min.css -->
+	<link rel="stylesheet" href="/core/media/media.nl?id=9715641&c=3461650&h=b22680138f7f59b722ab&_xt=.css">
+	<!-- flatpickr.min.js -->
+	<script src="/core/media/media.nl?id=9715642&c=3461650&h=216c5ecb787d819578a6&_xt=.js"></script>
+	
+	<!-- END PRODUCTION -->

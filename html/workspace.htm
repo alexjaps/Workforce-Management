@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+    	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+    	<meta name="viewport" content="width=device-width, initial-scale=1">
+    	<!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+		<title>Project Management - Workspace Original</title>
+		<!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.css" crossorigin="anonymous">
+		<!-- GANTT -->
+		<!-- dhtmlxgantt_meadow.css -->
+		<link href="/core/media/media.nl?id=5804207&c=3461650&h=f81ebb1b5c2017b85dbc&_xt=.css" type="text/css" media="screen" title="no title" charset="utf-8" rel="stylesheet">
+		<style>
+			th {
+				bgcolor: #485973;
+			}
+			
+			.panel-warning {
+				background: #F0AD4E;
+			}
+		</style>
+	</head>
+	<body>
+		
+		<div class="container">
+			<div class="row">
+                <div class="col-lg-3 col-md-6">
+                    <div class="panel ">
+                        <div class="panel-heading">
+                            <div class="row">
+                                <div class="col-xs-3">                                    
+                                    <i class="fa fa-check-square fa-5x"></i>
+                                </div>
+                                <div class="col-xs-9 text-right">
+                                    <div class="huge"></div>
+                                    <h1><span class="label label-warning btn-lg"><span class="acknowledge"></span></span></h1>
+                                    <div>Pending Acknowledge *</div>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="#">
+                            <div class="panel-footer">
+                                <span class="pull-left">View Details</span>
+                                <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
+                                <div class="clearfix"></div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="panel">
+                        <div class="panel-heading">
+                            <div class="row">
+                                <div class="col-xs-3">
+                                    <i class="fa fa-calendar fa-5x"></i>
+                                </div>
+                                <div class="col-xs-9 text-right">
+                                    <h1><span class="label label-success btn-lg"><span class="today"></span></span></h1>
+                                    <div>Today Tasks</div>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="#">
+                            <div class="panel-footer">
+                                <span class="pull-left">View Details</span>
+                                <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
+                                <div class="clearfix"></div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="panel panel-yellow">
+                        <div class="panel-heading">
+                            <div class="row">
+                                <div class="col-xs-3">
+                                    <i class="fa fa-tasks fa-5x"></i>
+                                </div>
+                                <div class="col-xs-9 text-right">
+                                    <h1><span class="label label-info btn-lg"><span class="new">0</span></span></h1>
+                                    <div>New Tasks</div>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="#">
+                            <div class="panel-footer">
+                                <span class="pull-left">View Details</span>
+                                <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
+                                <div class="clearfix"></div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="panel panel-red">
+                        <div class="panel-heading">
+                            <div class="row">
+                                <div class="col-xs-3">
+                                    <i class="fa fa-fire fa-5x"></i>
+                                </div>
+                                <div class="col-xs-9 text-right">
+                                    <h1><span class="label label-danger btn-lg"><span class="overdue">12</span></span></h1>
+                                    <div>Overdue</div>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="#">
+                            <div class="panel-footer">
+                                <span class="pull-left">View Details</span>
+                                <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
+                                <div class="clearfix"></div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+			<div class="row">
+			<div class="col-md-12">
+				<table id="salesorder" class="table table-bordered table-hover">
+	    		<thead>
+	    			<tr class="bg-success">
+	    				<th>Sales Order</th>	    				
+	    				<th>Customer</th>
+	    				<th>Description</th>
+	    				<th>Project Manager</th>
+	    				<th>Sales Rep</th>
+	    			</tr>    			
+	    		</thead>
+	    		<tbody>
+	    		</tbody>    		
+	  			</table>
+			</div>			
+			</div>
+			<div class="row">
+				<div class="col-md-12">
+					<table id="addresses" class="table table-striped table-bordered">
+					<thead>
+						<tr class="success">
+							<th>Address Name</th>
+							<th>Address</th>
+							<th>City</th>
+							<th>Type</th>
+							<th>New Build</th>
+							<th>Last Mile Type</th>
+						</tr>
+					</thead>
+					<tbody>
+					</tbody>
+					</table>
+				</div>
+			</div>
+			<div class="row">			
+				<div class="col-md-12">
+					<table id="services" class="table table-striped table-bordered">
+					<thead>
+						<tr class="success">
+							<th>Service</th>
+							<th>Capacity</th>
+							<th>UoM</th>
+							<th>Location A</th>
+							<th>Location Z</th>
+						</tr>
+					</thead>
+					<tbody>
+					</tbody>
+					</table>
+				</div>
+			</div>
+			<div class="row">
+			
+				<div class="col-md-12">
+					<div class="mygantt" id='gantt1' style='width:100%; height:500px;'></div>				
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-12">
+					<div id="planning"></div>			
+				</div>
+			</div>
+			
+			<div class="row">
+				<div class="col-md-6">
+					<div id="address"></div>
+				</div>
+				<div class="col-md-6">
+					<div id="service"></div>
+				</div>
+			</div>			
+		</div>
+		<!-- jQuery 2.x -->
+		<script   src="https://code.jquery.com/jquery-2.2.3.min.js"   integrity="sha256-a23g1Nt4dtEYOj7bR+vTu7+T8VP13humZFBJNIYoEJo="   crossorigin="anonymous"></script>
+		<!-- Latest compiled and minified JavaScript -->
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+		<!-- GANTT -->
+		<script src="/core/media/media.nl?id=5879979&c=3461650&h=8be1a3c98517f2b0ad3b&_xt=.js"></script>  	
+   		<!-- dhtmlxgantt_tooltip.js -->
+		<script src="/core/media/media.nl?id=5880037&c=3461650&h=8a8dd26e8a30deca440c&_xt=.js" type="text/javascript" charset="utf-8"></script>
+		<!-- dhtmlxgantt_auto_scheduling.js -->
+		<script src="/core/media/media.nl?id=5880028&c=3461650&h=efe7b1336a22fe56e323&_xt=.js" type="text/javascript" charset="utf-8"></script>
+		<!--  dhtmlxgantt_critical_path.js -->
+		<script src="/core/media/media.nl?id=5880029&c=3461650&h=b8aee7db43fa27f4b1ff&_xt=.js" type="text/javascript" charset="utf-8"></script>
+  		
+  		<script>
+  			gantt.init("gantt1");
+			gantt.config.columns = [
+		    	{ name:"text", label:"Task", width:180, tree:true, resize: true },
+		        { name:"start_time", label:"Start time", template:function(obj){
+		        	return gantt.templates.date_grid(obj.start_date);
+		        }, 
+		        align: "center", width:100 },
+				{ name:"assigned", label:"Assigned", align:"center", width:100, template: function(item){
+					if (!item.users) return "Nobody";
+		            	return item.users.join(", ");
+						}},
+		        	{	name:"duration", label:"Duration", align:"center", width:60},
+				];
+  		
+  		</script>
+		
+		<script>
+		
+			$(document).ready(function(){
+				$('table#salesorder tr[data-id]').css('font-size', '18px');
+				$("#gantt1").hide();
+				
+				var getUrlParameter = function getUrlParameter(sParam) {
+				    var sPageURL = decodeURIComponent(window.location.search.substring(1)),
+				        sURLVariables = sPageURL.split('&'),
+				        sParameterName,
+				        i;
+		
+				    for (i = 0; i < sURLVariables.length; i++) {
+				        sParameterName = sURLVariables[i].split('=');
+		
+				        if (sParameterName[0] === sParam) {
+				            return sParameterName[1] === undefined ? true : sParameterName[1];
+				        }
+				    }
+				};
+				
+				$.ajax({
+					  url: '/app/site/hosting/restlet.nl?script=957&deploy=1',
+					  data: {'action':'getActiveSalesOrder'},
+					  dataType: 'json',
+					  success: function(data){
+						  var row ='';
+						  data.forEach(function(d){
+								row += "<tr data-id="+ d.id + ">"
+									//+ "<td>" + d.id + "</td>"
+									+ "<td>" + d.tranid + "</td>"
+									+ "<td>" + d.entity + "</td>"
+									+ "<td>" + d.description + "</td>"
+									+ "<td>" + d.projectManager + "</td>"
+									+ "<td>" + d.salesRep + "</td>"
+									+"</tr>";
+								
+							});	
+						  $("#salesorder.table > tbody").append(row);
+					  }
+						 
+					});
+				
+				$("#salesorder").on('click','tr', function(){
+										
+					var id = $(this).data('id');
+					
+					$.ajax({
+						  url: '/app/site/hosting/restlet.nl?script=957&deploy=1',
+						  data: {'action':'getServiceAddresses', 'so': id, 'user': window.location.search.substring().split('&')[4].split("=")[1]},
+						  dataType: 'json',
+						  beforeSend: function(){
+							  $("#addresses.table > tbody").html('<tr><td colspan="6">Loading...</td></tr>');
+						  },
+						  success: function(data){
+							  var row='';
+							  data.forEach(function(d){
+								row += "<tr data-id="+ d.id + ">"						
+									+ "<td>" + d.name + "</td>"
+									+ "<td>" + d.address + "</td>"
+									+ "<td>" + d.city + "</td>"
+									+ "<td></td>"
+									+ "<td></td>"
+									+ "<td></td>"
+									+"</tr>";
+							});	
+							$("#addresses.table > tbody").html(row);
+						  }
+							
+					});
+					
+					//
+					$.ajax({
+						  url: '/app/site/hosting/restlet.nl?script=957&deploy=1',
+						  data: {'action':'getServiceItems', 'so': id, 'user': window.location.search.substring().split('&')[4].split("=")[1]},
+						  dataType: 'json',
+						  beforeSend: function(){
+							  $("#services.table > tbody").html('<tr><td colspan="5">Loading...</td></tr>');
+						  },
+						  success: function(data){
+							  var row='';
+							  data.forEach(function(d){
+								row += "<tr data-id="+ d.id + ">"						
+									+ "<td>" + d.name + "</td>"
+									+ "<td>" + d.capacity + "</td>"
+									+ "<td>" + d.uom + "</td>"
+									+ "<td>" + d.locationa + "</td>"
+									+ "<td>" + d.locationz + "</td>"							
+									+"</tr>";
+							});	
+							$("#services.table > tbody").html(row);
+						  }
+							
+					});
+					
+					
+					$.ajax({
+						  url: '/app/site/hosting/restlet.nl?script=957&deploy=1',
+						  data: {'action':'getTasks','so': id, 'user': window.location.search.substring().split('&')[4].split("=")[1]},
+						  dataType: 'json',
+						  beforeSend: function(){
+							  $("#tasks.table > tbody").html('<tr><td colspan="5">Loading...</td></tr>');
+						  },
+						  success: function(data){							  
+							  
+							  //RAW VERSION 2016.05.17
+							  var row='';
+							  
+							  if(data['planning'].length > 0){
+								 	var planning = '<h3>Planning Tasks</h3>'
+								 		+ '<table id="planning_table" class="table  table-bordered">'
+										+ '<thead>'
+										+ '<tr class="success">'
+										+ '<th>Task</th>'
+										+ '<th>Start</th>'
+										+ '<th>Duration</th>'
+										+ '<th>End</th>'
+										+ '<th>Status</th>'
+										+ '<th>Assigned</th>'
+										+ '</tr>'
+										+ '</thead>'
+										+ '<tbody>'; 
+										
+									data['planning'].forEach(function(task){
+										planning += "<tr data-id="+ task.id + " class=\"active\">"						
+											+ "<td>" + task.title + "</td>"
+											+ "<td>" + task.start + "</td>"
+											+ "<td>" + task.duration + "</td>"
+											+ "<td>" + task.due + "</td>"
+											+ "<td>" + task.status + "</td>"
+											+ "<td>" + task.assigned + "</td>"
+											+"</tr>";
+									});
+									planning + '</tbody></table>'; 
+								 
+								  $('#planning').append(planning);
+							  }
+							  
+							  //address
+							  if(!$.isEmptyObject(data['address'])){
+								  for(var prop in data['address']){
+									  var addressTable = '<h3>' + data['address'][prop]['name'] + '</h3>'
+									 		+ '<table id="address_' + prop + '" class="table  table-bordered">'
+											+ '<thead>'
+											+ '<tr class="success">'
+											+ '<th>Task</th>'
+											+ '<th>Start</th>'
+											+ '<th>Duration</th>'
+											+ '<th>End</th>'
+											+ '<th>Status</th>'
+											+ '<th>Assigned</th>'
+											+ '</tr>'
+											+ '</thead>'
+											+ '<tbody>'; 
+											
+									  data['address'][prop]['tasks'].forEach(function(task){
+										  addressTable += "<tr data-id="+ task.id + " class=\"active\">"						
+											+ "<td>" + task.title + "</td>"
+											+ "<td>" + task.start + "</td>"
+											+ "<td>" + task.duration + "</td>"
+											+ "<td>" + task.due + "</td>"
+											+ "<td>" + task.status + "</td>"
+											+ "<td>" + task.assigned + "</td>"
+											+"</tr>";
+									  });
+									  addressTable + '</tbody></table>';
+									  
+									  $("#address").append(addressTable);
+								  }  
+							  }
+							  
+							  if(!$.isEmptyObject(data['service'])){
+								  for(var prop in data['service']){
+									  var addressTable = '<h3>' + data['service'][prop]['name'] + '</h3>'
+									 		+ '<table id="service_"' + data['service'][prop] + ' class="table  table-bordered">'
+											+ '<thead>'
+											+ '<tr class="success">'
+											+ '<th>Task</th>'
+											+ '<th>Start</th>'
+											+ '<th>Duration</th>'
+											+ '<th>End</th>'
+											+ '<th>Status</th>'
+											+ '<th>Assigned</th>'
+											+ '</tr>'
+											+ '</thead>'
+											+ '<tbody>'; 
+											
+									  data['service'][prop]['tasks'].forEach(function(task){
+										  addressTable += "<tr data-id="+ task.id + " class=\"active\">"						
+											+ "<td>" + task.title + "</td>"
+											+ "<td>" + task.start + "</td>"
+											+ "<td>" + task.duration + "</td>"
+											+ "<td>" + task.due + "</td>"
+											+ "<td>" + task.status + "</td>"
+											+ "<td>" + task.assigned + "</td>"
+											+"</tr>";
+									  });
+									  addressTable + '</tbody></table>';
+									  
+									  $("#service").append(addressTable);
+								  }  
+							  }
+							  
+							  
+						  
+						  }
+						  
+						});
+					
+					
+					// Gantt
+					$.ajax({
+						method: "GET",
+						dataType: "json",
+						beforeSend: function(){
+							$("#gantt1").hide();
+						},
+						url: '/app/site/hosting/restlet.nl?script=873&deploy=1&so=' + id,
+			        }).done(function( data ) {
+			        	if(data.data.length > 0){
+			        		$("#gantt1").show();	
+			        	}
+			        	
+						gantt.parse(data);
+					});
+
+					
+				});
+				
+				// pending acknowledge
+				$.ajax({
+					  url: '/app/site/hosting/restlet.nl?script=957&deploy=1',
+					  data: {'action':'getPendingAck', 'user': window.location.search.substring().split('&')[4].split("=")[1]},
+					  dataType: 'json',
+					  success: function(data){
+						  $('.acknowledge').html(data.count);	  
+					  }
+						 
+				});
+				
+				// today tasks
+				
+				$.ajax({
+					  url: '/app/site/hosting/restlet.nl?script=957&deploy=1',
+					  data: {'action':'getTodayTasks', 'user': window.location.search.substring().split('&')[4].split("=")[1]},
+					  dataType: 'json',
+					  success: function(data){
+						  $('.today').html(data.count);	  
+					  }
+						 
+				});
+			});
+			
+			
+		</script>		
+	</body>	
+</html>

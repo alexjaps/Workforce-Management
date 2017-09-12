@@ -1,0 +1,14 @@
+<!-- /* Ariel Garcia - Created - 2017-May-07 12:42pm */ -->
+<!-- add css, js, styles to wf_mobile SBOX here -->
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css?family=Roboto:400,700&subset=latin,cyrillic-ext" rel="stylesheet" type="text/css">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" type="text/css">
+<!-- bootstrap.css Mofified to allow dropdownA --><link rel="stylesheet" type="text/css" href="/core/media/media.nl?id=6572829&c=3461650&h=3dda80471d88438ca1b0&_xt=.css" />
+<!-- waves.css --><link rel="stylesheet" type="text/css" href="/core/media/media.nl?id=6572828&c=3461650&h=c134b63b9ba54e804eec&_xt=.css" />
+<!-- animate.css --><link rel="stylesheet" type="text/css" href="/core/media/media.nl?id=6572826&c=3461650&h=c629d75b9a68d1578d89&_xt=.css" />
+<!-- waitMe.css --><link rel="stylesheet" type="text/css" href="/core/media/media.nl?id=6572827&c=3461650&h=4a59bdf6111eccee9d25&_xt=.css" />
+<!-- style.css --><link rel="stylesheet" type="text/css" href="/core/media/media.nl?id=6572830&c=3461650&h=dda7e6c9abb9cd01efd6&_xt=.css" />
+<!-- confirm.css --><link rel="stylesheet" type="text/css" href="/core/media/media.nl?id=6566920&c=3461650&h=5f283aff10a215bacd37&_xt=.css" />
+<!-- all-themes.css --><link rel="stylesheet" type="text/css" href="/core/media/media.nl?id=6572825&c=3461650&h=e8a37a318b8e5c17bb67&_xt=.css" />
+<!-- leirags_html_ed.js --><script src="/core/media/media.nl?id=6569411&c=3461650&h=9ecf9b1f34602f83bde9&_xt=.js"></script>
+<!-- end css, js links -->

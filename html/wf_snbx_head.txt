@@ -1,0 +1,53 @@
+	<!-- SANDBOX -->
+	
+	<!-- Styles CSS Main -->
+	<link href="/core/media/media.nl?id=6562729&c=3461650&h=7076ee691f8c4d569640&_xt=.css" type="text/css" media="screen" rel="stylesheet">
+	<!-- Bootstrap css 3.3.7 --><link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" crossorigin="anonymous">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.css" crossorigin="anonymous">
+	<!-- select multiple --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.1/css/bootstrap-select.min.css">
+	<!-- dhtmlxtreeview.css --><link href="/core/media/media.nl?id=6565582&c=3461650&h=18d7686c44aeae255fb7&_xt=.css" type="text/css" media="screen" rel="stylesheet">
+	<!-- link href="/core/media/media.nl?id=6565380&c=3461650&h=5cb5f1a2b64f137cdc3f&_xt=.css" type="text/css" media="screen" rel="stylesheet" -->
+	<!-- Styling select22.css include navv class --><link rel="stylesheet" href="/core/media/media.nl?id=6514725&c=3461650&h=837f09b494ee4c44488c&_xt=.css">
+	<!-- GANTT Style dhtmlxgantt_meadow.css --><link rel="stylesheet" type="text/css" href="/core/media/media.nl?id=5804207&c=3461650&h=f81ebb1b5c2017b85dbc&_xt=.css">
+	<!-- jquery.qtip.css --><link href="/core/media/media.nl?id=6521184&c=3461650&h=e013188b5d16ead01fa9&_xt=.css" type="text/css" media="screen" rel="stylesheet">
+	<!-- dhtmlx.css --><link href="https://cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css" type="text/css" media="screen" rel="stylesheet">
+	
+	<!-- link href="https://cdn.datatables.net/1.10.12/css/dataTables.material.min.css" type="text/css" media="screen" rel="stylesheet" -->
+	
+	<!-- wf_ns_utils.js THIS IS NEW FROM MOBILE VERSION LINKED WITH CONFIRM -->
+	<script type='text/javascript' src='/core/media/media.nl?id=6573343&c=3461650&h=ad79863fcb9a7ba6f540&_xt=.js'></script>
+	
+	<!-- Bootstrap js -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<!-- Jquery  2.1.4 -->
+	<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+	<!-- Polyfiller -->
+	<script src="https://cdn.jsdelivr.net/webshim/1.15.10/polyfiller.js"></script>
+	<!-- Call to Table Sorter jquery api -->
+	<script type="text/javascript" src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js"></script>
+	<!-- Call to jquery.qtip.js -->
+	<script type="text/javascript" src="/core/media/media.nl?id=6521185&c=3461650&h=e68de457a6a6be8ab629&_xt=.js"></script>
+	<!-- Table TreeGrid JS -->
+	<script type="text/javascript" src="/core/media/media.nl?id=6520636&c=3461650&h=4008e22c2c5519f955ed&_xt=.js"></script>
+ 	<!-- flatpickr.min.css -->
+	<link href="/core/media/media.nl?id=6565072&c=3461650&h=63d87989670937062f3a&_xt=.css" rel="stylesheet">
+ 	<!-- confirm.min.css -->
+	<link href="/core/media/media.nl?id=6566920&c=3461650&h=5f283aff10a215bacd37&_xt=.css" rel="stylesheet">
+ 	<!-- flatpickr.min.js -->
+	<script src="/core/media/media.nl?id=6565073&c=3461650&h=ac2b71b9de81665d8d21&_xt=.js"></script>
+	<!-- memory_stat.js -->
+	<script src="/core/media/media.nl?id=6566402&c=3461650&h=37f37f39664f6e9d1049&_xt=.js"></script>
+	<!-- jquery_confirm.js -->
+	<script src="/core/media/media.nl?id=6566921&c=3461650&h=dc4605202ce06adb7ea2&_xt=.js"></script>
+	<!-- leirags_drager.js -- >
+	<script src="/core/media/media.nl?id=6567597&c=3461650&h=f0c3e4c5b247128ad183&_xt=.js"></script> -->
+	<!-- leirags_html_ed.js -->
+	<script src="/core/media/media.nl?id=6569411&c=3461650&h=9ecf9b1f34602f83bde9&_xt=.js"></script>
+	<!-- d3.v3.min.js -- >
+	<script src="/core/media/media.nl?id=6569512&c=3461650&h=ae0057ea76dc04da3240&mv=j0pkqxhk&_xt=.js"></script -->
+	<!-- d3.v4.min.js -- >
+	<script src="/core/media/media.nl?id=6569713&c=3461650&h=a8a0bf03bd6158d391a5&mv=j0pksn7s&_xt=.js"></script -->
+	<!-- Bootstrap-select.js v1.12.1 -->
+	<script src="/core/media/media.nl?id=6571465&c=3461650&h=2af92bffd6112cc1f7ed&mv=j1lnfo0w&_xt=.js"></script>
+	
+	<!-- END SANDBOX -->

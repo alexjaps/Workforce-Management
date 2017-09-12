@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- HTML page to show only GANTT with the SO ID passed:  ganttSOID -->
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+	<title>Project Management - Workspace - Gantt View</title>
+	<style>
+		h1 {
+			color: #125986;
+			font-size: 16px;
+			font-weight: bold;
+			font-family: verdana, arial, sans-serif;
+			text-align: center;
+		}
+	</style> 
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.css" crossorigin="anonymous">	
+	<link href="/core/media/media.nl?id=6520637&c=3461650&h=868ea8c7adb3abc4717e&_xt=.css" type="text/css" media="screen" charset="utf-8" rel="stylesheet">	
+	<!-- GANTT Style -->
+	<!-- dhtmlxgantt_meadow.css -->	
+	<link rel="stylesheet" type="text/css" href="https://system.sandbox.netsuite.com/core/media/media.nl?id=5804207&c=3461650&h=f81ebb1b5c2017b85dbc&_xt=.css">		
+	<!-- dhtmlx.css -->
+	<link href="https://cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css" type="text/css" media="screen" charset="utf-8" rel="stylesheet">
+	<link href="https://cdn.datatables.net/1.10.12/css/dataTables.material.min.css" type="text/css" media="screen" charset="utf-8" rel="stylesheet">
+	<!-- Jquery  2.1.4 -->
+	<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>		
+</head>
+<body>
+<h1><span>Gantt View for Sales Order </span><span id="placeIDSO"></span> / <span id="placeIDNumber"></span> / <span id="placeIDTitle"></span></h1>
+<div class="mygantt" id='gantt1' style='width:100%; height:850px;'>
+	<p style="text-align: center">
+		<img src="/core/media/media.nl?id=6519192&c=3461650&h=f2681d85a34d7de8bdb8" alt="Loading Gantt View" />
+	</p>
+</div> 	
+	
+<!-- GANTT -->
+<script src="/core/media/media.nl?id=5879979&c=3461650&h=8be1a3c98517f2b0ad3b&_xt=.js"></script>  	 
+<!-- dhtmlxgantt_tooltip.js -->
+<script src="/core/media/media.nl?id=5880037&c=3461650&h=8a8dd26e8a30deca440c&_xt=.js" type="text/javascript" charset="utf-8"></script>
+<!-- dhtmlxgantt_auto_scheduling.js -->
+<script src="/core/media/media.nl?id=5880028&c=3461650&h=efe7b1336a22fe56e323&_xt=.js" type="text/javascript" charset="utf-8"></script>
+<!--  dhtmlxgantt_critical_path.js -->
+<script src="/core/media/media.nl?id=5880029&c=3461650&h=b8aee7db43fa27f4b1ff&_xt=.js" type="text/javascript" charset="utf-8"></script>  
+
+<!-- Ajax functions to update, move, change tasks information -->
+<script>
+	$(document).ready(function () {
+		
+		function getQueryVariable(variable) {
+			var query = window.location.search.substring(1);
+			var vars = query.split('&');
+			for (var i = 0; i < vars.length; i++) {
+				var pair = vars[i].split('=');
+				if (decodeURIComponent(pair[0]) == variable) {
+					return decodeURIComponent(pair[1]);
+				}
+			}
+			console.log('Query variable %s not found', variable);
+		}
+		
+		var ganttSOID     = getQueryVariable('ganttSOID');
+		var ganttSONumber = getQueryVariable('ganttSONumber');
+		var ganttSOTitle  = getQueryVariable('ganttSOTitle');
+		
+		console.log ('ganttSOID is:: ' + ganttSOID );
+		console.log ('ganttSONumber is:: ' + ganttSONumber );
+		console.log ('ganttSOTitle is:: ' + ganttSOTitle );
+		
+		$('span#placeIDSO').html(ganttSOID);
+		$('span#placeIDNumber').html(ganttSONumber);
+		$('span#placeIDTitle').html(ganttSOTitle);
+		
+		$("#gantt1").show();
+		
+		gantt.init("gantt1");
+		gantt.config.columns = [
+		{ name:"text", label:"Task", width:180, tree:true, resize: true },
+		{ name:"start_time", label:"Start time", template:function(obj){
+			return gantt.templates.date_grid(obj.start_date);
+		}, 
+		align: "center", width:100 },
+		{ name:"assigned", label:"Assigned", align:"center", width:100, template: function(item){
+			if (!item.users) return "Nobody";
+				return item.users.join(", ");
+				}},
+			{	name:"duration", label:"Duration", align:"center", width:60},
+		];
+		
+		$.ajax({
+			method: "GET",
+			dataType: "json",
+			beforeSend: function(){
+				$("#gantt1").hide();
+				//alert('Gant hidden');
+			},
+			url: '/app/site/hosting/restlet.nl?script=873&deploy=1&so=' + ganttSOID,
+		}).done(function( data ) {
+			if(data.data.length > 0){
+				//alert('Gant has data');
+				$("#gantt1").show();	
+			} 
+
+			gantt.parse(data);
+		});
+	});
+</script>
+</body>
+</html>

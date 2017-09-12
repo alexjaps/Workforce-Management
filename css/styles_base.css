@@ -1,0 +1,1000 @@
+
+	/* Task Status Colors */
+		#closeTskBtn { bottom: 15px; position: relative; }
+		.spTskStatus { padding: 3px 8px; }
+		.tskStatusColorContainer { display: inline-block; width: 51%; float: left; }
+		.tskStatusColor { display: inline-block; width: 11px; height: 12px; padding: 0 5px;}
+		.tskGray  { background-color: #cccccc }
+		.tskDarkGray  { background-color: #777 }
+		.tskBlue  { background-color: #337ab7 }
+		.tskGreen { background-color: #5cb85c }
+		.label-completed { background-color: #5cb85c }
+		.tskRed   { background-color: #d9534f }
+		.tskCream { background-color: #f0ad4e }
+		/* End of Task Status Colors */
+		.list-group-item { text-align: left; }
+
+		.gradCell {
+			background-color : #fff;
+			transition : background-color 3s ease 0s;
+
+		}
+		.gradCell:hover {
+		   background-color : #F6F6F6;
+		   background-image : linear-gradient(to bottom, transparent 0%, rgba(77, 77, 77, 0.2) 100%);
+		}
+
+		a#AllMyWork, a#salesorder {
+			color: #337AB7;
+		}
+		h6 {
+			color: #337AB7;
+			font-style: italic;
+			text-shadow: 1px -1px 1px white;
+			font-weight:bold;
+		}
+		input[type="date"]::-webkit-clear-button {
+		 -webkit-appearance: none;
+		  display: none;
+		}
+		input[type="date"]::-ms-clear {
+		 display: none;
+		}
+		input[type="date"]::-webkit-inner-spin-button {
+		  -webkit-appearance: none;
+		  display: none;
+		}
+		.talknow {
+			position: absolute;
+			width: 150px;
+			z-index: 950;
+			text-shadow: rgb(153, 153, 153) 2px 1px 2px;
+			display: block;
+			background-color: #f1f1f1;
+			color: #004C66;
+			font-size: 20px;
+			text-align: center;
+			top: 255px;
+			left: 50%;
+			margin-right: -50%;
+			padding: 2px 5px;
+			border-radius: 8px;
+		}
+		.fBarChkHeaders {
+			text-shadow: 1px 0 1px #c9c9c9;
+		}
+		.myTeamLink {
+			cursor: pointer;
+		}
+		#NameSalesorderBySpan {
+			font-size: 140%;
+			color: #004C66;
+			text-align: left;
+			font-weight: bold;
+			padding: 18px 17px;
+		}
+		span#msgSalesOrdersClick, span#msgSalesOrdersClick2 {
+			color: #004C66;
+			font-size: small;
+			left: 5px;
+			position: relative;
+		}
+		.filterDepartment {
+			width: 166px;
+		}
+		#secondDiv {
+			width:40%;
+			display:none;
+			display:inline-block
+		}
+		/* #salesorder {
+			width: 100%;
+		} */
+		#salesorder tr, #allsalesorder tr {
+			cursor: pointer;
+		}
+		#salesorder th {
+			vertical-align: middle;
+			font-weight: bold;
+		}
+		table#salesorder td.rowDataSd {
+			background-color: #f8f8f8;
+			text-shadow: 1px 0 1px #FFFFB7;
+		}
+		p#msgAdminSalesOrdersTab {
+			margin: 10px 0;
+			color: #999;
+			text-shadow: 1px 1px 1px #fff;
+			font-style: italic;
+		}
+		.badge {
+			border: 1px solid #999 !important;
+			border-radius: 8px 8px 8px 8px;
+			-moz-border-radius: 8px 8px 8px 8px;
+			-webkit-border-radius: 8px 8px 8px 8px;
+			border: 0px solid #000000;
+		}
+		.showsototals {
+			color: black;
+			width: 1292px;
+			margin-right: 14px;
+			border: 1px solid #d7d8d9;
+			background: rgba(255,255,255,1);
+			background: -moz-linear-gradient(top, rgba(255,255,255,1) 0%, rgba(246,246,246,1) 47%, rgba(237,237,237,1) 100%);
+			background: -webkit-gradient(left top, left bottom, color-stop(0%, rgba(255,255,255,1)), color-stop(47%, rgba(246,246,246,1)), color-stop(100%, rgba(237,237,237,1)));
+			background: -webkit-linear-gradient(top, rgba(255,255,255,1) 0%, rgba(246,246,246,1) 47%, rgba(237,237,237,1) 100%);
+			background: -o-linear-gradient(top, rgba(255,255,255,1) 0%, rgba(246,246,246,1) 47%, rgba(237,237,237,1) 100%);
+			background: -ms-linear-gradient(top, rgba(255,255,255,1) 0%, rgba(246,246,246,1) 47%, rgba(237,237,237,1) 100%);
+			background: linear-gradient(to bottom, rgba(255,255,255,1) 0%, rgba(246,246,246,1) 47%, rgba(237,237,237,1) 100%);
+			filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#ededed', GradientType=0 );
+		}
+		.showsototals td {
+			padding: 8px 0px;
+			border-right: 1px solid #d7d8d9;
+		}
+		#totItems, #totLocations, #toProvEng, #totMRR {
+		}
+		.myCustomClass {
+			color: #333;
+			font-size: 15px;
+			line-height: 1.3;
+			padding: 5px 22px;
+		}
+		/* Styles to Table of Team Member*/
+		#Customsalesorder {
+			width: 100%;
+		}
+		#Customsalesorder tr {
+			cursor: pointer;
+		}
+		#Customsalesorder th {
+			vertical-align: middle;
+			font-weight: bold;
+		}
+		#Customsalesorder {
+			border-collapse: separate;
+			border-radius: 12px !important;
+			-moz-border-radius: 12px !important;
+			border: 1px solid #f3f3f3;
+		}
+		/*table#Customsalesorder td.rowDataSd {
+			background-color: #f8f8f8;
+		}*/
+		table.mytblTasks {
+			font-family: verdana, arial, sans-serif;
+			font-size: 11px;
+			color: #333333;
+			border-width: 1px;
+			border-color: #3A3A3A;
+			border-collapse: collapse;
+		}
+		table.mytblTasks th {
+			background-color: #004c66;
+			border-color: #5aa6c0;
+			border-style: solid;
+			border-width: 1px;
+			color: #ffffff;
+			padding: 8px;
+			text-align: center;
+		}
+		table.mytblTasks tr:hover td {
+			/* cursor: pointer; Not required for now*/
+		}
+		table.mytblTasks tr:nth-child(even) td {
+			/* background-color: #f2f2f2; */
+		}
+		table.mytblTasks td {
+			border-width: 1px;
+			padding: 8px;
+			border-style: solid;
+			border-color: #eeeeee;
+			background-color: #ffffff;
+		}
+		table.mytblTasks .centerth {
+			text-align: center;
+		}
+		/* Table Preview Styles */
+		table.myUpdatedSA {
+			width: 100%;
+			font-family: verdana, arial, sans-serif;
+			font-size: 9px;
+			color: #333333;
+			border-width: 0;
+			border-color: #3A3A3A;
+			border-collapse: collapse;
+			border-bottom: 2px solid #C9D272;
+		}
+		table.myUpdatedSA {
+			font-family: verdana, arial, sans-serif;
+			font-size: 11px;
+			color: #333333;
+			border-width: 0px;
+			border-color: #3A3A3A;
+			border-collapse: collapse;
+		}
+		table.myUpdatedSA th {
+			background-color: #9DA749;
+			border-color: transparent;
+			border-style: solid;
+			border-width: 0px;
+			color: #ffffff;
+			text-shadow: 1px 1px 1px #333;
+			padding: 8px;
+		}
+		table.myUpdatedSA tr {
+			height: 20px;
+		}
+		table.myUpdatedSA tr:hover td {
+			/* cursor: pointer; Not required for now*/
+		}
+		table.myUpdatedSA tr:nth-child(even) td {
+			/* background-color: #f2f2f2; */
+		}
+		table.myUpdatedSA td {
+			border-width: 1px;
+			padding: 8px;
+			border-style: solid;
+			border-color: #eeeeee;
+			background-color: #ffffff;
+		}
+		table.myUpdatedSA .centerth {
+			text-align: center;
+		}
+		.rounded-th-left {
+			border-top-left-radius: 8px;
+		}
+		.rounded-th-right {
+			border-top-right-radius: 8px;
+		}
+		/* End of myUpdatedSA */
+		/* Style of myUpdatedServicesAddresses */
+		table.myUpdatedServicesAddresses {
+			width: 100%;
+			font-family: verdana, arial, sans-serif;
+			font-size: 9px;
+			color: #333333;
+			border-width: 1px;
+			border-color: #3A3A3A;
+			border-collapse: collapse;
+			border-bottom: 2px solid #C9D272;
+		}
+		table.myUpdatedServicesAddresses {
+			font-family: verdana, arial, sans-serif;
+			font-size: 11px;
+			color: #333333;
+			border-width: 1px;
+			border-color: #3A3A3A;
+			border-collapse: collapse;
+		}
+		table.myUpdatedServicesAddresses th {
+			background-color: #9DA749;
+			border-color: transparent;
+			border-style: solid;
+			border-width: 0px;
+			color: #ffffff;
+			text-shadow: 1px 1px 1px #333;
+			padding: 8px;
+		}
+		table.myUpdatedServicesAddresses tr {
+			height: 20px;
+		}
+		table.myUpdatedServicesAddresses tr:hover td {
+			/* cursor: pointer; Not required for now*/
+		}
+		table.myUpdatedServicesAddresses tr:nth-child(even) td {
+			/* background-color: #f2f2f2; */
+		}
+		table.myUpdatedServicesAddresses td {
+			border-width: 1px;
+			padding: 8px;
+			border-style: solid;
+			border-color: #eeeeee;
+			background-color: #ffffff;
+		}
+		table.myUpdatedServicesAddresses .centerth {
+			text-align: center;
+		}
+		/* End of myUpdatedServicesAddresses Style */
+		table.myUpdatedTasks {
+			font-family: verdana, arial, sans-serif;
+			font-size: 9px;
+			color: #333333;
+			border-width: 1px;
+			border-color: #3A3A3A;
+			border-collapse: collapse;
+			width: 80%;
+			border-bottom: 2px solid #C9D272;
+		}
+		table.myUpdatedTasks th {
+			background-color: #C9D272;
+			border-color: #DDDDDD;
+			border-style: solid;
+			border-width: 1px;
+			color: #ffffff;
+			padding: 8px;
+			text-shadow: 1px 1px 1px #666;
+		}
+		table.myUpdatedTasks tr:hover td {
+			/* cursor: pointer; Not required for now*/
+		}
+		table.myUpdatedTasks tr:nth-child(even) td {
+			background-color: #EDF0D0;
+		}
+		table.myUpdatedTasks td {
+			border-width: 1px;
+			padding: 8px;
+			border-style: solid;
+			border-color: #fafafa;
+			background-color: #ffffff;
+		}
+		table.myUpdatedTasks .centerth {
+			text-align: center;
+		}
+		/* GoUpdate maked the update icon go transparent or have an icon for it */
+		.GoUpdateDisabled {
+			background-image: url('/core/media/media.nl?id=6516751&c=3461650&h=39fcf0424e9ad5417e8f');
+			/* background-image:
+		url('/core/media/media.nl?id=6516751&c=3461650&h=39fcf0424e9ad5417e8f'); */
+			display: block;
+			position: relative;
+			width: 16px;
+			height: 16px;
+			cursor: default;
+		}
+		.GoUpdateEnable {
+			background-image: url('/core/media/media.nl?id=6516650&c=3461650&h=ab51ab95dfc3a39e2248');
+			display: block;
+			position: relative;
+			width: 16px;
+			height: 16px;
+			cursor: pointer;
+		}
+		.loader {
+			position: fixed;
+			left: 40%;
+			bottom: 25px;
+			width: 400px;
+			height: 100px;
+			z-index: 9999;
+			/*background: url('/core/media/media.nl?id=6519192&c=3461650&h=f2681d85a34d7de8bdb8') 50% 50% no-repeat rgba(249, 249, 249, 0);*/
+			background: url('/core/media/media.nl?id=6564234&c=3461650&h=4e4ecafd97e44b0c4d00') 50% 50% no-repeat rgba(249, 249, 249, 0);
+			background-size: contain;
+		}
+		.image-container1 {
+			width: 100%;
+			position: absolute;
+			float: right;
+			right: 0;
+			clear: both;
+			cursor: pointer;
+		}
+		.image-container2 {
+			background: url('/core/media/media.nl?id=6526817&c=3461650&h=ca708bd01e692258aae9') no-repeat;
+			background-size: 49px 131px;
+			height: 131px;
+			width: 41px;
+			float: right;
+		}
+		.styleToId {
+			background-color: #F8F8F8 !important;
+			color: darkblue;
+			text-shadow: 1px 0 1px #fff;
+		}
+		/* Styles applies to Sales Order table */
+		.hotTitles-grey {
+			color: #0085B2;
+			font-size: 18px;
+			font-weight: bold;
+			background: #fff;
+			background: -moz-linear-gradient(top, #dedede 0%, #ffffff 100%);
+			background: -webkit-linear-gradient(top, #dedede 0%, #ffffff 100%);
+			background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #dedede), color-stop(1, #ffffff));
+			background: -o-linear-gradient(top, #dedede 0%, #ffffff 100%);
+			background: -ms-linear-gradient(top, #dedede 0%, #ffffff 100%);
+			background: linear-gradient(top, #dedede 0%, #ffffff 100%);
+			margin: 22px auto;
+			width: 25%;
+			padding: 10px;
+			text-align: center;
+			position: relative;
+			box-shadow: rgba(0, 0, 0, 0.3) 2px 2px 2px;
+			border-radius: 12px;
+		}
+		.hotTitles-grey:after {
+			content: "";
+			border-color: transparent #fff #fff transparent;
+			border-style: solid;
+			border-width: 10px;
+			bottom: -10px;
+			box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.3);
+			content: "";
+			left: 50%;
+			position: absolute;
+			-moz-transform: rotate(45deg);
+			-webkit-transform: rotate(45deg);
+		}
+		#salesorder {
+			border-collapse: separate;
+			border-radius: 12px !important;
+			-moz-border-radius: 12px !important;
+			border: 1px solid #f3f3f3;
+		}
+		/* These styles affect the elements generated by the datatable plugin */
+		#salesorder_filter, #mytblTasks_filter	 {
+			margin-bottom: 10px;
+		}
+		.dataTables_scrollHeadInner, .dataTables_scrollFootInner {
+			background-color: #004c66;
+			color: white;
+		}
+		/* End of styles for datable plugin - customized */
+		.bloc {
+			display: inline-block;
+			vertical-align: top;
+			overflow: hidden;
+			border: solid grey 1px;
+		}
+		.bloc select {
+			padding: 10px;
+			margin: -5px -20px -5px -5px;
+		}
+		.bg-success-z {
+			background-color: #004c66;
+			color: white;
+			text-align: center;
+		}
+		.bg-success-zr {
+			background-color: #004c66;
+			color: white;
+			text-align: right;
+			padding: 10px 0px 6px 18px !important;
+		}
+		tr.success th {
+			background-color: #004C66 !important;
+			color: white;
+		}
+		.rounded-th-left {
+			border-top-left-radius: 12px;
+		}
+		.rounded-th-right {
+			border-top-right-radius: 12px;
+		}
+		.bg-success-z> th {
+			border-bottom-width: 0 !important;
+		}
+		/* End of styles to Sales Order table */
+		/* Styles for main filters */
+		.basicFilters {
+			position: relative;
+			margin-right: 10px;
+		}
+		.filtersFirstBar {
+			background-color: #f3f3f3;
+			padding: 10px 18px;
+			-webkit-border-radius: 8px;
+			-moz-border-radius: 8px;
+			border-radius: 8px;
+			box-shadow: 3px 3px 2px #AAAAAA;
+		}
+		.filtersBar, .filtersBar4OrderSales {
+			background-color: #f3f3f3;
+			-webkit-border-radius: 8px;
+			-moz-border-radius: 8px;
+			border-radius: 8px;
+			box-shadow: 3px 3px 2px #AAAAAA;
+			border: 1px solid #a4a4a4;
+		}
+		.filtersBar {
+			padding: 10px 18px;
+		}
+		.filtersBar4OrderSales {
+			padding: 0 18px;
+		}
+		.filterAsignee {
+			height: 32pt;
+		}
+		select[class^="filterAsignee"] { 
+			font-weight: normal;
+			height: 32pt;
+		}
+		select[class^="filterDepartment"] {
+			font-weight: normal;
+		}
+		/* Styles for Filter button */
+		.filterButton {
+			position: relative;
+			padding: 4px 18px;
+			margin-left: 9px;
+			border-radius: 8px;
+			font-family: 'Helvetica', cursive;
+			font-size: 14px;
+			color: #FFF;
+			text-decoration: none;
+			background-color: #3498DB;
+			border-bottom: 4px solid #cccccc;
+			text-shadow: 0px -2px #2980B9;
+			/* Animation */
+			transition: all 0.1s;
+			-webkit-transition: all 0.1s;
+			cursor: pointer;
+			width: 80px;
+		}
+		.filterButton:hover,
+		.filterButton:focus {
+			text-decoration: none;
+			border-bottom: 4px solid #333;
+			color: #fff;
+		}
+		.filterButton:active {
+			transform: translate(0px, 5px);
+			-webkit-transform: translate(0px, 5px);
+			border-bottom: 1px solid;
+		}
+		.filterButtonSO {
+			position: relative;
+			padding: 4px 18px;
+			margin-left: 9px;
+			border-radius: 8px;
+			font-family: 'Helvetica', cursive;
+			font-size: 14px;
+			color: #FFF;
+			text-decoration: none;
+			background-color: #3498DB;
+			border-bottom: 4px solid #cccccc;
+			text-shadow: 0px -2px #2980B9;
+			/* Animation */
+			transition: all 0.1s;
+			-webkit-transition: all 0.1s;
+			cursor: pointer;
+			width: 80px;
+		}
+		.filterButtonSO:hover,
+		.filterButtonSO:focus {
+			text-decoration: none;
+			border-bottom: 4px solid #333;
+			color: #fff;
+		}
+		.filterButtonSO:active {
+			transform: translate(0px, 5px);
+			-webkit-transform: translate(0px, 5px);
+			border-bottom: 1px solid;
+		}
+		.filterButtonALLSO {
+			position: relative;
+			padding: 4px 18px;
+			margin-left: 9px;
+			border-radius: 8px;
+			font-family: 'Helvetica', cursive;
+			font-size: 14px;
+			color: #FFF;
+			text-decoration: none;
+			background-color: #3498DB;
+			border-bottom: 4px solid #cccccc;
+			text-shadow: 0px -2px #2980B9;
+			/* Animation */
+			transition: all 0.1s;
+			-webkit-transition: all 0.1s;
+			cursor: pointer;
+			width: 80px;
+		}
+		.filterButtonALLSO:hover,
+		.filterButtonALLSO:focus {
+			text-decoration: none;
+			border-bottom: 4px solid #333;
+			color: #fff;
+		}
+		.filterButtonALLSO:active {
+			transform: translate(0px, 5px);
+			-webkit-transform: translate(0px, 5px);
+			border-bottom: 1px solid;
+		}
+		.filtersDividers {
+			display: inline-block;
+			idth: 8px;
+		}
+		.div-selectEnableDate {
+			position: relative;
+			left: 495px;
+		}
+		/* End of styles for Filter button */
+		/* Style for thetabtogants */
+		/*----- thetabtogants -----*/
+		.thetabtogants {
+			width: 100%;
+			display: inline-block;
+			font-family: "Lucida Grande", "Lucida Sans Unicode", Arial, Helvetica, sans-serif;
+		}
+		/*----- tabtogant Links -----*/
+		/* Clearfix */
+		.tabtogant-links:after {
+			display: block;
+			clear: both;
+			content: '';
+		}
+		.tabtogant-links li {
+			margin: 0px 2px;
+			float: left;
+			list-style: none;
+		}
+		.tabtogant-links a {
+			padding: 9px 15px;
+			display: inline-block;
+			border-radius: 8px 8px 0px 0px;
+			font-size: 13px;
+			font-weight: 600;
+			color: #0085b2;
+			transition: all linear 0.15s;
+			text-decoration: none;
+			background: -moz-linear-gradient(top, #dedede 0%, #ffffff 100%);
+			background: -webkit-linear-gradient(top, #dedede 0%, #ffffff 100%);
+			background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #dedede), color-stop(1, #ffffff));
+			background: -o-linear-gradient(top, #dedede 0%, #ffffff 100%);
+			background: -ms-linear-gradient(top, #dedede 0%, #ffffff 100%);
+			background: linear-gradient(top, #dedede 0%, #ffffff 100%);
+		}
+		.tabtogant-links a:hover {
+			background: #004C66;
+			text-decoration: none;
+			color: #ffffff;
+			/* #4c4c4c */
+		}
+		.tabtogant-links li.active a,
+		li.active a:hover {
+			background: #004C66;
+			color: #f4f4f4;
+			/* #4c4c4c */
+		}
+		/*----- Content of thetabtogants -----*/
+		.tabtogant-content {
+			padding: 15px;
+			border-radius: 3px;
+			box-shadow: -1px 1px 1px rgba(0, 0, 0, 0.15);
+			background: white;
+			min-height: 570px;
+			border: 3px solid #004C66;
+			/*width: 1020px;*/
+			background: #ffffff;
+			/* Old Browsers */
+			background: -webkit-linear-gradient(top, #ffffff, #f4f4f4);
+			/*Safari 5.1-6*/
+			background: -o-linear-gradient(top, #ffffff, #f4f4f4);
+			/*Opera 11.1-12*/
+			background: -moz-linear-gradient(top, #ffffff, #f4f4f4);
+			/*Fx 3.6-15*/
+			background: linear-gradient(to bottom, #ffffff, #f4f4f4);
+			/*Standard*/
+			border-radius: 12px 12px 12px 12px;
+			-moz-border-radius: 12px 12px 12px 12px;
+			-webkit-border-radius: 12px 12px 12px 12px;
+		}
+		.tabtogant {
+			display: none;
+		}
+		.tabtogant.active {
+			display: block;
+		}
+		/* End TABS styles */
+		/*----- thetabsalesorders -----*/
+		.thetabsalesorders {
+			width: 100%;
+			display: inline-block;
+			font-family: "Lucida Grande", "Lucida Sans Unicode", Arial, Helvetica, sans-serif;
+		}
+		/*----- tabtogant Links -----*/
+		/* Clearfix */
+		.tabtogsales-links:after {
+			display: block;
+			clear: both;
+			content: '';
+		}
+		.tabtogsales-links li {
+			margin: 0px 2px;
+			float: left;
+			list-style: none;
+		}
+		.tabtogsales-links a {
+			padding: 9px 15px;
+			display: inline-block;
+			border-radius: 8px 8px 0px 0px;
+			font-size: 13px;
+			font-weight: 600;
+			color: #0085b2;
+			transition: all linear 0.15s;
+			text-decoration: none;
+			background: -moz-linear-gradient(top, #dedede 0%, #ffffff 100%);
+			background: -webkit-linear-gradient(top, #dedede 0%, #ffffff 100%);
+			background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #dedede), color-stop(1, #ffffff));
+			background: -o-linear-gradient(top, #dedede 0%, #ffffff 100%);
+			background: -ms-linear-gradient(top, #dedede 0%, #ffffff 100%);
+			background: linear-gradient(top, #dedede 0%, #ffffff 100%);
+		}
+		.tabtogsales-links a:hover {
+			background: #004C66;
+			text-decoration: none;
+			color: #ffffff;
+		}
+		.tabtogsales-links li.active a,
+		li.active a:hover {
+			background: #004C66;
+			color: #f4f4f4;
+		}
+		/*----- Content of tabsalesorder -----*/
+		.tabsalesorder-content {
+			padding: 15px;
+			border-radius: 3px;
+			box-shadow: -1px 1px 1px rgba(0, 0, 0, 0.15);
+			background: white;
+			/* min-height: 570px; */
+			border: 3px solid #004C66;
+			/*width: 1020px;*/
+			background: #ffffff;
+			/* Old Browsers */
+			background: -webkit-linear-gradient(top, #ffffff, #f4f4f4);
+			/*Safari 5.1-6*/
+			background: -o-linear-gradient(top, #ffffff, #f4f4f4);
+			/*Opera 11.1-12*/
+			background: -moz-linear-gradient(top, #ffffff, #f4f4f4);
+			/*Fx 3.6-15*/
+			background: linear-gradient(to bottom, #ffffff, #f4f4f4);
+			/*Standard*/
+			border-radius: 12px 12px 12px 12px;
+			-moz-border-radius: 12px 12px 12px 12px;
+			-webkit-border-radius: 12px 12px 12px 12px;
+		}
+		.tabsalesord {
+			display: none;
+		}
+		.tabsalesord.active {
+			display: block;
+		}
+		/* End TABS styles */
+		/* Styles for Task Tree */
+		div#tree_here {
+			width: 350px;
+			height: 400px;
+			border: 1px solid #dfdfdf;
+			box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.09);
+			margin-left: 20px;
+			margin-bottom: 20px;
+		}
+		table.tbl-task-details {
+			font-family: verdana, arial, sans-serif;
+			font-size: 11px;
+			color: #333333;
+			/*border-width: 1px;*/
+			/*border-color: #3A3A3A;
+			border-collapse: collapse;*/
+			min-height: 530px;
+		}
+		table.tbl-task-details th {
+			border-width: 1px;
+			padding: 8px;
+			border-style: solid;
+			border-color: #517994;
+			background-color: #F4F4F4;
+		}
+		table.tbl-task-details tr:hover td {
+			background-color: #F8F8F8;
+		}
+		table.tbl-task-details tr:last-child {
+			background-color: white;
+		}
+		table.tbl-task-details td {
+			border-width: 1px;
+			padding: 8px;
+			border-style: solid;
+			border-color: #517994;
+			background-color: #ffffff;
+		}
+		.dataTables_scrollBody {
+			overflow-x: hidden;
+		}
+		.icon_safe_closed {
+			background-image: url(/media/media.nl?id=6520032&c=3461650&h=c5b1a579d101d11e4610);
+		}
+		.icon_safe_opened {
+			background-image: url(/core/media/media.nl?id=6520031&c=3461650&h=39f6b346596e2941fae6);
+		}
+		dhxtreeview_cont {
+			width: 100% !important;
+			height: auto;
+		}
+		.preimageTasks {
+			text-align: center;
+			top: 200px;
+			position: relative;
+		}
+		/* For tasks tabs */
+		.nav-tabs>li.active>a {
+			border: 1px solid #517994;
+		}
+		.tab2Container {
+			padding-left: 20px;
+		}
+		table#tableSucc td,
+		table#tablePre td {
+			background-color: white;
+		}
+		#preWO,
+		#succWO {
+			position: relative;
+			top: 5px;
+		}
+		p.nivela {
+			clear: both;
+		}
+		/* End of styles for Task Tree */
+		/* Second Tab */
+		table#tableSOcountr td.rowDataSd {
+			background-color: #f8f8f8;
+			text-align: right;
+		}
+		.firstTdSoCount{
+			text-align: center;
+		}
+		.right {
+			float: right;
+			width: 50%;
+			height: 450px;
+			padding: 0em 2em 0em;
+		}
+		.right_team {
+			float: right;
+			width: 60%;
+			height: 450px;
+			padding: 0em 1em 0em;
+		}
+		table.dataTable tbody th, table.dataTable tbody td {
+			padding: 8px 8px !important;
+		}
+		/* For order sales styling */
+		.selectRow {
+		    display : block;
+		    padding : 20px;
+		}
+		.select2-container {
+		    width: 912px !important;
+		}
+		#s2id_autogen1 {
+			border: none;
+			border-color: transparent;
+		}
+		.h1_tasks {
+			color: #125986;
+			font-size: 16px;
+			font-weight: bold;
+		}
+		input[class^="s2id_"]
+		{
+			border: none !important;
+		}
+		/* Start All my work Style  */
+		table.AllMyWork {
+			font-family: verdana, arial, sans-serif;
+			font-size: 11px;
+			color: #333333;
+			border-width: 1px;
+			border-color: #3A3A3A;
+			border-collapse: collapse;
+			display: block;
+			width:auto !important;
+		}
+		table.AllMyWork th {
+			background-color: #004c66;
+			border-color: #5aa6c0;
+			border-style: solid;
+			border-width: 1px;
+			color: #ffffff;
+			padding: 8px;
+			text-align: center;
+		}
+		table.AllMyWork tr:hover td {
+			/* cursor: pointer; Not required for now*/
+		}
+		table.AllMyWork tr:nth-child(even) td {
+			/* background-color: #f2f2f2; */
+		}
+		table.AllMyWork td {
+			border-width: 1px;
+			padding: 8px;
+			border-style: solid;
+			border-color: #eeeeee;
+			background-color: #ffffff;
+		}
+		table.AllMyWork .centerth {
+			text-align: center;
+		}
+		table.AllMyWork a {
+			color: #215076;
+		}
+
+		/* Finished All my work styles */
+		/* Style for Gantt button in tab */
+		.ganttBtn {
+			display: inline-block;
+			margin: 10px;
+			-webkit-border-radius: 8px;
+			-moz-border-radius: 8px;
+			border-radius: 8px;
+			-webkit-box-shadow:    0 8px 0 #23538a, 0 15px 20px rgba(0, 0, 0, .35);
+			-moz-box-shadow: 0 8px 0 #23538a, 0 15px 20px rgba(0, 0, 0, .35);
+			box-shadow: 0 8px 0 #23538a, 0 15px 20px rgba(0, 0, 0, .35);
+			-webkit-transition: -webkit-box-shadow .1s ease-in-out;
+			-moz-transition: -moz-box-shadow .1s ease-in-out;
+			-o-transition: -o-box-shadow .1s ease-in-out;
+			transition: box-shadow .1s ease-in-out;
+			font-size: 20px;
+			color: #fff;
+		}
+		.ganttBtn span {
+			display: inline-block;
+			padding: 10px 30px;
+			background-color: #23538a;
+			/* IE10+ */
+			background-image: -ms-linear-gradient(bottom, #a7cfdf 0%, #23538a 100%);
+			/* Mozilla Firefox */
+			background-image: -moz-linear-gradient(bottom, #a7cfdf 0%, #23538a 100%);
+			/* Opera */
+			background-image: -o-linear-gradient(bottom, #a7cfdf 0%, #23538a 100%);
+			/* Webkit (Safari/Chrome 10) */
+			background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #a7cfdf), color-stop(100, #23538a));
+			/* Webkit (Chrome 11+) */
+			background-image: -webkit-linear-gradient(bottom, #a7cfdf 0%, #23538a 100%);
+			/* W3C Markup */
+			background-image: linear-gradient(to top, #a7cfdf 0%, #23538a 100%);
+			-webkit-border-radius: 8px;
+			-moz-border-radius: 8px;
+			border-radius: 8px;
+			-webkit-box-shadow: inset 0 -1px 1px rgba(255, 255, 255, .15);
+			-moz-box-shadow: inset 0 -1px 1px rgba(255, 255, 255, .15);
+			box-shadow: inset 0 -1px 1px rgba(255, 255, 255, .15);
+			line-height: 1;
+			text-shadow: 0 -1px 1px #a7cfdf;
+			-webkit-transition: background-color .2s ease-in-out, -webkit-transform .1s ease-in-out;
+			-moz-transition: background-color .2s ease-in-out, -moz-transform .1s ease-in-out;
+			-o-transition: background-color .2s ease-in-out, -o-transform .1s ease-in-out;
+			transition: background-color .2s ease-in-out, transform .1s ease-in-out;
+		}
+		.ganttBtn:hover span {
+			background-color: #23538a;
+			text-shadow: 0 -1px 1px #a7cfdf, 0 0 5px rgba(255, 255, 255, .8);
+			color: #f2f2f2;
+		}
+		.ganttBtn:active, .ganttBtn:focus {
+			-webkit-box-shadow:    0 8px 0 #23538a, 0 12px 10px rgba(0, 0, 0, .3);
+			-moz-box-shadow: 0 8px 0 #23538a, 0 12px 10px rgba(0, 0, 0, .3);
+			box-shadow:    0 8px 0 #23538a, 0 12px 10px rgba(0, 0, 0, .3);
+		}
+		.ganttBtn:active span {
+			-webkit-transform: translate(0, 4px);
+			-moz-transform: translate(0, 4px);
+			-o-transform: translate(0, 4px);
+			transform: translate(0, 4px);
+		}
+		#datatable {
+			width: 100% !important;
+		}
+
+		.todoScroll {
+		height: 530px;
+		overflow: auto;
+		}
+		
+	.selectpicker select optgroup
+	{
+		background-color:#000;
+		color:#fff;
+		font-style:normal;
+		font-weight:normal;
+	}
+
+	.filtersGroupTbl {
+		padding:20px 0;
+	}
+	
+	.filtersGroupTbl select {
+		height: 22pt;
+	}
+	
+	
+	
